@@ -16,10 +16,22 @@ _SENSORS = {
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([CarrierSensor(coordinator, serial, index, key)
-                        for serial, system in coordinator.data.items()
-                        for index in zone_indices(system)
-                        for key in _SENSORS])
+    seen: set[tuple[str, int, str]] = set()
+
+    def add_new_sensors():
+        fresh = []
+        for serial, system in coordinator.data.items():
+            for index in zone_indices(system):
+                for key in _SENSORS:
+                    identity = (serial, index, key)
+                    if identity not in seen:
+                        seen.add(identity)
+                        fresh.append(CarrierSensor(coordinator, serial, index, key))
+        if fresh:
+            async_add_entities(fresh)
+
+    add_new_sensors()
+    entry.async_on_unload(coordinator.async_add_listener(add_new_sensors))
 
 
 class CarrierSensor(CarrierEntity, SensorEntity):

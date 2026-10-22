@@ -6,7 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
+from .api import CarrierAuthError, CarrierError, CarrierRateLimitError, CarrierSmartHomeClient
 from .const import DOMAIN, POLL_INTERVAL
 
 
@@ -21,6 +21,8 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             systems = await self.client.async_get_systems()
         except CarrierAuthError as exc:
             raise ConfigEntryAuthFailed("Carrier SmartHome authentication failed") from exc
+        except CarrierRateLimitError as exc:
+            raise UpdateFailed("Carrier requested slower polling", retry_after=exc.retry_after) from exc
         except CarrierError as exc:
             raise UpdateFailed("Carrier SmartHome could not load devices") from exc
         result: dict[str, dict] = {}

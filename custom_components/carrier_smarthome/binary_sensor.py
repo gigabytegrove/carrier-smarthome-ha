@@ -7,8 +7,19 @@ from .const import DOMAIN
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([CarrierCloudConnectivity(coordinator, serial)
-                        for serial in coordinator.data])
+    seen: set[str] = set()
+
+    def add_new_devices():
+        fresh = []
+        for serial in coordinator.data:
+            if serial not in seen:
+                seen.add(serial)
+                fresh.append(CarrierCloudConnectivity(coordinator, serial))
+        if fresh:
+            async_add_entities(fresh)
+
+    add_new_devices()
+    entry.async_on_unload(coordinator.async_add_listener(add_new_devices))
 
 
 class CarrierCloudConnectivity(CoordinatorEntity, BinarySensorEntity):

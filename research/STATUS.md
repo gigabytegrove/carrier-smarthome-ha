@@ -1,3 +1,11 @@
+# Alpha 3 current status — 2026-10-22
+
+The live owner-side Carrier cloud test **PASSED** assistedLogin, entry-level listing, and detailed query. One zone was discovered; reported model `TSTATCCEEF-01` differs from physical label `TSTATCCEWF-01`; `isConnected=false`. Returned temperatures may be stale. First HA runtime test, refresh-token renewal, schedule/reminder reads, real writes, and native proprietary LAN control remain unverified. **Matter is out of scope.** See `VERIFIED_CLOUD_PROTOCOL.md`, `ALPHA3_TEST_MATRIX.md`, and `RELEASE_NOTES_v0.1.0-alpha.3.md`.
+
+---
+
+## Earlier historical logs (superseded where contradicted)
+
 # Evidence-based status — 2026-10-21
 
 | Workstream | Status | Verifiable artifact |

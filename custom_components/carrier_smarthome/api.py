@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from collections.abc import Mapping
 from typing import Any
 
@@ -23,6 +26,8 @@ REFRESH = "https://sso.carrier.com/oauth2/default/v1/token"
 # This is not a client secret.
 OAUTH_PUBLIC_CLIENT_ID = "0oa1ce7hwjuZbfOMB4x7"
 MAX_BODY = 1_048_576
+DEFAULT_RATE_LIMIT_DELAY = 120.0
+MAX_RATE_LIMIT_DELAY = 3600.0
 TIMEOUT = ClientTimeout(total=20, connect=8)
 
 LOGIN_QUERY = """mutation assistedLogin($input: AssistedLoginInput!) {
@@ -61,6 +66,26 @@ DETAIL_QUERY = """query getEntryLevelSystemData($serial: String!) {
   }
 }"""
 
+SCHEDULES_QUERY = """query getEntryLevelSchedules($serial: String!) {
+  entryLevelSchedules(serial: $serial) {
+    index zone_index scene_name htsp clsp start_time day
+  }
+}"""
+
+REMINDERS_QUERY = """query getEntryLevelReminders($serial: String!) {
+  entryLevelReminders(serial: $serial) { id message type }
+}"""
+
+NOTIFICATION_PREFS_QUERY = """query getEntryLevelNotificationPrefs($serial: String!) {
+  entryLevelNotificationPrefs(serial: $serial) {
+    push { mute reminders {
+      utilizedHvacFilter { enabled config { intervalInMonths lastExecutionDate nextExecutionDate } }
+      utilizedVentilatorFilter { enabled config { intervalInMonths lastExecutionDate nextExecutionDate } }
+      utilizedHumidifierFilter { enabled config { intervalInMonths lastExecutionDate nextExecutionDate } }
+    } alerts { offline { enabled } } }
+  }
+}"""
+
 ZONE_UPDATE = """mutation updateEntryLevelZone($input: EntryLevelZoneInput!) {
   updateEntryLevelZone(input: $input) { success }
 }"""
@@ -76,6 +101,35 @@ class CarrierAuthError(CarrierError):
 
 class CarrierTransportError(CarrierError):
     """HTTP, GraphQL or connectivity problem."""
+
+
+class CarrierRateLimitError(CarrierTransportError):
+    """Carrier asked us to slow polling; delay is bounded to one hour."""
+
+    def __init__(self, retry_after: float) -> None:
+        super().__init__("Carrier cloud rate limit reached")
+        self.retry_after = retry_after
+
+
+def retry_after_seconds(value: str | None, *, now: datetime | None = None) -> float:
+    """Parse HTTP Retry-After delta or HTTP-date without trusting huge values."""
+    if not isinstance(value, str) or not value.strip():
+        return DEFAULT_RATE_LIMIT_DELAY
+    raw = value.strip()
+    try:
+        result = float(raw)
+    except ValueError:
+        try:
+            when = parsedate_to_datetime(raw)
+            if when.tzinfo is None:
+                return DEFAULT_RATE_LIMIT_DELAY
+            reference = now or datetime.now(timezone.utc)
+            result = (when - reference).total_seconds()
+        except (TypeError, ValueError, OverflowError):
+            return DEFAULT_RATE_LIMIT_DELAY
+    if not math.isfinite(result):
+        return DEFAULT_RATE_LIMIT_DELAY
+    return max(1.0, min(result, MAX_RATE_LIMIT_DELAY))
 
 
 class CarrierQueryError(CarrierTransportError):
@@ -103,7 +157,7 @@ class CarrierSmartHomeClient:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a2"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a3"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
@@ -112,6 +166,8 @@ class CarrierSmartHomeClient:
                                          allow_redirects=False, **kwargs) as response:
                 if response.status in (401, 403):
                     raise CarrierAuthError("Carrier rejected the account/session")
+                if response.status == 429:
+                    raise CarrierRateLimitError(retry_after_seconds(response.headers.get("Retry-After")))
                 if url in (NO_AUTH, REFRESH) and response.status == 400:
                     raise CarrierAuthError("Carrier login or refresh request rejected")
                 if not 200 <= response.status < 300:
@@ -136,6 +192,16 @@ class CarrierSmartHomeClient:
     def _graphql_data(payload: Mapping[str, Any]) -> dict[str, Any]:
         if payload.get("errors"):
             # Never log raw GraphQL errors: they can include token/serial data.
+            # Error *codes* are safe to inspect for revoked/expired auth.
+            errors = payload["errors"]
+            if isinstance(errors, list):
+                for item in errors:
+                    if isinstance(item, dict) and isinstance(item.get("extensions"), dict):
+                        code = item["extensions"].get("code")
+                        if isinstance(code, str) and code.upper() in {
+                            "UNAUTHENTICATED", "UNAUTHORIZED", "INVALID_TOKEN", "TOKEN_EXPIRED",
+                        }:
+                            raise CarrierAuthError("Carrier session is no longer authorized")
             raise CarrierQueryError("Carrier rejected the GraphQL operation")
         data = payload.get("data")
         if not isinstance(data, dict):
@@ -253,6 +319,33 @@ class CarrierSmartHomeClient:
                 systems.append(system)
         return systems
 
+    async def async_get_entry_level_feature(self, serial: str, feature: str) -> Any:
+        """Optional owner-authorized read-only capability probe from APK documents.
+
+        This method does not imply the backend enables a feature for this model.
+        No mutation or direct LAN request is ever sent.
+        """
+        if not isinstance(serial, str) or not serial or len(serial) > 128:
+            raise ValueError("Invalid Carrier device identity")
+        definitions = {
+            "schedules": ("getEntryLevelSchedules", SCHEDULES_QUERY, "entryLevelSchedules"),
+            "reminders": ("getEntryLevelReminders", REMINDERS_QUERY, "entryLevelReminders"),
+            "notification_prefs": (
+                "getEntryLevelNotificationPrefs", NOTIFICATION_PREFS_QUERY,
+                "entryLevelNotificationPrefs",
+            ),
+        }
+        if feature not in definitions:
+            raise ValueError("Unsupported Carrier feature probe")
+        name, document, key = definitions[feature]
+        result = await self._graphql(name, document, {"serial": serial})
+        if key not in result or result[key] is None:
+            raise CarrierQueryError("Carrier did not provide feature data")
+        value = result[key]
+        if not isinstance(value, (dict, list)):
+            raise CarrierQueryError("Carrier returned an unexpected feature response")
+        return value
+
     async def async_get_system_detail(self, serial: str) -> dict[str, Any]:
         """Cross-check a single entry-level device using the APK-derived query.
 
@@ -272,7 +365,7 @@ class CarrierSmartHomeClient:
                                 mode: str | None = None,
                                 heat: float | None = None, cool: float | None = None,
                                 fan: str | None = None) -> None:
-        if not serial or not isinstance(index, int) or index < 0:
+        if not isinstance(serial, str) or not serial or len(serial) > 128 or type(index) is not int or index < 0:
             raise ValueError("Invalid Carrier zone identity")
         inp: dict[str, Any] = {"serial": serial, "index": index}
         if mode is not None:
@@ -284,6 +377,7 @@ class CarrierSmartHomeClient:
         if heat is not None and cool is not None:
             if not (isinstance(heat, (int, float)) and isinstance(cool, (int, float)) and
                     not isinstance(heat, bool) and not isinstance(cool, bool) and
+                    math.isfinite(heat) and math.isfinite(cool) and
                     0 <= heat <= 120 and 0 <= cool <= 120 and heat <= cool):
                 raise ValueError("Invalid Carrier thermostat setpoints")
             inp["htsp"] = {"current": heat}

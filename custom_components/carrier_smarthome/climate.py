@@ -24,6 +24,22 @@ async def async_setup_entry(hass, entry, async_add_entities):
         for index in zone_indices(system):
             devices.append(CarrierClimate(coordinator, entry, serial, index))
     async_add_entities(devices)
+    # Carrier can add a thermostat to the account after integration setup.
+    # Existing entities are stable; only newly discovered zones are added.
+    seen = {(item.serial, item.zone) for item in devices}
+
+    def add_new_zones():
+        fresh = []
+        for serial, system in coordinator.data.items():
+            for index in zone_indices(system):
+                key = (serial, index)
+                if key not in seen:
+                    seen.add(key)
+                    fresh.append(CarrierClimate(coordinator, entry, serial, index))
+        if fresh:
+            async_add_entities(fresh)
+
+    entry.async_on_unload(coordinator.async_add_listener(add_new_zones))
 
 
 class CarrierClimate(CarrierEntity, ClimateEntity):
