@@ -49,6 +49,10 @@ The integration authenticates with the same Carrier SmartHome account used in th
 
 Alternative manual installation: copy `custom_components/carrier_smarthome/` into your Home Assistant `config/custom_components/` directory and restart. [Detailed setup and troubleshooting](docs/HACS_INSTALLATION.md).
 
+## Thermostat diagnostics
+
+Home Assistant diagnostic entities have concise names (for example **Max Heating Setpoint**, **Min Cooling Setpoint**, **Heating Setpoint**, and **Fan Mode**). These are **last cloud-reported values**, not guaranteed live thermostat measurements; their `value_source`, `value_freshness`, and `last_successful_poll_utc` attributes document the distinction. Do not use these diagnostic entities for HVAC automation. Existing unique IDs and history are preserved on upgrade; Home Assistant may retain existing entity IDs or user-customized labels. The unsupported Comfort Profile and Equipment Status diagnostics are retired.
+
 ## Cloud connection resilience (v0.5.5)
 
 If Carrier cloud polling fails momentarily, live readings no longer disappear instantly. The last *successfully confirmed online* values can remain visible for up to 90 seconds with `telemetry_freshness: brief_cloud_recovery_grace_may_be_stale`, **but controls are blocked** until Carrier successfully responds again. On a genuine Carrier-reported thermostat disconnection, live entities become unavailable immediately. After the grace period, live entities become unavailable; last-reported diagnostics remain separately labeled.

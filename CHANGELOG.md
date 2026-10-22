@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.6 — Clear thermostat sensor names and diagnostic cleanup
+
+- Display native thermostat terminology in the Home Assistant Diagnostics section: **Max Heating Setpoint**, **Min Cooling Setpoint**, **Heating Setpoint**, **Cooling Setpoint**, **HVAC Mode**, **Fan Mode**, **Schedule Enabled**, **Room Temperature**, **Indoor Humidity**, and **Outdoor Temperature**.
+- Map the limits precisely: `htsp.max` = maximum heating setpoint; `clsp.min` = minimum cooling setpoint. Values, units, and conversion handling are unchanged.
+- Preserve the unique IDs and history of the ten retained diagnostic entities; renaming a display label does **not** change the existing entity ID, user-defined names, or cloud data.
+- Retire only this integration's obsolete `stage_status` and `current_scene` diagnostic entities, which are unsupported/unavailable for the tested `TSTATCCEWF-01` thermostat. Keep corresponding raw optional read fields for future compatibility research.
+- Even without the repetitive prefix, **all ten are historical Carrier cloud reports**. Their attributes continue to identify the source, unknown timestamp, stale-data risk, and warning not to use them for HVAC automation.
+- No changes to local control, cloud command mutation behavior, authentication, or Matter exclusion.
+
+
 ## v0.5.5 — Availability recovery and Carrier cloud backoff
 
 - Prevent a single cloud/API read failure from causing immediate whole-device flicker: retain only previously verified **online** readings for at most 90 seconds, mark them potentially stale, and still block any HVAC writes without a fresh successful Carrier read.

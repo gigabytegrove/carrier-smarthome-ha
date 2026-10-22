@@ -114,7 +114,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
             sys.modules.pop(f'{PKG}.{suffix}', None)
 
     async def test_entities_added_for_new_device_only_once(self):
-        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 2)]:
+        for name, count_per_zone in [('climate', 1), ('sensor', 12), ('binary_sensor', 2)]:
             with self.subTest(platform=name):
                 platform = load(name)
                 self.coordinator = DummyCoordinator()
@@ -173,10 +173,24 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(by_key['mode'].native_value, 'off')
         self.assertEqual(by_key['mode'].native_unit_of_measurement, None)
         self.assertEqual(by_key['fan_mode'].native_unit_of_measurement, None)
-        self.assertEqual(by_key['stage_status'].native_unit_of_measurement, None)
         self.assertEqual(by_key['schedule_enabled'].native_value, 'disabled')
         self.assertIsNone(by_key['schedule_enabled'].native_unit_of_measurement)
         self.assertEqual(by_key['temperature'].native_value, 73)
+        self.assertEqual(by_key['heat_max']._attr_name, 'Max Heating Setpoint')
+        self.assertEqual(by_key['cool_min']._attr_name, 'Min Cooling Setpoint')
+        self.assertEqual(by_key['heat_setpoint']._attr_name, 'Heating Setpoint')
+        self.assertEqual(by_key['cool_setpoint']._attr_name, 'Cooling Setpoint')
+        self.assertEqual(by_key['fan_mode']._attr_name, 'Fan Mode')
+        self.assertEqual(by_key['heat_max'].native_value, 90)
+        self.assertEqual(by_key['cool_min'].native_value, 62)
+        self.assertEqual(by_key['heat_max']._attr_unique_id,
+                         'serial-test_zone_0_last_cloud_reported_heat_max')
+        self.assertNotIn('stage_status', by_key)
+        self.assertNotIn('current_scene', by_key)
+        self.assertEqual(by_key['heat_max'].extra_state_attributes['value_source'],
+                         'last_carrier_cloud_report')
+        self.assertEqual(by_key['heat_max'].extra_state_attributes['value_freshness'],
+                         'unverified_may_be_stale')
         self.assertEqual(by_key['temperature'].native_unit_of_measurement, '°F')
         self.assertTrue(by_key['temperature'].available)
         self.assertFalse(entities[0].available)  # live humidity remains unavailable

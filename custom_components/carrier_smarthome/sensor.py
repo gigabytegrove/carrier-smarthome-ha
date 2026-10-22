@@ -1,7 +1,7 @@
-"""Carrier SmartHome live and explicitly labeled last cloud-reported sensors.
+"""Carrier SmartHome live and separately identified historical diagnostic sensors.
 
 Live sensors disappear when Carrier reports the thermostat offline. Additional
-"Last cloud-reported" sensors preserve visibility into the values returned by
+"Historical" diagnostic sensors preserve visibility into the values returned by
 Carrier, but must NEVER be interpreted as fresh or safe for control loops.
 Carrier does not provide a trustworthy sample timestamp in the query used here.
 """
@@ -22,18 +22,16 @@ _LIVE_SENSORS = {
 # Distinct entities, rather than making the existing live measurements look
 # available while the thermostat itself is not connected to Carrier.
 _LAST_REPORTED_SENSORS = {
-    "temperature": ("Last cloud-reported room temperature", SensorDeviceClass.TEMPERATURE, None),
-    "humidity": ("Last cloud-reported humidity", SensorDeviceClass.HUMIDITY, PERCENTAGE),
-    "outside_temperature": ("Last cloud-reported outdoor temperature", SensorDeviceClass.TEMPERATURE, None),
-    "heat_setpoint": ("Last cloud-reported heating target", SensorDeviceClass.TEMPERATURE, None),
-    "cool_setpoint": ("Last cloud-reported cooling target", SensorDeviceClass.TEMPERATURE, None),
-    "heat_max": ("Last cloud-reported heating limit", SensorDeviceClass.TEMPERATURE, None),
-    "cool_min": ("Last cloud-reported cooling limit", SensorDeviceClass.TEMPERATURE, None),
-    "mode": ("Last cloud-reported HVAC mode", None, None),
-    "fan_mode": ("Last cloud-reported fan setting", None, None),
-    "stage_status": ("Last cloud-reported equipment status", None, None),
-    "schedule_enabled": ("Last cloud-reported schedule state", None, None),
-    "current_scene": ("Last cloud-reported comfort profile", None, None),
+    "temperature": ("Room Temperature", SensorDeviceClass.TEMPERATURE, None),
+    "humidity": ("Indoor Humidity", SensorDeviceClass.HUMIDITY, PERCENTAGE),
+    "outside_temperature": ("Outdoor Temperature", SensorDeviceClass.TEMPERATURE, None),
+    "heat_setpoint": ("Heating Setpoint", SensorDeviceClass.TEMPERATURE, None),
+    "cool_setpoint": ("Cooling Setpoint", SensorDeviceClass.TEMPERATURE, None),
+    "heat_max": ("Max Heating Setpoint", SensorDeviceClass.TEMPERATURE, None),
+    "cool_min": ("Min Cooling Setpoint", SensorDeviceClass.TEMPERATURE, None),
+    "mode": ("HVAC Mode", None, None),
+    "fan_mode": ("Fan Mode", None, None),
+    "schedule_enabled": ("Schedule Enabled", None, None),
 }
 
 
@@ -118,6 +116,7 @@ class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
         label, device_class, unit = _LAST_REPORTED_SENSORS[key]
         self._attr_name = label
         # Diagnostic entities are opt-in in the HA UI to avoid flooding dashboards.
+        # Concise labels are intentional; freshness remains in state attributes.
         from homeassistant.helpers.entity import EntityCategory
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         # Keep the device page uncluttered by default; these are explicitly
@@ -159,6 +158,7 @@ class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
         return {
             "carrier_reported_connection": connectivity_state(self.system),
             "value_freshness": "unverified_may_be_stale",
+            "value_source": "last_carrier_cloud_report",
             "device_sample_timestamp": "not_provided_by_api",
             "not_for_hvac_automations": True,
             "last_successful_poll_utc": getattr(self.coordinator, "last_poll_utc", None),
