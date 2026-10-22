@@ -1,18 +1,18 @@
-# Evidence ledger
+# Evidence-based status — 2026-10-21
 
-## 2026-10-21 — Cloud-first APK follow-through
+| Workstream | Status | Verifiable artifact |
+|---|---|---|
+| Android XAPK unpack / Hermes v96 string extraction | COMPLETE | `analyze_xapk.py`, `summary.json` |
+| Extract 140 GraphQL operation/fragment definitions | COMPLETE | `graphql/`, `graphql-index.json`, `graphql-catalog.json` |
+| Parse 7 native DEX string sets | COMPLETE | `analyze_native_apk.py`, `native-dex-findings.json` |
+| Attribute 60 Hermes / 5 DEX Carrier URL literals | COMPLETE | `map_transport_evidence.py`, `transport-evidence.json` |
+| Document cloud auth/token and entry-level operations | STATIC EVIDENCE | `CLOUD_PROTOCOL.md` |
+| Implement sanitized Carrier HAR inspection | TESTED OFFLINE | `tools/analyze_har.py`, `tests/test_discovery.py` |
+| Implement cloud GraphQL read-only client core | TESTED OFFLINE | `tools/cloud_protocol.py`, `tests/test_discovery.py` |
+| Automatically discover private IP subnet, neighbors, mDNS, TCP | TESTED OFFLINE (LAN pending) | `tools/auto_discover.py`, `tools/Run-Discovery.ps1` |
+| Identify a TSTATCCEWF-01 private IP | NOT YET | Requires on-LAN result / identity correlation |
+| Confirm SmartHome new thermostat API hostname | NOT YET | Requires runtime evidence; legacy host ≠ proof |
+| Authenticate and fetch owner entry-level thermostat | NOT YET | Requires user-authorized account session |
+| Home Assistant entity registration and real device controls | NOT YET | Depends on successful live cloud path |
 
-- **APK_STATIC CONFIRMED:** 140 GraphQL operation/fragment definitions: 58 queries, 77 mutations, 5 fragments. 137 standalone definitions; three partial fragments retained separately, not executable. Full files and typed-variable catalog are in `research/graphql/`, `graphql-catalog.json` and `GRAPHQL_CATALOG.md`.
-- **APK_STATIC CONFIRMED:** Separate `entry_level` and `infinity` operation sets; TSTATCCEWF-01 backend mapping is still unverified.
-- **APK_STATIC CONFIRMED:** `classes3.dex` contains `https://dataservice.infinity.iot.carrier.com`, `https://platform.iot.carrier.com`, Okta authorize/token URLs on `sso.carrier.com`, and `wss://realtime.infinity.iot.carrier.com`.
-- **APK_STATIC CONFIRMED:** Hermes includes runtime key names `ENTRY_TIER_ENV_URL`, `HASURA_API_URL`, `REST_API_URL`, `OKTA_TOKEN_URL` and GraphQL route strings `/graphql`, `/graphql-no-auth`. These key names are not actual URL values.
-- **APK_STATIC CONFIRMED:** LocalControl/MQTT symbols exist in Hermes; no demonstrated link to this thermostat.
-- **IMPLEMENTED:** Automated public cloud configuration inspection, auto LAN neighbor/port discovery for Windows, complete catalog generation, and offline tests.
-- **NOT VERIFIED:** Active production entry-level GraphQL hostname, account login/token refresh, serial classification, status values, cloud control, local thermostat IP/MAC, Matter pairing, or proprietary local API availability.
-
-## 2026-10-21 — Foundation
-
-- Extracted APK Hermes operations and built cautious manual cloud/local probes.
-- Results for a real thermostat and live account were not obtained.
-
-Never put unredacted private device, account, token or network data into Git.
+No live Carrier account or TSTATCCEWF-01 was accessed during this research pass. All tests are offline and self-contained. Do not present cloud or local control as operational until observed against an owner device.
