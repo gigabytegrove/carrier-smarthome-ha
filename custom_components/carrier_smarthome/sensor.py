@@ -78,6 +78,13 @@ class CarrierSensor(CarrierEntity, SensorEntity):
             self._attr_native_unit_of_measurement = unit
 
     @property
+    def available(self):
+        # Unlike the explicitly stale-aware climate display, a sensor named
+        # 'Humidity' or 'Outside temperature' should not publish an unverified
+        # cached value as a live measurement into HA statistics/automations.
+        return super().available and connectivity_state(self.system) == "online"
+
+    @property
     def native_unit_of_measurement(self):
         if self.key != "humidity":
             return temperature_unit(self.system.get("temp_unit_format")) or self.hass.config.units.temperature_unit

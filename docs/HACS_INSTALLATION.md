@@ -35,3 +35,7 @@ Do not file issues containing usernames, tokens, raw HAR files, appliance pairin
 ## Project boundaries
 
 Native Carrier SmartHome cloud GraphQL first; proprietary LAN control only after confirming it exists. No Matter integration, bridge, or fallback. Experimental HVAC commands are intentionally disabled by default and have not been verified against the owner's equipment.
+
+## Alpha 5 connection discrepancy
+
+If your Carrier mobile app can control the thermostat but the `Carrier-reported device connection` sensor says `off`, that binary sensor is faithfully displaying Carrier's GraphQL flag; it does **not** prove the physical thermostat is unreachable. The `Native cloud API readable` sensor independently represents successful API polling. The climate entity displays unverified cloud-reported readings, with an explicit freshness warning. Experimental HVAC writes remain blocked whenever the online flag is false. See `research/ALPHA5_CONNECTION_DISCREPANCY.md` and `tools/Verify-CarrierConnectivity.ps1`.

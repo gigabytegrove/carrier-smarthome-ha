@@ -107,7 +107,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
             sys.modules.pop(f'{PKG}.{suffix}', None)
 
     async def test_entities_added_for_new_device_only_once(self):
-        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 1)]:
+        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 2)]:
             with self.subTest(platform=name):
                 platform = load(name)
                 self.coordinator = DummyCoordinator()
@@ -149,13 +149,20 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(by_key['temperature'].available)
         self.assertFalse(entities[0].available)  # live humidity remains unavailable
 
-    async def test_offline_climate_unavailable(self):
+    async def test_offline_climate_readable_but_writes_still_blocked(self):
         cl = load('climate')
         entities = []
         await cl.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
         self.assertTrue(entities[0].available)
         self.coordinator.data['serial-test']['connection']['isConnected'] = False
-        self.assertFalse(entities[0].available)
+        self.assertTrue(entities[0].available)
+        self.assertEqual(entities[0].extra_state_attributes['carrier_reported_connection'], 'offline')
+        self.assertEqual(entities[0].extra_state_attributes['telemetry_freshness'], 'unverified_may_be_cached')
+        self.entry.options = {'enable_control': True}
+        self.assertEqual(entities[0].supported_features, ClimateEntityFeature(0))
+        self.assertEqual(entities[0].hvac_modes, [HVACMode.OFF])
+        with self.assertRaisesRegex(Exception, 'connectivity is unverified'):
+            entities[0]._require_control()
 
 
 if __name__ == '__main__':

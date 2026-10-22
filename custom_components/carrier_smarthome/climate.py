@@ -7,7 +7,7 @@ from homeassistant.exceptions import HomeAssistantError
 from .api import CarrierError
 from .const import CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, DOMAIN
 from .entity import CarrierEntity
-from .models import temperature_unit, zone_indices, zone_values
+from .models import connectivity_state, temperature_unit, zone_indices, zone_values
 
 _TO_HA = {
     "off": HVACMode.OFF, "heat": HVACMode.HEAT,
@@ -55,7 +55,8 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
     @property
     def hvac_modes(self):
         # Do not offer mode-change controls before explicit opt-in.
-        if not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
+        if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)
+                or connectivity_state(self.system) != "online"):
             return [self.hvac_mode] if self.hvac_mode else [HVACMode.OFF]
         return [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.HEAT_COOL]
 
@@ -82,7 +83,8 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def supported_features(self):
-        if not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
+        if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)
+                or connectivity_state(self.system) != "online"):
             return ClimateEntityFeature(0)
         state = self._state
         if state["heat_setpoint"] is None or state["cool_setpoint"] is None:
@@ -117,13 +119,21 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         return {"schedule_enabled": data["schedule_enabled"],
                 "fan_mode_reported": data["fan_mode"],
                 "stage_status": data["stage_status"],
-                "experimental_control_enabled": bool(self.entry.options.get(CONF_ENABLE_CONTROL, False))}
+                "experimental_control_enabled": bool(self.entry.options.get(CONF_ENABLE_CONTROL, False)),
+                "carrier_reported_connection": connectivity_state(self.system),
+                "telemetry_freshness": "unverified_may_be_cached",
+                "physical_device_online": "not_established_by_this_query"}
 
     def _require_control(self):
         if not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
             raise HomeAssistantError("Enable experimental control in Carrier SmartHome options first")
         if not self.available:
-            raise HomeAssistantError("Carrier thermostat is unavailable")
+            raise HomeAssistantError("Carrier thermostat API data are unavailable")
+        # Opting into experimental control is *not* evidence that the device is
+        # reachable. Keep writes blocked until cloud connection/identity is
+        # verified, even while last-reported values are visible in dashboards.
+        if connectivity_state(self.system) != "online":
+            raise HomeAssistantError("Carrier device connectivity is unverified; writes are blocked")
 
     async def async_set_hvac_mode(self, hvac_mode):
         self._require_control()
