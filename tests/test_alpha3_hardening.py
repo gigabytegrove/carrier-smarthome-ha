@@ -26,7 +26,7 @@ def load(name, path):
 
 
 api = load('api', API / 'api.py')
-local = load('local', TOOLS / 'Probe-VerifiedCarrierLAN.py')
+local = load('local', TOOLS / 'Probe-CarrierLocalDeep.py')
 observer = load('observer', TOOLS / 'Observe-SmartHomeCloud.py')
 
 
@@ -70,23 +70,37 @@ class NewValidationTests(unittest.IsolatedAsyncioTestCase):
 
 
 class LocalIdentityTests(unittest.TestCase):
+    def fixture(self):
+        return {'online': [{'MAC ADDRESS': 'A1:B2:C3:D4:BE:EF',
+                            'NAME': 'Smart Thermostat-BEEF', 'STATUS': 'CONNECTED',
+                            'IP ADDRESS': '172.20.0.151'}], 'offline': [], 'history': []}
+
     def test_refuses_stale_ip(self):
-        with self.assertRaisesRegex(ValueError, 'not connected'):
-            local.connected_target({'status': 'NOT CONNECTED IN EXPORT', 'last_ip': '172.20.0.151'})
+        rows = self.fixture()
+        rows['offline'] = [dict(rows['online'][0], STATUS='DISCONNECTED')]
+        rows['online'] = []
+        with self.assertRaisesRegex(ValueError, 'not CONNECTED'):
+            local.verify_identity(rows, 'BEEF')
 
     def test_refuses_other_network(self):
+        rows = self.fixture()
+        rows['online'][0]['IP ADDRESS'] = '192.168.0.51'
         with self.assertRaisesRegex(ValueError, 'outside'):
-            local.connected_target({'status': 'CONNECTED', 'current_ip': '192.168.0.51'})
+            local.verify_identity(rows, 'BEEF')
 
     def test_refuses_ambiguous_lease(self):
-        with self.assertRaisesRegex(ValueError, 'ambiguous'):
-            local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.151', 'same_ip_other_macs': 1})
+        rows = self.fixture()
+        rows['online'].append(dict(rows['online'][0], **{'MAC ADDRESS': 'AA:BB:CC:DD:EE:FF', 'NAME': 'Other'}))
+        with self.assertRaisesRegex(ValueError, 'conflicting'):
+            local.verify_identity(rows, 'BEEF')
 
     def test_current_known_host_allows_check(self):
-        self.assertEqual(local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.151', 'same_ip_other_macs': 0}), '172.20.0.151')
+        self.assertEqual(local.verify_identity(self.fixture(), 'BEEF')[0], '172.20.0.151')
 
-    def test_no_credentials_or_commands_in_ports(self):
-        self.assertEqual(local.PORTS, (80, 443, 8080, 8443, 1883, 8883))
+    def test_approved_probe_ports(self):
+        self.assertIn(1883, local.scan_ports(False))
+        self.assertIn(8883, local.scan_ports(False))
+        self.assertEqual(len(local.scan_ports(True)), 65535)
 
 
 class ObserverTests(unittest.TestCase):

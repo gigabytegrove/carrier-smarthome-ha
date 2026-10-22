@@ -9,4 +9,4 @@
 
 **Known limits:** Authenticated cloud reads and official-app → cloud synchronization have been proved. The alpha's outgoing `updateEntryLevelZone` writes have not yet been owner-verified. Fan On is an experimental Carrier GraphQL value; Circulation is not exposed. `turn_on` cannot invent an initial mode. If no prior non-Off Carrier mode has been observed since startup, select Heat, Cool or Auto manually. No Matter and no verified proprietary LAN API.
 
-For update troubleshooting, check manifest `0.1.0a10` and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
+For update troubleshooting, check manifest `0.5.0` and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
