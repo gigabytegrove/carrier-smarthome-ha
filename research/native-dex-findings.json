@@ -672,404 +672,404 @@
     ],
     "ble": [
       {
-        "dex": "classes.dex",
-        "symbol": "  KEY_DEFAULT_QUIRK_ENABLED = "
+        "dex": "classes2.dex",
+        "symbol": "Landroid/bluetooth/BluetoothManager;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "  KEY_QUIRK_FORCE_DISABLED = "
+        "dex": "classes2.dex",
+        "symbol": "STREAM_BLUETOOTH_SCO"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "  KEY_QUIRK_FORCE_ENABLED = "
+        "dex": "classes2.dex",
+        "symbol": "bluetooth"
       },
       {
-        "dex": "classes.dex",
-        "symbol": " can only be used with a compatible window decor layout"
+        "dex": "classes3.dex",
+        "symbol": "EXTRA_BLUETOOTH_SETTINGS_CLOSE_ON_CONNECT"
       },
       {
-        "dex": "classes.dex",
-        "symbol": " from list of available cameras."
+        "dex": "classes3.dex",
+        "symbol": "EXTRA_BLUETOOTH_SETTINGS_CONNECTION_ONLY"
       },
       {
-        "dex": "classes.dex",
-        "symbol": " zslDisabled"
+        "dex": "classes3.dex",
+        "symbol": "EXTRA_BLUETOOTH_SETTINGS_FILTER_TYPE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$SwitchMap$com$caverock$androidsvg$SVGParser$SVGAttr"
+        "dex": "classes3.dex",
+        "symbol": "STREAM_BLUETOOTH_SCO"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$alwaysFocusable"
+        "dex": "classes3.dex",
+        "symbol": "android.bluetooth.devicepicker.extra.FILTER_TYPE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$animatable"
+        "dex": "classes3.dex",
+        "symbol": "android.settings.BLUETOOTH_SETTINGS"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$available"
+        "dex": "classes3.dex",
+        "symbol": "getAllBluetoothDeviceTypes"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$cancellableShow"
+        "dex": "classes3.dex",
+        "symbol": "isBluetoothConnected"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$createClickable"
+        "dex": "classes4.dex",
+        "symbol": "BLUETOOTH"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$currentlyVisible"
+        "dex": "classes4.dex",
+        "symbol": "BLUETOOTH_CLASSIC"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$currentlyVisible$inlined"
+        "dex": "classes4.dex",
+        "symbol": "BLUETOOTH_LOW_ENERGY"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$disableClip"
+        "dex": "classes4.dex",
+        "symbol": "BLUETOOTH_NOT_SUPPORTED"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$editable"
+        "dex": "classes4.dex",
+        "symbol": "BluetoothState"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$enabled"
+        "dex": "classes4.dex",
+        "symbol": "BluetoothUtils.java"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$enabled$inlined"
+        "dex": "classes4.dex",
+        "symbol": "EVENT_BLUETOOTH_STATE_CHANGE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$forceKeyboardFocusable"
+        "dex": "classes4.dex",
+        "symbol": "INTENT_OPEN_BLUETOOTH_SETTINGS"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$hapticFeedbackEnabled"
+        "dex": "classes4.dex",
+        "symbol": "INTENT_REQUEST_ENABLE_BLUETOOTH"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$hapticFeedbackEnabled$inlined"
+        "dex": "classes4.dex",
+        "symbol": "Landroid/bluetooth/BluetoothAdapter;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$iconVisible"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/BluetoothUtils;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$isEnabled"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/BridgeUtils;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$nextAvailable"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/BuildConfig;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$onContextAvailable"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/Constants$BluetoothState;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$onDoubleClick"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/Constants;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$onDoubleClick$inlined"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/R;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$onDoubleTap"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/RNBluetoothStateManagerModule$1;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$onPostviewBitmapAvailable"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/RNBluetoothStateManagerModule$2;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$pinnableItem$inlined"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/RNBluetoothStateManagerModule;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$placeable"
+        "dex": "classes4.dex",
+        "symbol": "Lde/patwoz/rn/bluetoothstatemanager/RNBluetoothStateManagerPackage;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$placeables"
+        "dex": "classes4.dex",
+        "symbol": "RNBluetoothStateManager"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$previousAvailable"
+        "dex": "classes4.dex",
+        "symbol": "RNBluetoothStateManagerModule.java"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$r8$lambda$FaBlEBg_WvgtEoySK92Jtr69-m4"
+        "dex": "classes4.dex",
+        "symbol": "RNBluetoothStateManagerPackage.java"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$r8$lambda$TbleZNgM4ZO_NzDplNjawzRtTmE"
+        "dex": "classes4.dex",
+        "symbol": "This device doesn't support Bluetooth"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$r8$lambda$jrQH3C5bqIJble9ly1Rhh7CUms8"
+        "dex": "classes4.dex",
+        "symbol": "android.bluetooth.adapter.action.REQUEST_ENABLE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$renderOnlyWhenVisible"
+        "dex": "classes4.dex",
+        "symbol": "android.bluetooth.adapter.action.STATE_CHANGED"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$revealLastTypedEnabled"
+        "dex": "classes4.dex",
+        "symbol": "android.bluetooth.adapter.extra.STATE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$scrollableTabData"
+        "dex": "classes4.dex",
+        "symbol": "android.permission.BLUETOOTH_ADMIN"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$selectableDates"
+        "dex": "classes4.dex",
+        "symbol": "android.settings.BLUETOOTH_SETTINGS"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$selectableId"
+        "dex": "classes4.dex",
+        "symbol": "ble"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$selectionInSelectable"
+        "dex": "classes4.dex",
+        "symbol": "de.patwoz.rn.bluetoothstatemanager"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$sheetGesturesEnabled"
+        "dex": "classes4.dex",
+        "symbol": "fromBluetoothState"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$sheetSwipeEnabled"
+        "dex": "classes4.dex",
+        "symbol": "handleIfBluetoothNotSupported"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$stable"
+        "dex": "classes4.dex",
+        "symbol": "hasBluetoothAdminPermission"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$targetSelectableId"
+        "dex": "classes4.dex",
+        "symbol": "isBluetoothSupported"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$textInSelectable"
+        "dex": "classes4.dex",
+        "symbol": "setBluetooth"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$this_withContextAvailable"
+        "dex": "classes4.dex",
+        "symbol": "startListenForBluetoothStateChange"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$transformOriginWhenVisible"
+        "dex": "classes4.dex",
+        "symbol": "stopListenForBluetoothStateChange"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$visible"
+        "dex": "classes5.dex",
+        "symbol": "BLUETOOTH"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$visible$inlined"
+        "dex": "classes5.dex",
+        "symbol": "EventBluetoothChange"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$visibleState"
+        "dex": "classes5.dex",
+        "symbol": "Landroid/bluetooth/BluetoothAdapter;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$writeable$delegate"
+        "dex": "classes5.dex",
+        "symbol": "RNDeviceInfo_headphoneBluetoothConnectionDidChange"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "$yearPickerVisible$delegate"
+        "dex": "classes5.dex",
+        "symbol": "android.bluetooth.adapter.action.STATE_CHANGED"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "'isFocusable' param is no longer used. Use value without this parameter."
+        "dex": "classes5.dex",
+        "symbol": "android.bluetooth.adapter.extra.STATE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/annotation/InspectableProperty$ValueType;"
+        "dex": "classes5.dex",
+        "symbol": "android.settings.BLUETOOTH_SETTINGS"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/collection/MutableIntObjectMap;"
+        "dex": "classes5.dex",
+        "symbol": "bluetooth"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/collection/MutableScatterMap;"
+        "dex": "classes5.dex",
+        "symbol": "bluetoothBR"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/animation/core/Animatable;"
+        "dex": "classes5.dex",
+        "symbol": "bluetoothSettings"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/animation/core/InfiniteRepeatableSpec;"
+        "dex": "classes5.dex",
+        "symbol": "bluetooth_name"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/animation/core/MutableTransitionState;"
+        "dex": "classes5.dex",
+        "symbol": "headphoneBluetoothConnectionReceiver"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/animation/core/SeekableTransitionState$SeekingAnimationState;"
+        "dex": "classes5.dex",
+        "symbol": "isBluetoothA2dpOn"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/content/PlatformTransferableContent;"
+        "dex": "classes5.dex",
+        "symbol": "isBluetoothEnabled"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/gestures/AnchoredDraggableState;"
+        "dex": "classes5.dex",
+        "symbol": "isBluetoothHeadphonesConnected"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/gestures/DraggableAnchors;"
+        "dex": "classes5.dex",
+        "symbol": "isBluetoothHeadphonesConnectedSync"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/gestures/DraggableState;"
+        "dex": "classes5.dex",
+        "symbol": "listenBluetoothState"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/gestures/Scrollable2DState;"
+        "dex": "classes5.dex",
+        "symbol": "switchBluetooth"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/gestures/ScrollableState;"
+        "dex": "classes5.dex",
+        "symbol": "switchBluetoothSilence"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/interaction/MutableInteractionSource;"
+        "dex": "classes6.dex",
+        "symbol": " Is Or Greater than M $mBluetoothDevice"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/lazy/layout/MutableIntervalList;"
+        "dex": "classes6.dex",
+        "symbol": "-$$Nest$fgetenableBluetoothCallback"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/foundation/text/selection/SelectableInfo;"
+        "dex": "classes6.dex",
+        "symbol": "-$$Nest$fputenableBluetoothCallback"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/material3/SelectableChipColors;"
+        "dex": "classes6.dex",
+        "symbol": "BluetoothGatt is null"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/material3/SelectableDates;"
+        "dex": "classes6.dex",
+        "symbol": "Error starting enable bluetooth activity"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/material3/internal/AnchoredDraggableState;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothAdapter;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/material3/internal/DraggableAnchors;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothDevice;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/runtime/MutableIntState;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothGatt;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/runtime/MutableState;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothGattCallback;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/runtime/ProvidableCompositionLocal;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothGattCharacteristic;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/runtime/collection/MutableVector;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothGattDescriptor;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/runtime/saveable/Saver;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothGattService;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/ui/layout/Measurable;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/BluetoothManager;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/ui/layout/PinnableContainer;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/BluetoothLeScanner;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/ui/layout/Placeable;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanCallback;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/ui/modifier/ProvidableModifierLocal;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanFilter$Builder;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Landroidx/compose/ui/node/DelegatableNode;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanFilter;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Ljava/lang/Runnable;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanRecord;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Lkotlinx/coroutines/CancellableContinuation;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanResult;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()Lkotlinx/coroutines/flow/MutableSharedFlow;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanSettings$Builder;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()[Landroidx/annotation/InspectableProperty$EnumEntry;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/bluetooth/le/ScanSettings;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "()[Landroidx/annotation/InspectableProperty$FlagEntry;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/companion/BluetoothLeDeviceFilter$Builder;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(FLjava/lang/Object;)Landroidx/collection/MutableFloatObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "Landroid/companion/BluetoothLeDeviceFilter;"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(FLjava/lang/Object;FLjava/lang/Object;)Landroidx/collection/MutableFloatObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "No BLE scanner available"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(ILjava/lang/Object;)Landroidx/collection/MutableIntObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "No bluetooth support"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(ILjava/lang/Object;ILjava/lang/Object;)Landroidx/collection/MutableIntObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.adapter.action.REQUEST_ENABLE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(J)Landroidx/compose/animation/core/Animatable;"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.adapter.action.STATE_CHANGED"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(JJJJJJJJJJJJJ)Landroidx/compose/material3/SelectableChipColors;"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.adapter.extra.STATE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(JLjava/lang/Object;)Landroidx/collection/MutableLongObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.device.action.BOND_STATE_CHANGED"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(JLjava/lang/Object;JLjava/lang/Object;)Landroidx/collection/MutableLongObjectMap;"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.device.action.PAIRING_REQUEST"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(Landroid/graphics/drawable/Drawable;Landroidx/compose/runtime/Composer;I)V"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.device.extra.BOND_STATE"
       },
       {
-        "dex": "classes.dex",
-        "symbol": "(Landroid/graphics/drawable/Icon;Landroidx/compose/runtime/Composer;I)V"
+        "dex": "classes6.dex",
+        "symbol": "android.bluetooth.device.extra.DEVICE"
       }
     ]
   }

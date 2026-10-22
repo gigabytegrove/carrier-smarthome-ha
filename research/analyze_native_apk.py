@@ -22,7 +22,7 @@ FEATURE_PATTERNS = {
     'matter': re.compile(r'(?:^|\W)matter(?:\W|$)|_matter[cdi]?\.', re.I),
     'mqtt': re.compile(r'mqtt|LocalControl|LocalControlReq', re.I),
     'graphql': re.compile(r'graphql|hasura', re.I),
-    'ble': re.compile(r'bluetooth|ble|gatt', re.I),
+    'ble': re.compile(r'bluetooth|\bBLE\b|GattServer|GattCharacteristic|BluetoothGatt', re.I),
 }
 
 
@@ -60,7 +60,9 @@ def dex_strings(data: bytes):
 
 
 def inspect(apk: Path) -> dict:
-    result = {'apk_sha256': hashlib.file_digest(apk.open('rb'), 'sha256').hexdigest(),
+    with apk.open('rb') as stream:
+        digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+    result = {'apk_sha256': digest,
               'source': 'actual native DEX string tables', 'dex': [],
               'embedded_carrier_endpoints': [], 'feature_evidence': {name: [] for name in FEATURE_PATTERNS}}
     endpoints = set()
