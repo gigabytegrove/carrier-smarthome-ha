@@ -1,3 +1,13 @@
+## No fresh ZIP? Use Omada Connected Clients directly
+
+**Live UI alternative (does not rely on the stale 08:14 ZIP):** Open Omada **Connected Clients** and select the Carrier thermostat. While that page is open, run the PowerShell wrapper with `-LiveOmada` (and optionally `-FullTCP -Concurrency 12`). It prompts for the **current IPv4** and **full Wi-Fi MAC** exactly as displayed, and requires the explicit phrase `I-SEE-IT-CONNECTED`. It validates the MAC suffix, IP syntax, and permitted IoT network, and scans **that one supplied host only**.
+
+This is **owner attestation**, not an independently verified MAC-to-IP binding. Do not use a cached IP, historical screenshot, offline client or the old export. Refresh Omada immediately before running; a changed DHCP assignment can invalidate a manual target. No IP or full MAC is saved to the report. For independently checked snapshot identity, continue using the fresh ZIP method below.
+
+```powershell
+.\tools\Probe-CarrierLocalDeep.ps1 -LiveOmada -FullTCP -Concurrency 12
+```
+
 # v0.5.0 — Comprehensive Carrier SmartHome proprietary LAN discovery
 
 This is **not** the legacy Carrier Infinity protocol. The target is a Carrier SmartHome TSTATCCEWF-01 (cloud-reported TSTATCCEEF-01). The protocol for native *proprietary* LAN control remains unproven. **Matter is excluded.** No command in this guide turns the HVAC on/off, changes fan or mode, pairs a device, flashes firmware, or alters Wi-Fi/router/DNS settings.
