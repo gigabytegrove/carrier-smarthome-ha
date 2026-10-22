@@ -124,12 +124,20 @@ async def async_set_setpoints_verified(coordinator, options: dict, serial: str,
     from .const import CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL
     if not options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
         raise HomeAssistantError("Enable experimental setpoint changes in Carrier SmartHome options first")
-    assert_control_ready(coordinator, options, serial, index)
+    # Independent from HVAC mode-change permission, but the same online
+    # preflight rule applies before any heat/cool mutation.
+    def ready():
+        system = coordinator.data.get(serial, {})
+        return bool(coordinator.last_update_success and connectivity_state(system) == "online"
+                    and get_zone(system, index) is not None)
+    if not ready():
+        raise HomeAssistantError("Carrier thermostat offline; setpoint command blocked")
     try:
         await coordinator.async_request_refresh()
     except Exception as exc:
         raise HomeAssistantError("Carrier data could not be refreshed before changing targets") from exc
-    assert_control_ready(coordinator, options, serial, index)
+    if not ready():
+        raise HomeAssistantError("Carrier connection lost before changing targets")
     zone = zone_values(get_zone(coordinator.data[serial], index) or {})
     if zone["heat_setpoint"] == heat and zone["cool_setpoint"] == cool:
         return
