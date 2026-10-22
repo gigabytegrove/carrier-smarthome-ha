@@ -1,16 +1,14 @@
-## Alpha 8 — HVAC Power and cloud mode control (October 22, 2026)
+## Alpha 8 (native cloud controls + current-lease LAN probe)
 
-**HACS-ready native Carrier cloud alpha `0.1.0a8`.** The Home Assistant device page now has an **HVAC power** switch and an explicit Off / Heat / Cool / Auto climate mode selector. These control *real equipment*, not a simulation, and are **disabled by default**. In the integration Options, enable **experimental HVAC mode and power control** and choose the **Power On mode** (Heat, Cool or Auto). Leaving Power On mode at Unset blocks switch-based turn-on; selecting the climate HVAC mode directly is still possible. Temperature/setpoint writes require a **separate opt-in**, disabled by default.
+The Home Assistant device page now includes **HVAC power** in Controls and a mode selector in the climate entity, but only once the owner explicitly enables **experimental thermostat writes** in the integration's Options. Set an explicit Heat/Cool/Auto **Power On mode** for the one-click power switch; Unset refuses automatic turn-on. Turning Off selects Carrier native GraphQL HVAC mode `off`. All writes require a fresh online Carrier cloud read, submit a single mutation, then check read-back (without silently resending). This is **real equipment control**, so make your first test while physically able to observe the thermostat, and use the official app to restore settings if needed. The mutation has not yet been live verified.
 
-The code requires a fresh successful Carrier connection check before writing, sends a single `updateEntryLevelZone` mutation, and checks cloud readback up to three times. It does **not** repeat uncertain writes. A GraphQL acknowledgement is not proof of physical HVAC operation; **the first live mode mutation remains unverified**. Test while able to observe the thermostat and restore the desired settings in the official app if necessary.
+**Proprietary LAN probing is separate and read-only**: export a new Omada Client ZIP (within 20 minutes) and run `tools/Probe-VerifiedCarrierLAN.ps1 -PlanOnly`, then without `-PlanOnly` to check six TCP listeners on the *currently connected* verified thermostat. Use `-HttpFingerprint` only if you want an optional single unauthenticated HTTP HEAD per open web port. No MQTT commands, no Matter, no subnet-wide repeat scan; an older Omada export is refused.
 
-**Local control research:** A read-only Omada script now rejects an old client export (default 20-minute freshness), matches the currently connected thermostat by MAC suffix, and checks only six TCP ports. Optional `-HttpFingerprint` sends a single unauthenticated `HEAD /` on any open HTTP port. No Matter, no MQTT commands, no full VLAN scan. See [Alpha 8 details](research/ALPHA8_CLOUD_CONTROLS_AND_LAN.md).
-
-**Alpha 7 correction (October 22, 2026):** The thermostat experienced an actual Wi-Fi dropout before the successful Alpha 6 app/cloud test. It reconnected after a restart with no Wi-Fi reconfiguration; Carrier then reported online and both GraphQL read paths tracked official-app changes. That makes a real connectivity loss the leading explanation for earlier offline readings; previous suspicion of a broken online flag is superseded. Alpha 7 marks live climate entities unavailable when Carrier reports offline while preserving clearly labeled last-reported diagnostics. No Matter. See research/ALPHA7_WIFI_RECONNECT.md.
+See [Alpha 8 implementation and safety guide](research/ALPHA8_CLOUD_CONTROLS_AND_LAN.md).
 
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** HACS-installable native Carrier cloud alpha `0.1.0a7`; authenticated discovery and cloud telemetry verified against the owner account on 2026-10-22, but firmware connectivity fields and device write control are not validated.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a3` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
@@ -25,7 +23,7 @@ The public repository is ready to add directly to HACS **as a custom Integration
 5. Go to **Settings → Devices & services → Add integration → Carrier SmartHome (Native Cloud Alpha)** and sign in with the Carrier SmartHome account.
 6. Leave **Enable experimental thermostat writes** disabled in integration options. Test entity discovery/readings and diagnostics first.
 
-**What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA shows its last cloud-reported climate values with explicit unverified-freshness attributes. Live statistical sensors remain unavailable while Carrier reports the physical device disconnected, and controls are blocked. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
+**What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA may therefore mark its climate entity **unavailable** until Carrier reports it online; this is intentional and avoids presenting cached measurements as live. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
 
 **Updates:** While the repository has no GitHub Releases, HACS tracks `main` and uses the Git commit as the available version. Download an update in HACS and restart/reload Home Assistant. See [HACS installation and testing](docs/HACS_INSTALLATION.md).
 
@@ -38,34 +36,6 @@ Alpha 4 adds a read-only, privacy-minimized PowerShell field inventory that foll
 ```
 
 It reports baseline values plus the result of an **optional** richer APK-derived detailed query. Carrier may return stale readings while reporting `offline`. Home Assistant now includes additional **last cloud-reported diagnostic** entities for HVAC mode, fan setting, equipment stage, schedule state, and target limits. These do not enable HVAC writes or treat cached temperatures as fresh. See [Alpha 4 field notes](research/ALPHA4_FIELD_INVENTORY.md). This integration does **not** use Matter.
-
-## Alpha 5: Carrier reports offline while the owner phone app works
-
-The 2026-10-22 owner tests authenticated and read a cloud thermostat, but Carrier's
-`connection.isConnected` field remained false. The owner independently reports
-successful control from the Carrier phone app. These are **different observations**;
-we do not claim the thermostat is physically offline. Alpha 5 makes the HA
-climate entity readable on successful GraphQL polling even if the online flag
-is false, with explicit `telemetry_freshness: unverified_may_be_cached` attributes.
-Live statistical sensors remain unavailable unless Carrier reports online, and
-all experimental writes are additionally blocked while connectivity is unverified.
-
-Run the three-source read-only cloud cross-check on Windows:
-
-```powershell
-.\tools\Verify-CarrierConnectivity.ps1 -ExpectedMac '<physical thermostat Wi-Fi MAC>'
-```
-
-No Matter. See [connection discrepancy research](research/ALPHA5_CONNECTION_DISCREPANCY.md).
-
-
-## Alpha 6: compare official app changes with native cloud telemetry (read-only)
-
-The physical thermostat was **matched by Wi-Fi MAC** to the authenticated entry-level device; however, the three Carrier GraphQL connection flags all say `offline` despite the owner's official phone app still controlling the thermostat. This does not establish that the device is truly offline. A field that remains static across repeat polls is not necessarily live or stale.
-
-From a Windows PowerShell clone, run `./tools/Compare-AppChange.ps1`. It logs in once, reads both `getEntryLevelSystems` and `getEntryLevelSystemData`, asks the owner to change a single setpoint **in the official app**, and compares six bounded reads after the change. The owner then **manually restores the original setpoint in the app** and the tool verifies whether the cloud values returned to baseline. No HVAC writes, Matter protocol, raw serials, MACs, passwords or tokens are **printed or saved**. Authentication and device identifiers are transmitted only to Carrier for the expected authenticated read requests. The script cannot restore settings automatically.
-
-If a setpoint change appears in one or both GraphQL queries while the status flag remains false, we have evidence that the corresponding query tracks app changes despite its disconnected flag; this is **not yet validation of Home Assistant mutations**. If neither query changes, the phone app may use a different source, or these reads could be a stale cache. Do not enable HA writes until control/feedback are proven separately.
 
 ## Alpha 3: installation and owner-side verification
 
@@ -181,3 +151,7 @@ Testing is offline: simulated GraphQL responses, URL safety, HAR secret redactio
 - Document evidence sources precisely and label **unverified** conclusions. The authenticated TSTATCCEWF-01 read/write path has **not** yet been exercised.
 
 See `research/ANALYSIS_REPORT.md`, `research/CLOUD_PROTOCOL.md`, `research/LOCAL_PROTOCOL.md`, `research/TEST_PLAN.md`, and `research/STATUS.md`.
+
+## Alpha 9: visible HA controls and fan Auto/On experiment
+
+HACS custom integration now exposes **HVAC mode** (Off/Heat/Cool/Auto/Fan Only) and **Fan setting** (Auto/On) selects in Device Controls, alongside HVAC Power. Controls remain opt-in in integration Configure/Options: enable mode/power, fan, and setpoints separately; never enable commands implicitly. Restart HA after HACS update and save options. Read research/ALPHA9_HA_CONTROLS.md for safety and test steps. Carrier lists Circulation but its cloud enum is unknown, so it remains read-only/unavailable as a command. No Matter.

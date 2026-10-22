@@ -64,7 +64,7 @@ class CarrierPowerSwitch(CarrierEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs):
         mode = self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)
-        if mode not in ("heat", "cool", "auto"):
-            raise HomeAssistantError("Choose Heat, Cool or Auto as Turn On mode in Carrier SmartHome options")
+        if mode not in ("heat", "cool", "auto", "fanonly"):
+            raise HomeAssistantError("Choose Heat, Cool, Auto or Fan Only as Turn On mode in Carrier SmartHome options")
         await async_set_mode_verified(self.coordinator, self.entry.options,
                                       self.serial, self.zone, mode)

@@ -12,7 +12,8 @@ from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, Tex
 from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
 from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, CONF_ENABLE_SETPOINT_CONTROL,
                     DEFAULT_ENABLE_SETPOINT_CONTROL, CONF_POWER_ON_MODE,
-                    DEFAULT_POWER_ON_MODE, POWER_ON_MODES, DOMAIN)
+                    DEFAULT_POWER_ON_MODE, POWER_ON_MODES, DOMAIN,
+                    CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,6 +89,7 @@ class CarrierOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(data={
                 CONF_ENABLE_CONTROL: bool(user_input[CONF_ENABLE_CONTROL]),
                 CONF_ENABLE_SETPOINT_CONTROL: bool(user_input[CONF_ENABLE_SETPOINT_CONTROL]),
+                CONF_ENABLE_FAN_CONTROL: bool(user_input[CONF_ENABLE_FAN_CONTROL]),
                 CONF_POWER_ON_MODE: user_input[CONF_POWER_ON_MODE],
             })
         return self.async_show_form(
@@ -97,6 +99,8 @@ class CarrierOptionsFlow(config_entries.OptionsFlow):
                     default=self.config_entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool,
                 vol.Required(CONF_ENABLE_SETPOINT_CONTROL,
                     default=self.config_entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL)): bool,
+                vol.Required(CONF_ENABLE_FAN_CONTROL,
+                    default=self.config_entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)): bool,
                 vol.Required(CONF_POWER_ON_MODE,
                     default=self.config_entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)):
                     vol.In(POWER_ON_MODES),
