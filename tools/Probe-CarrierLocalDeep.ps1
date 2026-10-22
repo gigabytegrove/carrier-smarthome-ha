@@ -1,64 +1,82 @@
-# Carrier SmartHome v0.5.1 -- native proprietary LAN reconnaissance, no Matter.
-# Scans ONLY a fresh Omada ZIP target or manually confirmed live UI target.
+# Carrier SmartHome 0.5.4: one engine, three explicit target-selection paths.
+# All probes are network reconnaissance only; NEVER HVAC commands or Matter.
 [CmdletBinding()]
 param(
+    [string]$DirectIP = '',
+    [switch]$AcknowledgeIpRisk,
     [string]$ArchivePath = '',
-    [string]$MacSuffix = '',
     [switch]$LiveOmada,
-    [switch]$FullTCP,
+    [string]$MacSuffix = '',
     [switch]$PlanOnly,
+    [switch]$FullTCP,
     [ValidateRange(5,120)][int]$MaxAgeMinutes = 30,
-    [ValidateRange(1,64)][int]$Concurrency = 32,
+    [ValidateRange(1,64)][int]$Concurrency = 12,
     [ValidateRange(0.2,2.0)][double]$TcpTimeout = 0.45,
     [Nullable[int]]$ControllerUtcOffset = $null
 )
 $ErrorActionPreference = 'Stop'
-if (-not $LiveOmada -and -not $ArchivePath) {
-    $downloads = Join-Path $env:USERPROFILE 'Downloads'
-    $found = @(Get-ChildItem -LiteralPath $downloads -Filter 'Client_*.zip' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending)
-    if ($found.Count -eq 0) {
-        throw 'No Omada Client_*.zip in Downloads. Export CURRENT CONNECTED CLIENTS from Omada, save ZIP to Downloads, then run again.'
-    }
-    $fresh = @($found | Where-Object { $_.LastWriteTimeUtc -ge [DateTime]::UtcNow.AddMinutes(-$MaxAgeMinutes) })
-    if ($fresh.Count -eq 0) {
-        $latest = $found[0]
-        Write-Host ('Newest local export: ' + $latest.Name + ' (' + $latest.LastWriteTime.ToString('yyyy-MM-dd HH:mm') + ')') -ForegroundColor Yellow
-        throw 'All available Omada exports are old. Open Omada > Clients, export CURRENT connected clients again, and save a NEW Client_*.zip to Downloads. Old exports cannot confirm a current thermostat IP.'
-    }
-    $ArchivePath = $fresh[0].FullName
-}
-if (-not $MacSuffix) {
-    $MacSuffix = Read-Host 'Final 4 hexadecimal characters of the thermostat Wi-Fi MAC from Omada or label'
-}
-if ($MacSuffix -notmatch '^[0-9a-fA-F]{4}$') { throw 'A 4-character hexadecimal MAC suffix is required. No traffic sent.' }
-if (-not $LiveOmada -and -not (Test-Path -LiteralPath $ArchivePath -PathType Leaf)) { throw 'Omada ZIP is missing. No traffic sent.' }
-$py = Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $py) { throw 'Install Python 3.11+ before using the local research tools.' }
 $target = Join-Path $PSScriptRoot 'Probe-CarrierLocalDeep.py'
-if (-not (Test-Path -LiteralPath $target)) { throw 'Carrier LAN tool is missing from this checkout.' }
-$reportDir = Join-Path $env:LOCALAPPDATA 'CarrierSmartHome-Research'
-New-Item -Path $reportDir -ItemType Directory -Force | Out-Null
-$report = Join-Path $reportDir ('carrier-local-0.5.1-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.json')
-$arguments = @($target, '--suffix', $MacSuffix, '--concurrency', "$Concurrency", '--tcp-timeout', $TcpTimeout.ToString([Globalization.CultureInfo]::InvariantCulture))
-if ($LiveOmada) {
-    Write-Host 'Open Omada > Clients > Connected; click the actual Carrier thermostat.' -ForegroundColor Cyan
-    Write-Host 'Read the CURRENT IPv4 and FULL Wi-Fi MAC from that live client record. DO NOT use History or an old ZIP.' -ForegroundColor Yellow
-    $currentIP = (Read-Host 'Current Connected Client IPv4').Trim()
-    $currentMAC = (Read-Host 'Current Connected Client full Wi-Fi MAC').Trim()
-    $answer = (Read-Host 'Type exactly I-SEE-IT-CONNECTED to confirm this is ON SCREEN RIGHT NOW').Trim()
-    $arguments += @('--manual-ip', $currentIP, '--manual-mac', $currentMAC, '--manual-confirm', $answer)
-    # Clear only the PowerShell wrapper's copies; Python arguments are not saved.
-    Remove-Variable currentIP, currentMAC, answer -ErrorAction SilentlyContinue
+if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { throw 'Local probe engine not found in this repository.' }
+
+# Choose exactly one form of identification. No automatic fallback to an old IP.
+if ($DirectIP) {
+    if ($LiveOmada -or $ArchivePath -or $MacSuffix -or $null -ne $ControllerUtcOffset) {
+        throw 'DirectIP cannot be combined with Omada export or MAC selection.'
+    }
+    if (-not $AcknowledgeIpRisk) {
+        throw 'Use -AcknowledgeIpRisk: this address was identified earlier, but DHCP may have reassigned it. No packets sent.'
+    }
+} elseif ($AcknowledgeIpRisk) {
+    throw '-AcknowledgeIpRisk is only for -DirectIP mode.'
+} elseif ($LiveOmada -and $ArchivePath) {
+    throw 'Choose either live Omada UI or an export, not both.'
+}
+
+$py = Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $py) { throw 'Python 3.11 or newer is needed. The cloud research tools previously used Python on this computer.' }
+$argList = @($target, '--concurrency', [string]$Concurrency,
+            '--tcp-timeout', $TcpTimeout.ToString([Globalization.CultureInfo]::InvariantCulture))
+
+if ($DirectIP) {
+    $argList += @('--direct-ip', $DirectIP, '--accept-direct-risk', 'I-ACCEPT-IP-REASSIGNMENT-RISK')
+    Write-Host "`n=== KNOWN-IP SINGLE-HOST DISCOVERY ===" -ForegroundColor Cyan
+    Write-Host 'Identity assurance: last known owner IP only; current hardware identity NOT machine-verified.' -ForegroundColor Yellow
+} elseif ($LiveOmada) {
+    if (-not $MacSuffix) { $MacSuffix = Read-Host 'Thermostat Wi-Fi MAC final 4 hex digits (private)' }
+    if ($MacSuffix -notmatch '^[0-9A-Fa-f]{4}$') { throw 'MAC suffix must be four hex digits.' }
+    Write-Host 'Read the current CONNECTED client from Omada; avoid historical DHCP records.' -ForegroundColor Cyan
+    $currentIP = (Read-Host 'Current thermostat IP in Omada Connected Clients').Trim()
+    $currentMAC = (Read-Host 'Current thermostat full Wi-Fi MAC').Trim()
+    $confirm = (Read-Host 'Type I-SEE-IT-CONNECTED if the live Omada client is currently online').Trim()
+    $argList += @('--manual-ip', $currentIP, '--manual-mac', $currentMAC,
+                   '--manual-confirm', $confirm, '--suffix', $MacSuffix)
+    Remove-Variable currentIP,currentMAC,confirm -ErrorAction SilentlyContinue
+    Write-Host 'Identity assurance: owner-reported live UI; not independently verified.' -ForegroundColor Yellow
 } else {
-    $arguments += @('--omada', $ArchivePath, '--max-age-minutes', "$MaxAgeMinutes")
+    if (-not $ArchivePath) {
+        $downloads = Join-Path $env:USERPROFILE 'Downloads'
+        $exports = @(Get-ChildItem -LiteralPath $downloads -Filter 'Client_*.zip' -File -ErrorAction SilentlyContinue |
+                     Sort-Object LastWriteTimeUtc -Descending)
+        if ($exports.Count -eq 0) { throw 'No Omada ZIP found. Use -DirectIP with an explicitly known address instead.' }
+        $ArchivePath = $exports[0].FullName
+    }
+    if (-not (Test-Path -LiteralPath $ArchivePath -PathType Leaf)) { throw 'Omada ZIP not found.' }
+    if (-not $MacSuffix) { $MacSuffix = Read-Host 'Thermostat Wi-Fi MAC final 4 hex digits (private)' }
+    if ($MacSuffix -notmatch '^[0-9A-Fa-f]{4}$') { throw 'MAC suffix must be four hex digits.' }
+    $argList += @('--omada', $ArchivePath, '--suffix', $MacSuffix, '--max-age-minutes', [string]$MaxAgeMinutes)
+    if ($null -ne $ControllerUtcOffset) { $argList += @('--controller-utc-offset', [string]$ControllerUtcOffset) }
+    Write-Host 'Identity assurance: current Omada MAC/IP mapping; freshness checked by engine.' -ForegroundColor Cyan
 }
-if ($PlanOnly) { $arguments += '--plan' } else { $arguments += @('--output', $report) }
-if ($FullTCP) { $arguments += '--full-tcp' }
-if (-not $LiveOmada -and $null -ne $ControllerUtcOffset) { $arguments += @('--controller-utc-offset', "$ControllerUtcOffset") }
-Write-Host "`n=== CARRIER LOCAL PROTOCOL RESEARCH ===" -ForegroundColor Cyan
-Write-Host 'Identity source:' $(if ($LiveOmada) { 'owner confirmed live Omada UI' } else { Split-Path -Leaf $ArchivePath })
-Write-Host 'Mode:' $(if ($PlanOnly) { 'Plan only' } elseif ($FullTCP) { 'Full TCP 1-65535 + protocol discovery' } else { 'Top 1024 + common IoT TCP + protocol discovery' })
-& $py.Source @arguments
-if ($LASTEXITCODE -ne 0) {
-    throw "Carrier LAN probe stopped (exit $LASTEXITCODE). Check current Omada Connected Client identity or fresh export. No historical address fallback."
+if ($FullTCP) { $argList += '--full-tcp' }
+if ($PlanOnly) {
+    $argList += '--plan'
+} else {
+    $reportDir = Join-Path $env:LOCALAPPDATA 'CarrierSmartHome-Research'
+    New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
+    $reportFile = Join-Path $reportDir ('carrier-local-v0.5.4-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.json')
+    $argList += @('--output', $reportFile)
 }
+Write-Host 'Mode:' $(if ($PlanOnly) {'PLAN: no network'} elseif ($FullTCP) {'FULL TCP + UDP targeted research'} else {'QUICK TCP + UDP targeted research'})
+& $py.Source @argList
+$exitCode = $LASTEXITCODE
+if ($exitCode -ne 0) { throw "Carrier discovery stopped (exit $exitCode). Review the specific cause printed above. No HVAC commands are ever sent." }

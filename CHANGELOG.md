@@ -1,3 +1,10 @@
+## 0.5.4 — Direct local-IP investigation and release-readiness cleanup
+
+- Permit explicitly authorized single-host probes at the already identified thermostat IP, without repeating the Omada export process. Explicitly disclose that a previous IP is not an independently verified current MAC/IP binding.
+- Keep bounded, read-only TCP/UDP and protocol fingerprinting; no Matter, no local HVAC writes, no firmware/DNS modifications.
+- Update documentation, release metadata, privacy checks and regression coverage. Preserves cloud HVAC mode support and current entity IDs.
+- This is **not** a claim of functional local HVAC control; 1.0 remains dependent on real device tests.
+
 # Changelog
 
 ## v0.5.3 — Carrier SmartHome naming, artwork, faster confirmed cloud feedback

@@ -1,12 +1,24 @@
-## No fresh ZIP? Use Omada Connected Clients directly
+# Carrier SmartHome: local protocol investigation
 
-**Live UI alternative (does not rely on the stale 08:14 ZIP):** Open Omada **Connected Clients** and select the Carrier thermostat. While that page is open, run the PowerShell wrapper with `-LiveOmada` (and optionally `-FullTCP -Concurrency 12`). It prompts for the **current IPv4** and **full Wi-Fi MAC** exactly as displayed, and requires the explicit phrase `I-SEE-IT-CONNECTED`. It validates the MAC suffix, IP syntax, and permitted IoT network, and scans **that one supplied host only**.
+## Fastest path: the already identified thermostat IP
 
-This is **owner attestation**, not an independently verified MAC-to-IP binding. Do not use a cached IP, historical screenshot, offline client or the old export. Refresh Omada immediately before running; a changed DHCP assignment can invalidate a manual target. No IP or full MAC is saved to the report. For independently checked snapshot identity, continue using the fresh ZIP method below.
+No Omada export is required to investigate the **owner-selected, previously identified** IPv4 address (`<thermostat-ip>`).
+Use `-DirectIP` and `-AcknowledgeIpRisk` from Windows PowerShell. This is an **owner-attested**
+target, **not proof** that DHCP has not reassigned the address since the earlier verification.
+Confirm the thermostat is currently on Wi-Fi; stop if the resulting host appears unexpected.
 
 ```powershell
-.\tools\Probe-CarrierLocalDeep.ps1 -LiveOmada -FullTCP -Concurrency 12
+.\tools\Probe-CarrierLocalDeep.ps1 -DirectIP '<thermostat-ip>' -AcknowledgeIpRisk -PlanOnly
+.\tools\Probe-CarrierLocalDeep.ps1 -DirectIP '<thermostat-ip>' -AcknowledgeIpRisk -FullTCP -Concurrency 12
 ```
+
+The tool contacts only the exact IP, checks up to 65,535 TCP ports in full mode,
+then performs bounded TLS/HTTP/MQTT and 3 targeted UDP discovery probes.
+These are **not** HVAC controls. Some IoT devices dislike high scan rates;
+keep concurrency low, run once, and stop if Wi-Fi connectivity becomes unstable.
+A PC on a different VLAN may be firewalled from the thermostat even when cloud control works.
+
+## Stronger identity assurance: fresh Omada export (optional)
 
 # v0.5.0 — Comprehensive Carrier SmartHome proprietary LAN discovery
 

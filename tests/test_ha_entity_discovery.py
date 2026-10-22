@@ -468,7 +468,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         with patch.object(control.asyncio, 'sleep', new_callable=AsyncMock):
             await units[0].async_set_hvac_mode(HVACMode.OFF)
         self.assertEqual(state['mode'], 'off')
-        self.assertEqual(self.coordinator.async_refresh.await_count, 2)
+        self.assertEqual(self.coordinator.async_refresh.await_count, 1)  # detail-first success saves one list read
         self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, mode='off')
         self.coordinator.client.async_get_system_detail.assert_awaited_once_with('serial-test')
 

@@ -108,24 +108,9 @@ async def _write_verified(coordinator, serial: str, index: int,
         for attempt, delay in enumerate(READBACK_DELAYS):
             if delay:
                 await asyncio.sleep(delay)
-            try:
-                await coordinator.async_refresh()
-                latest = _state(coordinator, serial, index)
-                if _target_ok(latest, desired) and not require_detail_confirmation:
-                    return
-            except Exception:
-                # A transient failed read must not trigger another write or
-                # prematurely erase the possibility the first write succeeded.
-                last_read_error = True
-                # Carrier may impose a rate-limit; do not keep probing after it.
-                failure = getattr(coordinator, "last_exception", None)
-                if getattr(failure, "retry_after", None) is not None:
-                    raise HomeAssistantError(
-                        "Carrier acknowledged the command but rate-limited verification; "
-                        "check the official app before sending another command"
-                    ) from (failure if isinstance(failure, BaseException) else None)
-            # Consult the independent APK-derived detail view after the
-            # initial short wait. Never accept a mismatched serial or zone.
+            # Carrier's detailed native query can converge before the listing.
+            # Try it first when available. This avoids an extra blocking list
+            # request on the successful path and publishes only actual values.
             if attempt in DETAIL_CHECK_ATTEMPTS and hasattr(coordinator.client, "async_get_system_detail"):
                 try:
                     detail = await coordinator.client.async_get_system_detail(serial)
@@ -133,11 +118,6 @@ async def _write_verified(coordinator, serial: str, index: int,
                             and connectivity_state(detail) == "online"):
                         detail_zone = get_zone(detail, index)
                         if detail_zone is not None and _target_ok(zone_values(detail_zone), desired):
-                            # A verified detail response may lead the account
-                            # listing. Publish only the observed target fields
-                            # immediately to the coordinator so HA's climate
-                            # entity updates instead of waiting for the next
-                            # 60-second background poll. Never predict a state.
                             if hasattr(coordinator, "publish_verified_detail"):
                                 coordinator.publish_verified_detail(serial, index, detail, desired)
                             detail_confirmed = True
@@ -148,9 +128,22 @@ async def _write_verified(coordinator, serial: str, index: int,
                         "check the official app before sending another command"
                     ) from exc
                 except (CarrierError, ValueError, TypeError, AttributeError):
-                    # Some accounts reject the detail query. The account list
-                    # remains authoritative if it becomes current later.
+                    # A blocked detail API does not invalidate the listing.
                     pass
+            try:
+                await coordinator.async_refresh()
+                latest = _state(coordinator, serial, index)
+                if _target_ok(latest, desired) and not require_detail_confirmation:
+                    return
+            except Exception:
+                # Never repeat the write or assume failure when a read fails.
+                last_read_error = True
+                failure = getattr(coordinator, "last_exception", None)
+                if getattr(failure, "retry_after", None) is not None:
+                    raise HomeAssistantError(
+                        "Carrier acknowledged the command but rate-limited verification; "
+                        "check the official app before sending another command"
+                    ) from (failure if isinstance(failure, BaseException) else None)
         if detail_confirmed:
             # The verified detailed GraphQL view confirmed the command. When
             # supported, publish its observed fields through the coordinator;
