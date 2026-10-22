@@ -1,0 +1,7 @@
+query getFrontendConfig {
+  frontendConfig {
+    success
+    message
+    config
+  }
+}

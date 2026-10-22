@@ -1,0 +1,5 @@
+mutation sendUserCommunication($input: SendUserCommunicationInput) {
+  sendUserCommunication(input: $input) {
+    success
+  }
+}

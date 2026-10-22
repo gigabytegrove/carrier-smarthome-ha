@@ -1,0 +1,18 @@
+mutation revokeLocationInvite($input: RevokeLocationInviteInput!) {
+  revokeLocationInvite(input: $input) {
+    success
+    error {
+      code
+      message
+    }
+    data {
+      token
+      locationId
+      invitedBy
+      expiresAt
+      status
+      createdAt
+      invitedUser
+    }
+  }
+}

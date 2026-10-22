@@ -1,0 +1,16 @@
+query getServiceHistory($input: GetServiceHistoryInput!) {
+  serviceHistory(input: $input) {
+    history {
+      id
+      date
+      workPerformed
+      dealer
+      technician
+      notes
+      totalCost
+      isSelfReported
+      servicesPerformed
+      inspectionPerformed
+    }
+  }
+}

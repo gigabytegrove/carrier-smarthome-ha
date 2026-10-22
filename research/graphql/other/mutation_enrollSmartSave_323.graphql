@@ -1,0 +1,22 @@
+mutation enrollSmartSave($input: EnrollSmartSaveInput!) {
+  enrollSmartSave(input: $input) {
+    success
+    message
+    errors {
+      field
+      message
+      code
+    }
+    enrollment {
+      createdAt
+      locationId
+      isTechnicianAssisted
+      utilityName
+      devices {
+        serial
+        enrollmentStatus
+      }
+    }
+    enrollmentStatus
+  }
+}

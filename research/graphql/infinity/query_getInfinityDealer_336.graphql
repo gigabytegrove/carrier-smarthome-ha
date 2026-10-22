@@ -1,0 +1,18 @@
+query getInfinityDealer($serial: String!) {
+  infinityDealer(serial: $serial) {
+    timestamp
+    name
+    first
+    last
+    street1
+    street2
+    city
+    state
+    country
+    postal
+    phone
+    phoneExt
+    url
+    email
+  }
+}

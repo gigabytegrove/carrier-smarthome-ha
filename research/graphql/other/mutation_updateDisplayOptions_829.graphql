@@ -1,0 +1,6 @@
+mutation updateDisplayOptions($input: UpdateDisplayOptionsInput!) {
+  updateDisplayOptions(input: $input) {
+    success
+    message
+  }
+}

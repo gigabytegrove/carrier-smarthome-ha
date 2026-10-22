@@ -1,0 +1,6 @@
+mutation resetActiveDealer($input: ResetActiveDealerInput!) {
+  resetActiveDealer(input: $input) {
+    success
+    message
+  }
+}

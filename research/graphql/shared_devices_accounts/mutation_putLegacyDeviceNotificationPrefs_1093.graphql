@@ -1,0 +1,6 @@
+mutation putLegacyDeviceNotificationPrefs($input: LegacyDeviceNotificationPrefsInput!) {
+  putLegacyDeviceNotificationPrefs(input: $input) {
+    success
+    error
+  }
+}

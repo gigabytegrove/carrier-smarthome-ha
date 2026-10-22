@@ -1,0 +1,11 @@
+mutation sendGeofenceEvent($eventType: String!, $locationId: String!, $phoneId: String!, $username: String!) {
+  sendGeofenceEvent(
+    eventType: $eventType
+    locationId: $locationId
+    phoneId: $phoneId
+    username: $username
+  ) {
+    success
+    message
+  }
+}

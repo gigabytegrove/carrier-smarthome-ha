@@ -1,0 +1,6 @@
+query getAppVersion {
+  version {
+    minVersion
+    latestVersion
+  }
+}

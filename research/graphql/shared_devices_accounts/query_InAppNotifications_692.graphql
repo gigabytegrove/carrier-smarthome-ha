@@ -1,0 +1,15 @@
+query InAppNotifications($filter: InAppNotificationFilter) {
+  inAppNotifications(filter: $filter) {
+    data {
+      next_cursor
+      has_more
+      notifications {
+        id
+        title
+        icon
+        created_at
+        location_id
+      }
+    }
+  }
+}

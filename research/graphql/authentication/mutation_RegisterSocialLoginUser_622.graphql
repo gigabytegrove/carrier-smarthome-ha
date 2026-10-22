@@ -1,0 +1,8 @@
+mutation RegisterSocialLoginUser($input: RegisterSocialLoginUserInput) {
+  registerSocialLoginUser(input: $input) {
+    success
+    email
+    username
+    message
+  }
+}

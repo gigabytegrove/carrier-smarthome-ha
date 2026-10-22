@@ -1,0 +1,5 @@
+mutation updateConsumerDevice($input: UpdateConsumerDeviceInput!) {
+  updateConsumerDevice(input: $input) {
+    success
+  }
+}

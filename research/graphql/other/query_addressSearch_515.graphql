@@ -1,0 +1,13 @@
+query addressSearch($address: String!, $countries: [String!]) {
+  addressSearch(address: $address, countries: $countries) {
+    longitude
+    latitude
+    label
+    postalCode
+    country
+    state
+    city
+    street1
+    stateShortName
+  }
+}

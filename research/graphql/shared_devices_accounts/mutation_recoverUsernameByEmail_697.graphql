@@ -1,0 +1,9 @@
+mutation recoverUsernameByEmail($input: RecoverUsernameByEmailInput) {
+  recoverUsernameByEmail(input: $input) {
+    success
+    email
+    username
+    message
+    statusCode
+  }
+}

@@ -1,0 +1,5 @@
+mutation updateInfinityProfile($input: InfinityProfileInput!) {
+  updateInfinityProfile(input: $input) {
+    name
+  }
+}

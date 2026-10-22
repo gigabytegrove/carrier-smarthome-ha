@@ -1,0 +1,5 @@
+mutation removeEntryLevelSchedule($input: RemoveEntryLevelScheduleInput!) {
+  removeEntryLevelSchedule(input: $input) {
+    success
+  }
+}

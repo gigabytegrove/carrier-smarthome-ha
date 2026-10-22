@@ -22,13 +22,13 @@ cloud = load('probe_cloud')
 class LocalTests(unittest.TestCase):
     def test_restricted_network(self):
         self.assertEqual(str(local.private_net('192.168.12.7/24')), '192.168.12.0/24')
-        for invalid in ('8.8.8.0/24', '127.0.0.0/24', '192.168.0.0/16', '169.254.1.0/24'):
+        for invalid in ('8.8.8.0/24', '127.0.0.0/24', '192.168.0.0/16', '169.254.1.0/24', '192.0.0.0/24'):
             with self.assertRaises(Exception):
                 local.private_net(invalid)
 
     def test_local_ip(self):
         self.assertEqual(str(local.private_ip('10.1.2.3')), '10.1.2.3')
-        for invalid in ('8.8.8.8', '127.0.0.1', '169.254.2.3', '::1', 'foobar'):
+        for invalid in ('8.8.8.8', '127.0.0.1', '169.254.2.3', '::1', 'foobar', '192.0.0.9'):
             with self.assertRaises(Exception):
                 local.private_ip(invalid)
 

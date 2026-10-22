@@ -1,0 +1,2071 @@
+[
+  {
+    "name": "smartSaveEnergyEvents",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 297,
+    "document_path": "graphql/other/query_smartSaveEnergyEvents_297.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "getLegacyDeviceNotificationPrefs",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 298,
+    "document_path": "graphql/shared_devices_accounts/query_getLegacyDeviceNotificationPrefs_298.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getDealerSearch",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 300,
+    "document_path": "graphql/shared_devices_accounts/query_getDealerSearch_300.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DealerSearchInput!"
+      }
+    ]
+  },
+  {
+    "name": "GetDeviceMetric",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 302,
+    "document_path": "graphql/shared_devices_accounts/query_GetDeviceMetric_302.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "device_id",
+        "type": "String!"
+      },
+      {
+        "name": "metricName",
+        "type": "String!"
+      },
+      {
+        "name": "time",
+        "type": "timestamptz_comparison_exp"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityConfig",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 309,
+    "document_path": "graphql/infinity/mutation_updateInfinityConfig_309.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityConfigInput!"
+      }
+    ]
+  },
+  {
+    "name": "unassignLocationUser",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 311,
+    "document_path": "graphql/shared_devices_accounts/mutation_unassignLocationUser_311.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UnassignLocationUserInput!"
+      }
+    ]
+  },
+  {
+    "name": "resetEntryLevelPushNotificationReminders",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 312,
+    "document_path": "graphql/entry_level/mutation_resetEntryLevelPushNotificationReminders_312.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ResetEntryLevelPushNotificationRemindersInput!"
+      }
+    ]
+  },
+  {
+    "name": "enrollSmartSave",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 323,
+    "document_path": "graphql/other/mutation_enrollSmartSave_323.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EnrollSmartSaveInput!"
+      }
+    ]
+  },
+  {
+    "name": "addDeviceSmartSave",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 325,
+    "document_path": "graphql/shared_devices_accounts/mutation_addDeviceSmartSave_325.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "monthlyInfinityRuntimeProjection",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 335,
+    "document_path": "graphql/infinity/query_monthlyInfinityRuntimeProjection_335.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "MonthlyProjectionInput!"
+      }
+    ]
+  },
+  {
+    "name": "getInfinityDealer",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 336,
+    "document_path": "graphql/infinity/query_getInfinityDealer_336.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getAggregatedUserPreferences",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 337,
+    "document_path": "graphql/shared_devices_accounts/query_getAggregatedUserPreferences_337.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "upsertMaintenance",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 338,
+    "document_path": "graphql/shared_devices_accounts/mutation_upsertMaintenance_338.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpsertMaintenanceInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelZone",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 339,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelZone_339.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EntryLevelZoneInput!"
+      }
+    ]
+  },
+  {
+    "name": "stopIntelisenseDiagnostic",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 340,
+    "document_path": "graphql/other/mutation_stopIntelisenseDiagnostic_340.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "deviceId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "replaceFilter",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 343,
+    "document_path": "graphql/shared_devices_accounts/mutation_replaceFilter_343.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ReplaceFilterInput!"
+      }
+    ]
+  },
+  {
+    "name": "deleteUser",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 344,
+    "document_path": "graphql/shared_devices_accounts/mutation_deleteUser_344.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DeleteUserInput"
+      }
+    ]
+  },
+  {
+    "name": "UpsertSelfReportedService",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 345,
+    "document_path": "graphql/shared_devices_accounts/mutation_UpsertSelfReportedService_345.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpsertSelfReportedServiceInput!"
+      }
+    ]
+  },
+  {
+    "name": "TypeRef",
+    "kind": "fragment",
+    "family": "other",
+    "hermes_string_id": 395,
+    "document_path": "graphql/other/fragment_TypeRef_395.partial.txt",
+    "standalone_document": false,
+    "variables": []
+  },
+  {
+    "name": "inviteLocationDetailsByToken",
+    "kind": "query",
+    "family": "authentication",
+    "hermes_string_id": 396,
+    "document_path": "graphql/authentication/query_inviteLocationDetailsByToken_396.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InviteLocationDetailsByTokenInput!"
+      }
+    ]
+  },
+  {
+    "name": "getGooglePlace",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 397,
+    "document_path": "graphql/other/query_getGooglePlace_397.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "address",
+        "type": "String!"
+      },
+      {
+        "name": "countries",
+        "type": "[String!]"
+      }
+    ]
+  },
+  {
+    "name": "energyUsageInfinity",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 400,
+    "document_path": "graphql/infinity/query_energyUsageInfinity_400.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetEnergyUsageInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateUserUnitTemperature",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 408,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateUserUnitTemperature_408.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "tempUnitFormat",
+        "type": "TempUnitFormat!"
+      },
+      {
+        "name": "locationId",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelSchedule",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 410,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelSchedule_410.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateEntryLevelScheduleInput!"
+      }
+    ]
+  },
+  {
+    "name": "shareLocation",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 411,
+    "document_path": "graphql/shared_devices_accounts/mutation_shareLocation_411.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ShareLocationInput!"
+      }
+    ]
+  },
+  {
+    "name": "removeDeviceSmartSave",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 412,
+    "document_path": "graphql/shared_devices_accounts/mutation_removeDeviceSmartSave_412.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "deleteLocation",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 413,
+    "document_path": "graphql/shared_devices_accounts/mutation_deleteLocation_413.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DeleteLocationInput!"
+      }
+    ]
+  },
+  {
+    "name": "UpdatePromoEmailPreference",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 414,
+    "document_path": "graphql/other/mutation_UpdatePromoEmailPreference_414.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      },
+      {
+        "name": "promoEmail",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "InputValue",
+    "kind": "fragment",
+    "family": "other",
+    "hermes_string_id": 421,
+    "document_path": "graphql/other/fragment_InputValue_421.partial.txt",
+    "standalone_document": false,
+    "variables": []
+  },
+  {
+    "name": "monthlyCostProjection",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 455,
+    "document_path": "graphql/other/query_monthlyCostProjection_455.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "MonthlyProjectionInput!"
+      }
+    ]
+  },
+  {
+    "name": "getGooglePlaceDetail",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 456,
+    "document_path": "graphql/other/query_getGooglePlaceDetail_456.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "placeId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "filterChangeAverage",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 458,
+    "document_path": "graphql/shared_devices_accounts/query_filterChangeAverage_458.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serialNumber",
+        "type": "String!"
+      },
+      {
+        "name": "filterType",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "upsertFilter",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 460,
+    "document_path": "graphql/shared_devices_accounts/mutation_upsertFilter_460.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpsertFilterInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelSystem",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 461,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelSystem_461.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EntryLevelSystemInput!"
+      }
+    ]
+  },
+  {
+    "name": "stopInfinityDiagnostic",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 462,
+    "document_path": "graphql/infinity/mutation_stopInfinityDiagnostic_462.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityDiagnosticInput!"
+      }
+    ]
+  },
+  {
+    "name": "removeEntryLevelSchedule",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 463,
+    "document_path": "graphql/entry_level/mutation_removeEntryLevelSchedule_463.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RemoveEntryLevelScheduleInput!"
+      }
+    ]
+  },
+  {
+    "name": "deletePhone",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 465,
+    "document_path": "graphql/other/mutation_deletePhone_465.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DeletePhoneInput"
+      }
+    ]
+  },
+  {
+    "name": "UpdateSmartSaveUserFeatureAccess",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 466,
+    "document_path": "graphql/shared_devices_accounts/mutation_UpdateSmartSaveUserFeatureAccess_466.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateSmartSaveUserFeatureAccessInput!"
+      }
+    ]
+  },
+  {
+    "name": "smartSaveEligibility",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 498,
+    "document_path": "graphql/other/query_smartSaveEligibility_498.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "getInfinitySystems",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 499,
+    "document_path": "graphql/infinity/query_getInfinitySystems_499.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "userName",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getBreezometerAirQuality",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 502,
+    "document_path": "graphql/other/query_getBreezometerAirQuality_502.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "googleAddress",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 511,
+    "document_path": "graphql/other/query_googleAddress_511.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "address",
+        "type": "String!"
+      },
+      {
+        "name": "countries",
+        "type": "[String!]"
+      }
+    ]
+  },
+  {
+    "name": "getFrontendConfig",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 514,
+    "document_path": "graphql/other/query_getFrontendConfig_514.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "addressSearch",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 515,
+    "document_path": "graphql/other/query_addressSearch_515.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "address",
+        "type": "String!"
+      },
+      {
+        "name": "countries",
+        "type": "[String!]"
+      }
+    ]
+  },
+  {
+    "name": "updateUserProfile",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 518,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateUserProfile_518.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "userProfile",
+        "type": "UpdateUserProfileInput"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelPushNotificationPrefs",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 520,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelPushNotificationPrefs_520.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateEntryLevelPushNotificationPrefsInput!"
+      }
+    ]
+  },
+  {
+    "name": "sendUserCommunication",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 521,
+    "document_path": "graphql/shared_devices_accounts/mutation_sendUserCommunication_521.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "SendUserCommunicationInput"
+      }
+    ]
+  },
+  {
+    "name": "registerUserEmailVerification",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 522,
+    "document_path": "graphql/authentication/mutation_registerUserEmailVerification_522.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RegisterUserEmailVerificationInput!"
+      }
+    ]
+  },
+  {
+    "name": "deleteFirebaseToken",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 523,
+    "document_path": "graphql/authentication/mutation_deleteFirebaseToken_523.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DeleteFirebaseTokenInput!"
+      }
+    ]
+  },
+  {
+    "name": "SetUserPreferences",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 524,
+    "document_path": "graphql/shared_devices_accounts/mutation_SetUserPreferences_524.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "preferences",
+        "type": "PreferencesInput!"
+      }
+    ]
+  },
+  {
+    "name": "runtimeUsageInfinity",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 586,
+    "document_path": "graphql/infinity/query_runtimeUsageInfinity_586.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetRuntimeUsageInput!"
+      }
+    ]
+  },
+  {
+    "name": "getInfinitySystem",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 587,
+    "document_path": "graphql/infinity/query_getInfinitySystem_587.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getAutoEnrollmentStatus",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 606,
+    "document_path": "graphql/other/query_getAutoEnrollmentStatus_606.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetAutoEnrollmentStatusInput!"
+      }
+    ]
+  },
+  {
+    "name": "getWeather",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 610,
+    "document_path": "graphql/other/query_getWeather_610.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "postal",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getFilters",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 615,
+    "document_path": "graphql/shared_devices_accounts/query_getFilters_615.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetFiltersInput!"
+      }
+    ]
+  },
+  {
+    "name": "IsRegisteredUser",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 616,
+    "document_path": "graphql/shared_devices_accounts/query_IsRegisteredUser_616.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RegisteredUser"
+      }
+    ]
+  },
+  {
+    "name": "updatePhone",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 617,
+    "document_path": "graphql/other/mutation_updatePhone_617.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "PutPhoneInput"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelDealerPreferences",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 618,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelDealerPreferences_618.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EntryLevelDealerPreferencesInput!"
+      }
+    ]
+  },
+  {
+    "name": "sendGeofenceEvent",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 619,
+    "document_path": "graphql/other/mutation_sendGeofenceEvent_619.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "eventType",
+        "type": "String!"
+      },
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "phoneId",
+        "type": "String!"
+      },
+      {
+        "name": "username",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "registerUser",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 620,
+    "document_path": "graphql/authentication/mutation_registerUser_620.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RegisterUserInput!"
+      }
+    ]
+  },
+  {
+    "name": "createLocation",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 621,
+    "document_path": "graphql/shared_devices_accounts/mutation_createLocation_621.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "CreateLocationInput!"
+      }
+    ]
+  },
+  {
+    "name": "RegisterSocialLoginUser",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 622,
+    "document_path": "graphql/authentication/mutation_RegisterSocialLoginUser_622.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RegisterSocialLoginUserInput"
+      }
+    ]
+  },
+  {
+    "name": "wallControllerReminders",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 666,
+    "document_path": "graphql/other/query_wallControllerReminders_666.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getMobileAppFeatures",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 668,
+    "document_path": "graphql/other/query_getMobileAppFeatures_668.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      },
+      {
+        "name": "brand",
+        "type": "String!"
+      },
+      {
+        "name": "os",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getDeviceNotificationPrefs",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 670,
+    "document_path": "graphql/shared_devices_accounts/query_getDeviceNotificationPrefs_670.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      },
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "deviceId",
+        "type": "String!"
+      },
+      {
+        "name": "phoneId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "GetEdragonStatus",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 671,
+    "document_path": "graphql/other/query_GetEdragonStatus_671.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "bess_sn",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityProgramDay",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 675,
+    "document_path": "graphql/infinity/mutation_updateInfinityProgramDay_675.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityProgramDayInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateConsumerDevice",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 677,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateConsumerDevice_677.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateConsumerDeviceInput!"
+      }
+    ]
+  },
+  {
+    "name": "resubmitEnrollmentSmartSave",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 678,
+    "document_path": "graphql/other/mutation_resubmitEnrollmentSmartSave_678.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EnrollSmartSaveInput!"
+      }
+    ]
+  },
+  {
+    "name": "optOutAutoEnrollment",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 679,
+    "document_path": "graphql/other/mutation_optOutAutoEnrollment_679.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "OptOutAutoEnrollmentInput!"
+      }
+    ]
+  },
+  {
+    "name": "associateDevice",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 680,
+    "document_path": "graphql/shared_devices_accounts/mutation_associateDevice_680.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "AssociateDeviceInput!"
+      }
+    ]
+  },
+  {
+    "name": "getUserLocations",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 689,
+    "document_path": "graphql/shared_devices_accounts/query_getUserLocations_689.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getEntryLevelSchedules",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 690,
+    "document_path": "graphql/entry_level/query_getEntryLevelSchedules_690.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "InAppNotifications",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 692,
+    "document_path": "graphql/shared_devices_accounts/query_InAppNotifications_692.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "filter",
+        "type": "InAppNotificationFilter"
+      }
+    ]
+  },
+  {
+    "name": "updateIntelisense",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 694,
+    "document_path": "graphql/other/mutation_updateIntelisense_694.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "IntelisenseInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateEmail",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 695,
+    "document_path": "graphql/other/mutation_updateEmail_695.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateEmailInput"
+      }
+    ]
+  },
+  {
+    "name": "sendCommand",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 696,
+    "document_path": "graphql/shared_devices_accounts/mutation_sendCommand_696.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DeviceCommandSetInput!"
+      }
+    ]
+  },
+  {
+    "name": "recoverUsernameByEmail",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 697,
+    "document_path": "graphql/shared_devices_accounts/mutation_recoverUsernameByEmail_697.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RecoverUsernameByEmailInput"
+      }
+    ]
+  },
+  {
+    "name": "createEntryLevelSchedule",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 698,
+    "document_path": "graphql/entry_level/mutation_createEntryLevelSchedule_698.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "CreateEntryLevelScheduleInput!"
+      }
+    ]
+  },
+  {
+    "name": "MaintenanceFields",
+    "kind": "fragment",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 699,
+    "document_path": "graphql/shared_devices_accounts/fragment_MaintenanceFields_699.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "smartSaveEnrollment",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 802,
+    "document_path": "graphql/other/query_smartSaveEnrollment_802.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getLocationInvites",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 803,
+    "document_path": "graphql/shared_devices_accounts/query_getLocationInvites_803.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetLocationInvitesInput!"
+      }
+    ]
+  },
+  {
+    "name": "getDeviceHistory",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 804,
+    "document_path": "graphql/shared_devices_accounts/query_getDeviceHistory_804.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      },
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "deviceId",
+        "type": "String!"
+      },
+      {
+        "name": "point",
+        "type": "String!"
+      },
+      {
+        "name": "periodValue",
+        "type": "Int!"
+      },
+      {
+        "name": "periodUnit",
+        "type": "String!"
+      },
+      {
+        "name": "intervalValue",
+        "type": "Int!"
+      },
+      {
+        "name": "intervalUnit",
+        "type": "String!"
+      },
+      {
+        "name": "labelInterval",
+        "type": "Int!"
+      },
+      {
+        "name": "labelFormat",
+        "type": "String!"
+      },
+      {
+        "name": "tooltipLabelFormat",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "GetDeviceMetricBucket",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 805,
+    "document_path": "graphql/shared_devices_accounts/query_GetDeviceMetricBucket_805.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "device",
+        "type": "String!"
+      },
+      {
+        "name": "name",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityNotificationPrefs",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 807,
+    "document_path": "graphql/infinity/mutation_updateInfinityNotificationPrefs_807.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityNotificationPrefsInput!"
+      }
+    ]
+  },
+  {
+    "name": "unenrollSmartSave",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 811,
+    "document_path": "graphql/other/mutation_unenrollSmartSave_811.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UnenrollSmartSaveInput!"
+      }
+    ]
+  },
+  {
+    "name": "resetMaintenance",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 812,
+    "document_path": "graphql/shared_devices_accounts/mutation_resetMaintenance_812.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ResetMaintenanceInput!"
+      }
+    ]
+  },
+  {
+    "name": "fetchAccessToken",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 813,
+    "document_path": "graphql/authentication/mutation_fetchAccessToken_813.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "FetchAccessTokenInput!"
+      }
+    ]
+  },
+  {
+    "name": "addPhone",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 814,
+    "document_path": "graphql/other/mutation_addPhone_814.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "PutPhoneInput"
+      }
+    ]
+  },
+  {
+    "name": "getUser",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 821,
+    "document_path": "graphql/shared_devices_accounts/query_getUser_821.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "userName",
+        "type": "String!"
+      },
+      {
+        "name": "appVersion",
+        "type": "String"
+      },
+      {
+        "name": "brand",
+        "type": "String"
+      },
+      {
+        "name": "os",
+        "type": "String"
+      },
+      {
+        "name": "osVersion",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "getEntryLevelReminders",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 825,
+    "document_path": "graphql/entry_level/query_getEntryLevelReminders_825.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "GetUniqueDeviceMetrics",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 826,
+    "document_path": "graphql/shared_devices_accounts/query_GetUniqueDeviceMetrics_826.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "device_id",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityZoneConfig",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 828,
+    "document_path": "graphql/infinity/mutation_updateInfinityZoneConfig_828.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityZoneConfigInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateDisplayOptions",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 829,
+    "document_path": "graphql/other/mutation_updateDisplayOptions_829.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateDisplayOptionsInput!"
+      }
+    ]
+  },
+  {
+    "name": "sendAirMonitorNotification",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 830,
+    "document_path": "graphql/shared_devices_accounts/mutation_sendAirMonitorNotification_830.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "SendNotificationInput!"
+      }
+    ]
+  },
+  {
+    "name": "recoverPassword",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 831,
+    "document_path": "graphql/authentication/mutation_recoverPassword_831.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RecoverPasswordInput"
+      }
+    ]
+  },
+  {
+    "name": "changePassword",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 832,
+    "document_path": "graphql/authentication/mutation_changePassword_832.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ChangePasswordInput"
+      }
+    ]
+  },
+  {
+    "name": "FilterFields",
+    "kind": "fragment",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 835,
+    "document_path": "graphql/shared_devices_accounts/fragment_FilterFields_835.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "smartSaveEnrollmentStatus",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 990,
+    "document_path": "graphql/other/query_smartSaveEnrollmentStatus_990.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getMaintenance",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 991,
+    "document_path": "graphql/shared_devices_accounts/query_getMaintenance_991.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetMaintenanceInput!"
+      }
+    ]
+  },
+  {
+    "name": "getDeviceInfo",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 992,
+    "document_path": "graphql/shared_devices_accounts/query_getDeviceInfo_992.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "username",
+        "type": "String!"
+      },
+      {
+        "name": "locationId",
+        "type": "String!"
+      },
+      {
+        "name": "deviceId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "GetEDragonRuntimeData",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 994,
+    "document_path": "graphql/other/query_GetEDragonRuntimeData_994.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetEDragonRuntimeDataInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityProfile",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 997,
+    "document_path": "graphql/infinity/mutation_updateInfinityProfile_997.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityProfileInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateActiveDealerById",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 998,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateActiveDealerById_998.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateActiveDealerById!"
+      }
+    ]
+  },
+  {
+    "name": "resetPassword",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 999,
+    "document_path": "graphql/authentication/mutation_resetPassword_999.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ResetPasswordInput"
+      }
+    ]
+  },
+  {
+    "name": "inviteLocationUser",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1000,
+    "document_path": "graphql/shared_devices_accounts/mutation_inviteLocationUser_1000.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InviteLocationUserInput!"
+      }
+    ]
+  },
+  {
+    "name": "assistedLogin",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 1001,
+    "document_path": "graphql/authentication/mutation_assistedLogin_1001.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "AssistedLoginInput!"
+      }
+    ]
+  },
+  {
+    "name": "monthlyRuntimeProjection",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 1032,
+    "document_path": "graphql/other/query_monthlyRuntimeProjection_1032.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "MonthlyProjectionInput!"
+      }
+    ]
+  },
+  {
+    "name": "getInfinityEnergy",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 1033,
+    "document_path": "graphql/infinity/query_getInfinityEnergy_1033.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getApiKeys",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 1053,
+    "document_path": "graphql/other/query_getApiKeys_1053.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "validateResetToken",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 1054,
+    "document_path": "graphql/authentication/mutation_validateResetToken_1054.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ValidateResetTokenInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateFirebaseToken",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 1055,
+    "document_path": "graphql/authentication/mutation_updateFirebaseToken_1055.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateFirebaseTokenInput!"
+      }
+    ]
+  },
+  {
+    "name": "transferOwnership",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 1056,
+    "document_path": "graphql/other/mutation_transferOwnership_1056.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "TransferOwnershipInput!"
+      }
+    ]
+  },
+  {
+    "name": "resetActiveDealer",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1058,
+    "document_path": "graphql/shared_devices_accounts/mutation_resetActiveDealer_1058.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "ResetActiveDealerInput!"
+      }
+    ]
+  },
+  {
+    "name": "disassociateSystemLocation",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1060,
+    "document_path": "graphql/shared_devices_accounts/mutation_disassociateSystemLocation_1060.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "DisassociateSystemLocationInput!"
+      }
+    ]
+  },
+  {
+    "name": "acceptLocationInvite",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1061,
+    "document_path": "graphql/shared_devices_accounts/mutation_acceptLocationInvite_1061.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "AcceptLocationInviteInput!"
+      }
+    ]
+  },
+  {
+    "name": "getServiceHistory",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1084,
+    "document_path": "graphql/shared_devices_accounts/query_getServiceHistory_1084.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetServiceHistoryInput!"
+      }
+    ]
+  },
+  {
+    "name": "getEntryLevelNotificationPrefs",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 1086,
+    "document_path": "graphql/entry_level/query_getEntryLevelNotificationPrefs_1086.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "GetSelfReportedPerformedLists",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 1087,
+    "document_path": "graphql/other/query_GetSelfReportedPerformedLists_1087.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "type",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "updateInfinityZoneActivity",
+    "kind": "mutation",
+    "family": "infinity",
+    "hermes_string_id": 1089,
+    "document_path": "graphql/infinity/mutation_updateInfinityZoneActivity_1089.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "InfinityZoneActivityInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateDeviceNotificationPrefs",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1091,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateDeviceNotificationPrefs_1091.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateDeviceNotificationPrefsInput!"
+      }
+    ]
+  },
+  {
+    "name": "revokeLocationInvite",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1092,
+    "document_path": "graphql/shared_devices_accounts/mutation_revokeLocationInvite_1092.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RevokeLocationInviteInput!"
+      }
+    ]
+  },
+  {
+    "name": "putLegacyDeviceNotificationPrefs",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1093,
+    "document_path": "graphql/shared_devices_accounts/mutation_putLegacyDeviceNotificationPrefs_1093.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "LegacyDeviceNotificationPrefsInput!"
+      }
+    ]
+  },
+  {
+    "name": "cancelEnergyEventEHub",
+    "kind": "mutation",
+    "family": "other",
+    "hermes_string_id": 1094,
+    "document_path": "graphql/other/mutation_cancelEnergyEventEHub_1094.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "eventId",
+        "type": "String!"
+      },
+      {
+        "name": "deviceIds",
+        "type": "[String!]"
+      }
+    ]
+  },
+  {
+    "name": "getUserPreferences",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1098,
+    "document_path": "graphql/shared_devices_accounts/query_getUserPreferences_1098.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "locationId",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getEntryLevelSystemData",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 1099,
+    "document_path": "graphql/entry_level/query_getEntryLevelSystemData_1099.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "InfinityNotifications",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 1104,
+    "document_path": "graphql/infinity/query_InfinityNotifications_1104.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "updateLocation",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1106,
+    "document_path": "graphql/shared_devices_accounts/mutation_updateLocation_1106.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "UpdateLocationInput!"
+      }
+    ]
+  },
+  {
+    "name": "updateEntryLevelComfortProfile",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 1107,
+    "document_path": "graphql/entry_level/mutation_updateEntryLevelComfortProfile_1107.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EntryLevelComfortProfileInput!"
+      }
+    ]
+  },
+  {
+    "name": "sendEmailVerification",
+    "kind": "mutation",
+    "family": "authentication",
+    "hermes_string_id": 1110,
+    "document_path": "graphql/authentication/mutation_sendEmailVerification_1110.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "SendEmailVerificationInput"
+      }
+    ]
+  },
+  {
+    "name": "recoverUsernameBySerial",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1111,
+    "document_path": "graphql/shared_devices_accounts/mutation_recoverUsernameBySerial_1111.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "RecoverUsernameBySerialInput"
+      }
+    ]
+  },
+  {
+    "name": "createEntryLevelScheduleBatch",
+    "kind": "mutation",
+    "family": "entry_level",
+    "hermes_string_id": 1112,
+    "document_path": "graphql/entry_level/mutation_createEntryLevelScheduleBatch_1112.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "CreateEntryLevelScheduleBatchInput!"
+      }
+    ]
+  },
+  {
+    "name": "DeleteInAppNotifications",
+    "kind": "mutation",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1113,
+    "document_path": "graphql/shared_devices_accounts/mutation_DeleteInAppNotifications_1113.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "deleteInAppNotificationsInput!"
+      }
+    ]
+  },
+  {
+    "name": "runtimeUsageEntryLevel",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 1165,
+    "document_path": "graphql/entry_level/query_runtimeUsageEntryLevel_1165.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "GetRuntimeUsageInput!"
+      }
+    ]
+  },
+  {
+    "name": "getInfinityNotificationPrefs",
+    "kind": "query",
+    "family": "infinity",
+    "hermes_string_id": 1166,
+    "document_path": "graphql/infinity/query_getInfinityNotificationPrefs_1166.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "serial",
+        "type": "String!"
+      }
+    ]
+  },
+  {
+    "name": "getAppVersion",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 1167,
+    "document_path": "graphql/other/query_getAppVersion_1167.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "getUserWithDevices",
+    "kind": "query",
+    "family": "shared_devices_accounts",
+    "hermes_string_id": 1169,
+    "document_path": "graphql/shared_devices_accounts/query_getUserWithDevices_1169.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "userName",
+        "type": "String!"
+      },
+      {
+        "name": "appVersion",
+        "type": "String"
+      },
+      {
+        "name": "brand",
+        "type": "String"
+      },
+      {
+        "name": "os",
+        "type": "String"
+      },
+      {
+        "name": "osVersion",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "getEtBleSessionKey",
+    "kind": "query",
+    "family": "entry_level",
+    "hermes_string_id": 1171,
+    "document_path": "graphql/entry_level/query_getEtBleSessionKey_1171.graphql",
+    "standalone_document": true,
+    "variables": [
+      {
+        "name": "input",
+        "type": "EntryLevelSessionInput"
+      }
+    ]
+  },
+  {
+    "name": "IntrospectionQuery",
+    "kind": "query",
+    "family": "other",
+    "hermes_string_id": 1172,
+    "document_path": "graphql/other/query_IntrospectionQuery_1172.graphql",
+    "standalone_document": true,
+    "variables": []
+  },
+  {
+    "name": "FullType",
+    "kind": "fragment",
+    "family": "other",
+    "hermes_string_id": 1175,
+    "document_path": "graphql/other/fragment_FullType_1175.partial.txt",
+    "standalone_document": false,
+    "variables": []
+  }
+]

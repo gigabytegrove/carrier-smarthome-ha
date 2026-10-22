@@ -1,0 +1,5 @@
+mutation updateDeviceNotificationPrefs($input: UpdateDeviceNotificationPrefsInput!) {
+  updateDeviceNotificationPrefs(input: $input) {
+    success
+  }
+}

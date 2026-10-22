@@ -1,0 +1,24 @@
+{
+  "package": "com.carrier.home",
+  "app_version": "1.2.42",
+  "version_code": "854",
+  "min_sdk": "29",
+  "target_sdk": "36",
+  "split_count": 20,
+  "expo_config": {
+    "name": "Hems",
+    "displayName": "SmartHome",
+    "slug": "hems",
+    "version": "1.2.42",
+    "sdkVersion": "54.0.0"
+  },
+  "xapk_sha256": "92d16352c60772df98f1d35ec6bd93e8471dba0c144a07fd1f7f8262dccc1f68",
+  "base_apk_sha256": "861167b146914ae1a076b628aa5cb0085052d4a7d9ea0bfaf9f91baace31a1e7",
+  "hermes_version": 96,
+  "function_count": 57616,
+  "identifier_count": 32493,
+  "string_count": 80776,
+  "overflow_string_count": 46051,
+  "string_storage_bytes": 16777516,
+  "bundle_sha256": "10db83c4f32115826f21d39be163832034f19ab58a30cd56755ca50e26483cf7"
+}

@@ -1,0 +1,6 @@
+mutation sendEmailVerification($input: SendEmailVerificationInput) {
+  sendEmailVerification(input: $input) {
+    success
+    message
+  }
+}

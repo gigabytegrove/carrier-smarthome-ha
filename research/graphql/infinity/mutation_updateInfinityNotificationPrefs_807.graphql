@@ -1,0 +1,6 @@
+mutation updateInfinityNotificationPrefs($input: InfinityNotificationPrefsInput!) {
+  updateInfinityNotificationPrefs(input: $input) {
+    disconnectHours
+    maxCount
+  }
+}

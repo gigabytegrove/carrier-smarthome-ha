@@ -1,0 +1,5 @@
+mutation updateEntryLevelSchedule($input: UpdateEntryLevelScheduleInput!) {
+  updateEntryLevelSchedule(input: $input) {
+    success
+  }
+}

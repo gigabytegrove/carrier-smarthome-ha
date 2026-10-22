@@ -1,0 +1,6 @@
+query smartSaveEnrollmentStatus($locationId: String!) {
+  smartSaveEnrollmentStatus(locationId: $locationId) {
+    status
+    reason
+  }
+}

@@ -1,0 +1,6 @@
+mutation disassociateSystemLocation($input: DisassociateSystemLocationInput!) {
+  disassociateSystemLocation(input: $input) {
+    success
+    message
+  }
+}

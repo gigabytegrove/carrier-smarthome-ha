@@ -1,0 +1,5 @@
+mutation updateFirebaseToken($input: UpdateFirebaseTokenInput!) {
+  updateFirebaseToken(input: $input) {
+    success
+  }
+}

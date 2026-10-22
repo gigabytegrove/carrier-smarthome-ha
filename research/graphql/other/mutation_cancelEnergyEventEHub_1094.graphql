@@ -1,0 +1,23 @@
+mutation cancelEnergyEventEHub($eventId: String!, $deviceIds: [String!]) {
+  cancelEnergyEvent(eventId: $eventId, deviceIds: $deviceIds) {
+    success
+    message
+    errors {
+      field
+      message
+      code
+    }
+    energyEvents {
+      eventId
+      requestId
+      startTime
+      endTime
+      offset
+      setpointLimit
+      isPrecondition
+      deviceSerial
+      deviceType
+      status
+    }
+  }
+}

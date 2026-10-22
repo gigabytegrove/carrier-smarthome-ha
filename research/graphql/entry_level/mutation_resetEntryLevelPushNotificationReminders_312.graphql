@@ -1,0 +1,36 @@
+mutation resetEntryLevelPushNotificationReminders($input: ResetEntryLevelPushNotificationRemindersInput!) {
+  resetEntryLevelPushNotificationReminders(input: $input) {
+    mute
+    reminders {
+      utilizedHvacFilter {
+        enabled
+        config {
+          intervalInMonths
+          lastExecutionDate
+          nextExecutionDate
+        }
+      }
+      utilizedVentilatorFilter {
+        enabled
+        config {
+          intervalInMonths
+          lastExecutionDate
+          nextExecutionDate
+        }
+      }
+      utilizedHumidifierFilter {
+        enabled
+        config {
+          intervalInMonths
+          lastExecutionDate
+          nextExecutionDate
+        }
+      }
+    }
+    alerts {
+      offline {
+        enabled
+      }
+    }
+  }
+}

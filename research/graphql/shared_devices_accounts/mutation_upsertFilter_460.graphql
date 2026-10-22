@@ -1,0 +1,8 @@
+mutation upsertFilter($input: UpsertFilterInput!) {
+  upsertFilter(input: $input) {
+    success
+    data {
+      ...FilterFields
+    }
+  }
+}

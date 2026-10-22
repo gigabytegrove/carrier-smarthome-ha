@@ -1,0 +1,6 @@
+mutation stopInfinityDiagnostic($input: InfinityDiagnosticInput!) {
+  stopInfinityDiagnostic(input: $input) {
+    success
+    message
+  }
+}

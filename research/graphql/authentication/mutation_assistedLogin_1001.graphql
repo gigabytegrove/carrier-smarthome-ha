@@ -1,0 +1,15 @@
+mutation assistedLogin($input: AssistedLoginInput!) {
+  assistedLogin(input: $input) {
+    success
+    status
+    errorMessage
+    data {
+      token_type
+      expires_in
+      access_token
+      scope
+      refresh_token
+    }
+    provider
+  }
+}

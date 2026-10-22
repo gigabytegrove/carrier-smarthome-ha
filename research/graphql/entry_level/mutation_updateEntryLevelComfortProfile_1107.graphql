@@ -1,0 +1,6 @@
+mutation updateEntryLevelComfortProfile($input: EntryLevelComfortProfileInput!) {
+  updateEntryLevelComfortProfile(input: $input) {
+    success
+    payload
+  }
+}

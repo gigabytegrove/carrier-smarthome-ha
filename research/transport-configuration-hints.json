@@ -1,0 +1,53 @@
+{
+  "graphql_path_literals": [
+    "/graphql",
+    "/graphql-no-auth"
+  ],
+  "environment_keys": [
+    {
+      "string_id": 45013,
+      "value": "API_URL"
+    },
+    {
+      "string_id": 68197,
+      "value": "ENTRA_CLIENT_ID"
+    },
+    {
+      "string_id": 68720,
+      "value": "ENTRA_TENANT_URL"
+    },
+    {
+      "string_id": 16170,
+      "value": "ENTRY_TIER_ENV_URL"
+    },
+    {
+      "string_id": 17479,
+      "value": "HASURA_API_URL"
+    },
+    {
+      "string_id": 68777,
+      "value": "OKTA_CLIENT_ID"
+    },
+    {
+      "string_id": 18239,
+      "value": "OKTA_TOKEN_URL"
+    },
+    {
+      "string_id": 18243,
+      "value": "REST_API_URL"
+    },
+    {
+      "string_id": 67720,
+      "value": "SOCIAL_LOGIN_ISSUER"
+    },
+    {
+      "string_id": 18246,
+      "value": "WEBSOCKET_API_URL"
+    }
+  ],
+  "notes": [
+    "Configuration key names and paths alone do not establish a production API host.",
+    "Do not assume every GraphQL operation is available for each thermostat model.",
+    "OAuth or token exchanges cannot be confirmed by static strings alone."
+  ]
+}

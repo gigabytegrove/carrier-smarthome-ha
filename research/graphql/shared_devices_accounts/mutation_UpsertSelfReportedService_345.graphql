@@ -1,0 +1,18 @@
+mutation UpsertSelfReportedService($input: UpsertSelfReportedServiceInput!) {
+  upsertSelfReportedService(input: $input) {
+    success
+    message
+    data {
+      id
+      date
+      servicesPerformed
+      inspectionPerformed
+      notes
+      totalCost
+      customerId
+      homeId
+      serialNo
+      modelNo
+    }
+  }
+}

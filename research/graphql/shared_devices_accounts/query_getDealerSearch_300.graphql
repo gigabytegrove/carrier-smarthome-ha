@@ -1,0 +1,17 @@
+query getDealerSearch($input: DealerSearchInput!) {
+  dealerSearch(input: $input) {
+    dealers {
+      dealerId
+      dealerName
+      address
+      city
+      state
+      postal
+      country
+      phone
+      tollFree
+      fax
+    }
+    totalCount
+  }
+}

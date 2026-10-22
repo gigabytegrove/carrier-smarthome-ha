@@ -1,0 +1,13 @@
+query smartSaveEnrollment($locationId: String!) {
+  smartSaveEnrollment(locationId: $locationId) {
+    createdAt
+    locationId
+    isTechnicianAssisted
+    utilityName
+    devices {
+      serial
+      enrollmentStatus
+      enrolledAtDateTime
+    }
+  }
+}

@@ -1,0 +1,49 @@
+query getWeather($postal: String!) {
+  weather(postal: $postal) {
+    tempF
+    tempC
+    sunrise
+    sunset
+    timestamp
+    cloudsCoded
+    humidity
+    weatherPrimary
+    weatherPrimaryCoded
+    weatherStatusType
+    minTempF
+    minTempC
+    maxTempF
+    maxTempC
+    windSpeedMPH
+    windSpeedKPH
+    pop
+    forecast {
+      timestamp
+      minTempF
+      minTempC
+      maxTempF
+      maxTempC
+      weatherPrimary
+      weatherPrimaryCoded
+      cloudsCoded
+      weatherStatusType
+      pop
+      windSpeedMPH
+      windSpeedKPH
+    }
+    forecastHourly {
+      timestamp
+      minTempF
+      minTempC
+      maxTempF
+      maxTempC
+      weatherPrimary
+      weatherPrimaryCoded
+      cloudsCoded
+      weatherStatusType
+      pop
+      windSpeedMPH
+      windSpeedKPH
+    }
+  }
+}

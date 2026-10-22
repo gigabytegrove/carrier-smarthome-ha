@@ -1,0 +1,8 @@
+query getMaintenance($input: GetMaintenanceInput!) {
+  getMaintenance(input: $input) {
+    success
+    data {
+      ...MaintenanceFields
+    }
+  }
+}

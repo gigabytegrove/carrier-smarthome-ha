@@ -1,0 +1,6 @@
+mutation validateResetToken($input: ValidateResetTokenInput!) {
+  validateResetToken(input: $input) {
+    success
+    token
+  }
+}

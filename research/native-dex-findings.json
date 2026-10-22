@@ -1,0 +1,1076 @@
+{
+  "apk_sha256": "861167b146914ae1a076b628aa5cb0085052d4a7d9ea0bfaf9f91baace31a1e7",
+  "source": "actual native DEX string tables",
+  "dex": [
+    {
+      "file": "classes.dex",
+      "strings": 72527
+    },
+    {
+      "file": "classes2.dex",
+      "strings": 63469
+    },
+    {
+      "file": "classes3.dex",
+      "strings": 71644
+    },
+    {
+      "file": "classes4.dex",
+      "strings": 60031
+    },
+    {
+      "file": "classes5.dex",
+      "strings": 62109
+    },
+    {
+      "file": "classes6.dex",
+      "strings": 59954
+    },
+    {
+      "file": "classes7.dex",
+      "strings": 47510
+    }
+  ],
+  "embedded_carrier_endpoints": [
+    {
+      "dex": "classes3.dex",
+      "url": "https://dataservice.infinity.iot.carrier.com"
+    },
+    {
+      "dex": "classes3.dex",
+      "url": "https://platform.iot.carrier.com"
+    },
+    {
+      "dex": "classes3.dex",
+      "url": "https://sso.carrier.com/oauth2/default/v1/authorize"
+    },
+    {
+      "dex": "classes3.dex",
+      "url": "https://sso.carrier.com/oauth2/default/v1/token"
+    },
+    {
+      "dex": "classes3.dex",
+      "url": "wss://realtime.infinity.iot.carrier.com"
+    }
+  ],
+  "feature_evidence": {
+    "oauth": [
+      {
+        "dex": "classes3.dex",
+        "symbol": "OKTA_CLIENT_ID"
+      },
+      {
+        "dex": "classes3.dex",
+        "symbol": "OKTA_TOKEN_URL"
+      },
+      {
+        "dex": "classes3.dex",
+        "symbol": "Proxy-Authorization"
+      },
+      {
+        "dex": "classes3.dex",
+        "symbol": "https://sso.carrier.com/oauth2/default/v1/authorize"
+      },
+      {
+        "dex": "classes3.dex",
+        "symbol": "https://sso.carrier.com/oauth2/default/v1/token"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "AUTHORIZATION_RESPONSE_BODY"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Auth.Api.Identity.Authorization.API"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Authorization"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/google/android/gms/auth/api/identity/AuthorizationClient;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/google/android/gms/auth/api/identity/AuthorizationRequest$Builder;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/google/android/gms/auth/api/identity/AuthorizationRequest$ResourceParameter;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/google/android/gms/auth/api/identity/AuthorizationRequest;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/google/android/gms/auth/api/identity/AuthorizationResult;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Picasso.java"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Proxy-Authorization"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "[Lcom/google/android/gms/auth/api/identity/AuthorizationRequest$ResourceParameter;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "[Lcom/google/android/gms/auth/api/identity/AuthorizationRequest;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "[Lcom/google/android/gms/auth/api/identity/AuthorizationResult;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "authorization"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "authorization_result"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com.google.android.gms.auth.api.identity.internal.IAuthorizationCallback"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com.google.android.gms.auth.api.identity.internal.IAuthorizationService"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com.google.android.gms.auth.api.identity.service.authorization.START"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "getAuthorizationClient"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "getAuthorizationResultFromIntent"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "https://accounts.google.com/o/oauth2/revoke?token="
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "openid"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "proxy-authorization"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "AUTHORIZATION"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Authorization"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "PROXY_AUTHORIZATION"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Proxy-Authorization"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "getLocationAuthorizationStatus"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "lambda$requestAuthorization$0"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "lambda$requestAuthorization$1"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "lambda$requestAuthorization$2"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "lambda$requestAuthorization$3"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "lambda$requestAuthorization$4"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "requestAuthorization"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "  Authorization: "
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "AUTHORIZATION"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Authorization"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "PROXY_AUTHORIZATION"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Proxy-Authorization"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "assertAuthorizationHeader"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "getAuthorizationHeader"
+      },
+      {
+        "dex": "classes7.dex",
+        "symbol": "Authorization"
+      },
+      {
+        "dex": "classes7.dex",
+        "symbol": "Proxy-Authorization"
+      },
+      {
+        "dex": "classes7.dex",
+        "symbol": "authorization"
+      },
+      {
+        "dex": "classes7.dex",
+        "symbol": "proxy-authorization"
+      }
+    ],
+    "websocket": [
+      {
+        "dex": "classes3.dex",
+        "symbol": "WEBSOCKET_API_URL"
+      },
+      {
+        "dex": "classes3.dex",
+        "symbol": "wss://realtime.infinity.iot.carrier.com"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "$webSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "()Lcom/facebook/react/modules/websocket/WebSocketModule;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Could not close WebSocket connection for id "
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Error occurred, shutting down websocket connection: "
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Expected 'Sec-WebSocket-Accept' header value '"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Expected 'Upgrade' header value 'websocket' but was '"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "IWebSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/fbreact/specs/NativeWebSocketModuleSpec;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/devsupport/CxxInspectorPackagerConnection$DelegateImpl$connectWebSocket$1;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/devsupport/CxxInspectorPackagerConnection$IWebSocket;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/devsupport/CxxInspectorPackagerConnection$WebSocketDelegate;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/modules/blob/BlobModule$webSocketContentHandler$1;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/modules/websocket/WebSocketModule$Companion;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/modules/websocket/WebSocketModule$ContentHandler;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/modules/websocket/WebSocketModule$connect$2;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/modules/websocket/WebSocketModule;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/packagerconnection/ReconnectingWebSocket$$ExternalSyntheticLambda0;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/packagerconnection/ReconnectingWebSocket$Companion;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/packagerconnection/ReconnectingWebSocket$ConnectionCallback;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/packagerconnection/ReconnectingWebSocket$MessageCallback;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lcom/facebook/react/packagerconnection/ReconnectingWebSocket;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lokhttp3/WebSocket;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Lokhttp3/WebSocketListener;"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "NativeWebSocketModuleSpec.java"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "OkHttp WebSocket "
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "ReconnectingWebSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "ReconnectingWebSocket.kt"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Sec-WebSocket-Accept"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Sec-WebSocket-Key"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Sec-WebSocket-Protocol"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Sec-WebSocket-Version"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "WebSocketDelegate"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "WebSocketModule"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "WebSocketModule.kt"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Websocket exception"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "Websocket received message with payload of unexpected type binary"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "access$getWebSocket$p"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "access$getWebSocketConnections$p"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "access$notifyWebSocketFailed"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "addWebSocketHandler"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "closeWebSocketQuietly"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com/facebook/react/devsupport/CxxInspectorPackagerConnection$DelegateImpl$connectWebSocket$1"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com/facebook/react/modules/blob/BlobModule$webSocketContentHandler$1"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "com/facebook/react/modules/websocket/WebSocketModule$connect$2"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "connectWebSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "getWebSocketModule"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "getWebsocketProxyURL"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "newWebSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "notifyWebSocketFailed"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "removeWebSocketHandler"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "webSocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "webSocketConnections"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "webSocketContentHandler"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "webSocketModule"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocket"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocketClosed"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocketFailed"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocketMessage"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocketOpen"
+      },
+      {
+        "dex": "classes4.dex",
+        "symbol": "websocketProxyURL"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "SEC_WEBSOCKET_ACCEPT"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "SEC_WEBSOCKET_EXTENSIONS"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "SEC_WEBSOCKET_KEY"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "SEC_WEBSOCKET_PROTOCOL"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "SEC_WEBSOCKET_VERSION"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Sec-WebSocket-Accept"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Sec-WebSocket-Extensions"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Sec-WebSocket-Key"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Sec-WebSocket-Protocol"
+      },
+      {
+        "dex": "classes5.dex",
+        "symbol": "Sec-WebSocket-Version"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "DefaultWebSocketClient.java"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "DefaultWebSocketEngine.java"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "DefaultWebSocketEngineFactory.java"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/DefaultWebSocketClient;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/DefaultWebSocketEngine;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/DefaultWebSocketEngineFactory;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketClient;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketEngine;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketEngineConfig$WebSocketEngineConfigBuilder;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketEngineConfig;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketEngineFactory;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/network/WebSocketListener;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport$$ExternalSyntheticLambda0;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport$Factory;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport$WebSocketHandler$1;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport$WebSocketHandler;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport$WebSocketReceiver;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lio/ably/lib/transport/WebSocketTransport;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lokhttp3/WebSocket;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lokhttp3/WebSocketListener;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lorg/java_websocket/WebSocket;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lorg/java_websocket/client/WebSocketClient;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lorg/java_websocket/exceptions/WebsocketNotConnectedException;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lorg/java_websocket/framing/Framedata;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Lorg/java_websocket/handshake/ServerHandshake;"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "Using %s WebSocket Engine"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "WebSocket is closed"
+      },
+      {
+        "dex": "classes6.dex",
+        "symbol": "WebSocketClient.java"
+      }
+    ],
+    "matter": [],
+    "mqtt": [],
+    "graphql": [
+      {
+        "dex": "classes7.dex",
+        "symbol": "ISGRAPHQLERROR_FIELD_NUMBER"
+      },
+      {
+        "dex": "classes7.dex",
+        "symbol": "isGraphqlError_"
+      }
+    ],
+    "ble": [
+      {
+        "dex": "classes.dex",
+        "symbol": "  KEY_DEFAULT_QUIRK_ENABLED = "
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "  KEY_QUIRK_FORCE_DISABLED = "
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "  KEY_QUIRK_FORCE_ENABLED = "
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": " can only be used with a compatible window decor layout"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": " from list of available cameras."
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": " zslDisabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$SwitchMap$com$caverock$androidsvg$SVGParser$SVGAttr"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$alwaysFocusable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$animatable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$available"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$cancellableShow"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$createClickable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$currentlyVisible"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$currentlyVisible$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$disableClip"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$editable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$enabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$enabled$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$forceKeyboardFocusable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$hapticFeedbackEnabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$hapticFeedbackEnabled$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$iconVisible"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$isEnabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$nextAvailable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$onContextAvailable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$onDoubleClick"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$onDoubleClick$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$onDoubleTap"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$onPostviewBitmapAvailable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$pinnableItem$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$placeable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$placeables"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$previousAvailable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$r8$lambda$FaBlEBg_WvgtEoySK92Jtr69-m4"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$r8$lambda$TbleZNgM4ZO_NzDplNjawzRtTmE"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$r8$lambda$jrQH3C5bqIJble9ly1Rhh7CUms8"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$renderOnlyWhenVisible"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$revealLastTypedEnabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$scrollableTabData"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$selectableDates"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$selectableId"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$selectionInSelectable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$sheetGesturesEnabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$sheetSwipeEnabled"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$stable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$targetSelectableId"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$textInSelectable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$this_withContextAvailable"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$transformOriginWhenVisible"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$visible"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$visible$inlined"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$visibleState"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$writeable$delegate"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "$yearPickerVisible$delegate"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "'isFocusable' param is no longer used. Use value without this parameter."
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/annotation/InspectableProperty$ValueType;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/collection/MutableIntObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/collection/MutableScatterMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/animation/core/Animatable;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/animation/core/InfiniteRepeatableSpec;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/animation/core/MutableTransitionState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/animation/core/SeekableTransitionState$SeekingAnimationState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/content/PlatformTransferableContent;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/gestures/AnchoredDraggableState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/gestures/DraggableAnchors;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/gestures/DraggableState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/gestures/Scrollable2DState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/gestures/ScrollableState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/interaction/MutableInteractionSource;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/lazy/layout/MutableIntervalList;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/foundation/text/selection/SelectableInfo;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/material3/SelectableChipColors;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/material3/SelectableDates;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/material3/internal/AnchoredDraggableState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/material3/internal/DraggableAnchors;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/runtime/MutableIntState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/runtime/MutableState;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/runtime/ProvidableCompositionLocal;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/runtime/collection/MutableVector;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/runtime/saveable/Saver;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/ui/layout/Measurable;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/ui/layout/PinnableContainer;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/ui/layout/Placeable;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/ui/modifier/ProvidableModifierLocal;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Landroidx/compose/ui/node/DelegatableNode;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Ljava/lang/Runnable;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Lkotlinx/coroutines/CancellableContinuation;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()Lkotlinx/coroutines/flow/MutableSharedFlow;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()[Landroidx/annotation/InspectableProperty$EnumEntry;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "()[Landroidx/annotation/InspectableProperty$FlagEntry;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(FLjava/lang/Object;)Landroidx/collection/MutableFloatObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(FLjava/lang/Object;FLjava/lang/Object;)Landroidx/collection/MutableFloatObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(ILjava/lang/Object;)Landroidx/collection/MutableIntObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(ILjava/lang/Object;ILjava/lang/Object;)Landroidx/collection/MutableIntObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(J)Landroidx/compose/animation/core/Animatable;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(JJJJJJJJJJJJJ)Landroidx/compose/material3/SelectableChipColors;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(JLjava/lang/Object;)Landroidx/collection/MutableLongObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(JLjava/lang/Object;JLjava/lang/Object;)Landroidx/collection/MutableLongObjectMap;"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(Landroid/graphics/drawable/Drawable;Landroidx/compose/runtime/Composer;I)V"
+      },
+      {
+        "dex": "classes.dex",
+        "symbol": "(Landroid/graphics/drawable/Icon;Landroidx/compose/runtime/Composer;I)V"
+      }
+    ]
+  }
+}

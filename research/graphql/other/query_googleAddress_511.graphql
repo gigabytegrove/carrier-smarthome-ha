@@ -1,0 +1,22 @@
+query googleAddress($address: String!, $countries: [String!]) {
+  googleAddress(address: $address, countries: $countries) {
+    results {
+      address_components {
+        long_name
+        short_name
+        types
+      }
+      formatted_address
+      geometry {
+        location {
+          lat
+          lng
+        }
+        location_type
+      }
+      place_id
+      types
+    }
+    status
+  }
+}

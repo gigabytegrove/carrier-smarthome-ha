@@ -1,0 +1,18 @@
+query getDeviceInfo($username: String!, $locationId: String!, $deviceId: String!) {
+  deviceInfo(
+    input: {username: $username, locationId: $locationId, deviceId: $deviceId}
+  ) {
+    tempUnit
+    connectionStatus
+    points {
+      name
+      value
+    }
+    config {
+      desired {
+        name
+        value
+      }
+    }
+  }
+}

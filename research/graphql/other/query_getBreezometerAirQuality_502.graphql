@@ -1,0 +1,46 @@
+query getBreezometerAirQuality($locationId: String!) {
+  breezometerAirQuality(locationId: $locationId) {
+    data {
+      datetime
+      data_available
+      indexes {
+        dominant_pollutant
+        aqi
+        aqi_display
+        color
+        category
+        index_key
+        display_name
+      }
+      pollutants {
+        pollutant_key
+        display_name
+        full_name
+        concentration {
+          value
+          units
+        }
+      }
+      pollutants {
+        pollutant_key
+        display_name
+        full_name
+        concentration {
+          value
+          units
+        }
+      }
+      geolocationDetails {
+        label
+        postalCode
+        latitude
+        longitude
+      }
+    }
+    error {
+      code
+      title
+      detail
+    }
+  }
+}

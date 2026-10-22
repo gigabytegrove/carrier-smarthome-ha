@@ -1,0 +1,6 @@
+mutation UpdateSmartSaveUserFeatureAccess($input: UpdateSmartSaveUserFeatureAccessInput!) {
+  updateSmartSaveUserFeatureAccess(input: $input) {
+    success
+    payload
+  }
+}

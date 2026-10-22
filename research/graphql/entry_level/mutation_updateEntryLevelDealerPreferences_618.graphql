@@ -1,0 +1,5 @@
+mutation updateEntryLevelDealerPreferences($input: EntryLevelDealerPreferencesInput!) {
+  updateEntryLevelDealerPreferences(input: $input) {
+    success
+  }
+}

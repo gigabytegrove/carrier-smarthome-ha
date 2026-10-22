@@ -1,0 +1,34 @@
+query getLegacyDeviceNotificationPrefs($serial: String!) {
+  getLegacyDeviceNotificationPrefs(serial: $serial) {
+    success
+    error
+    data {
+      serial
+      preferences {
+        user {
+          urgent
+          routine
+          confirmation
+          unresponsive
+          utilityEvent
+          status
+          schedule
+          modifyConfig
+        }
+        dealer {
+          urgent
+          routine
+          unresponsive
+          status
+          schedule
+          modifyConfig
+        }
+      }
+      settings {
+        disconnectHours
+        maxCount
+        mute
+      }
+    }
+  }
+}

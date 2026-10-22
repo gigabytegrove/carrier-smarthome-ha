@@ -1,0 +1,18 @@
+mutation acceptLocationInvite($input: AcceptLocationInviteInput!) {
+  acceptLocationInvite(input: $input) {
+    success
+    error {
+      code
+      message
+    }
+    data {
+      token
+      locationId
+      invitedBy
+      expiresAt
+      status
+      createdAt
+      invitedUser
+    }
+  }
+}

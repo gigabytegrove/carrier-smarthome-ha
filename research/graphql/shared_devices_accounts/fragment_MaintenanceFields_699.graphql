@@ -1,0 +1,15 @@
+fragment MaintenanceFields on Maintenance {
+  serial
+  deviceType
+  type
+  trackingMethod
+  period
+  runtimeThreshold
+  runtime
+  lastEventAt
+  nextEventAt
+  lastResetAt
+  createdAt
+  updatedAt
+  score
+}

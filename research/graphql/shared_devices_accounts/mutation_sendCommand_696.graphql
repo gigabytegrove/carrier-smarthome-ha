@@ -1,0 +1,5 @@
+mutation sendCommand($input: DeviceCommandSetInput!) {
+  sendCommand(input: $input) {
+    success
+  }
+}

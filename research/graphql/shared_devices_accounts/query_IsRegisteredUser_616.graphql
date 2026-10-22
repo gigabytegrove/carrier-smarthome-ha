@@ -1,0 +1,6 @@
+query IsRegisteredUser($input: RegisteredUser) {
+  isRegisteredUser(input: $input) {
+    success
+    message
+  }
+}

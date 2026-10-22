@@ -1,0 +1,6 @@
+query GetSelfReportedPerformedLists($type: String) {
+  selfReportedPerformedLists(type: $type) {
+    services
+    inspections
+  }
+}

@@ -1,0 +1,27 @@
+query smartSaveEligibility {
+  smartSaveEligibility {
+    eligibleLocations {
+      locationId
+      locationName
+      street1
+      street2
+      city
+      state
+      country
+      postal
+      labels
+      owner
+      users
+      devices {
+        type
+        serial
+      }
+      eligibilityData {
+        name
+        properties {
+          programId
+        }
+      }
+    }
+  }
+}

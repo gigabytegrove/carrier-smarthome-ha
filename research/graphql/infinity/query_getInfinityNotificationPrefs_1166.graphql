@@ -1,0 +1,39 @@
+query getInfinityNotificationPrefs($serial: String!) {
+  infinityNotificationPrefs(serial: $serial) {
+    disconnectHours
+    maxCount
+    primary {
+      email
+      urgent
+      routine
+      confirmation
+      unresponsive
+      utilityEvent
+      status
+      schedule
+      modifyConfig
+    }
+    secondary {
+      email
+      urgent
+      routine
+      confirmation
+      unresponsive
+      utilityEvent
+      status
+      schedule
+      modifyConfig
+    }
+    dealer {
+      email
+      urgent
+      routine
+      confirmation
+      unresponsive
+      utilityEvent
+      status
+      schedule
+      modifyConfig
+    }
+  }
+}

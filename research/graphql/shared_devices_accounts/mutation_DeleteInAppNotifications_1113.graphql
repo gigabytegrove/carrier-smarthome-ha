@@ -1,0 +1,9 @@
+mutation DeleteInAppNotifications($input: deleteInAppNotificationsInput!) {
+  deleteInAppNotifications(input: $input) {
+    success
+    error {
+      code
+      message
+    }
+  }
+}

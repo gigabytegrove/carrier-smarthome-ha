@@ -1,0 +1,13 @@
+mutation registerUserEmailVerification($input: RegisterUserEmailVerificationInput!) {
+  registerUserEmailVerification(input: $input) {
+    success
+    email
+    username
+    message
+    validationErrors {
+      field
+      message
+      id
+    }
+  }
+}

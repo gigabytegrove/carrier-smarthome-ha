@@ -1,0 +1,6 @@
+query getApiKeys {
+  apiKeys {
+    mapbox
+    breezometer
+  }
+}

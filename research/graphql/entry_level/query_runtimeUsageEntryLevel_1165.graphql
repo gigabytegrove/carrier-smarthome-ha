@@ -1,0 +1,23 @@
+query runtimeUsageEntryLevel($input: GetRuntimeUsageInput!) {
+  runtimeUsageEntryLevel(input: $input) {
+    success
+    message
+    tempUnitFormat: tempUnitFormat
+    runtimeBuckets {
+      timeBucket
+      totalRuntime
+      outsideTemperature
+      isSystemOn
+      zoneSettings {
+        zoneNumber
+        coolingSetpoint
+        heatingSetpoint
+        humidity
+        highestRoomTemperature
+        lowestRoomTemperature
+      }
+      totalCoolRuntime
+      totalHeatRuntime
+    }
+  }
+}
