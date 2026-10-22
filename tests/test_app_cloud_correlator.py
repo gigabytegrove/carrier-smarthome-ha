@@ -33,7 +33,7 @@ class PureComparison(unittest.TestCase):
         after = probe.clean_values(system(77)["zones"][0])
         self.assertEqual(probe.changed_targets(before, after), ["cool_setpoint"])
         self.assertEqual(probe.interpretation(before, after, before),
-                         "APP_TO_GRAPHQL_CHANGE_AND_RESTORE_CONFIRMED")
+                         "APP_TO_GRAPHQL_CHANGE_AND_FULL_OBSERVED_BASELINE_RESTORE_CONFIRMED")
 
     def test_no_change_is_not_painted_as_live(self):
         baseline = probe.clean_values(system(76)["zones"][0])
@@ -57,7 +57,7 @@ class PureComparison(unittest.TestCase):
         after = probe.clean_values(b["zones"][0])
         self.assertEqual(probe.changed_targets(before, after), ["cool_setpoint"])
         self.assertEqual(probe.interpretation(before, after, before),
-                         "APP_TO_GRAPHQL_CHANGE_AND_RESTORE_CONFIRMED")
+                         "APP_TO_GRAPHQL_CHANGE_AND_FULL_OBSERVED_BASELINE_RESTORE_CONFIRMED")
 
     def test_output_does_not_contain_private_device_identifiers(self):
         sample = {"connection": "offline", "list": probe.clean_values(system(76)["zones"][0]),
@@ -68,6 +68,30 @@ class PureComparison(unittest.TestCase):
         for secret in ("synthetic_device_id", "DONOTPRINT_ABC123", "private family home"):
             self.assertNotIn(secret, logged)
         self.assertIn("offline", logged)
+
+    def test_owner_observed_cooling_restore_did_not_restore_mode_or_heat(self):
+        before = {"heat_setpoint": 70.0, "cool_setpoint": 76.0, "mode": "off",
+                  "fan_mode": "auto", "schedule_enabled": True}
+        changed = {**before, "cool_setpoint": 73.0, "mode": "cool"}
+        final = {**before, "heat_setpoint": 69.0, "mode": "cool"}
+        self.assertEqual(probe.changed_targets(before, changed), ["cool_setpoint"])
+        self.assertTrue(probe.matches_baseline(before, final, ["cool_setpoint"]))
+        self.assertEqual(probe.baseline_differences(before, final), ["heat_setpoint", "mode"])
+        self.assertFalse(probe.matches_complete_baseline(before, final))
+        self.assertEqual(probe.interpretation(before, changed, final),
+                         "SETPOINT_RESTORED_OTHER_SETTINGS_DIFFER")
+
+    def test_unreported_baseline_fields_do_not_block_reversible_test(self):
+        before = {"heat_setpoint": 70.0, "cool_setpoint": 76.0,
+                  "mode": "off", "fan_mode": None, "schedule_enabled": None}
+        self.assertTrue(probe.matches_complete_baseline(before, before))
+        self.assertFalse(probe.baseline_differences(before, before))
+
+    def test_missing_known_baseline_values_count_as_differences(self):
+        before = {"heat_setpoint": 70.0, "cool_setpoint": 76.0, "mode": "cool"}
+        after = {"heat_setpoint": 70.0, "cool_setpoint": 76.0}
+        self.assertEqual(probe.baseline_differences(before, after), ["mode"])
+        self.assertFalse(probe.matches_complete_baseline(before, after))
 
     def test_missing_values_not_claimed_to_change_or_restore(self):
         self.assertEqual(probe.changed_targets({"cool_setpoint": None}, {"cool_setpoint": 75}), [])
@@ -104,12 +128,12 @@ class CloudPair(unittest.IsolatedAsyncioTestCase):
 
     async def test_restore_stops_only_when_changed_source_restores(self):
         # A *different, unchanged* API view must not produce a false restore PASS.
-        base = {"connection": "offline", "list": {"cool_setpoint": 76.0},
-                "detail": {"cool_setpoint": 76.0}}
-        not_restored = {"connection": "offline", "list": {"cool_setpoint": 77.0},
-                        "detail": {"cool_setpoint": 76.0}}
-        restored = {"connection": "offline", "list": {"cool_setpoint": 76.0},
-                    "detail": {"cool_setpoint": 76.0}}
+        base = {"connection": "offline", "list": {"heat_setpoint": 70.0, "cool_setpoint": 76.0},
+                "detail": {"heat_setpoint": 70.0, "cool_setpoint": 76.0}}
+        not_restored = {"connection": "offline", "list": {"heat_setpoint": 70.0, "cool_setpoint": 77.0},
+                        "detail": {"heat_setpoint": 70.0, "cool_setpoint": 76.0}}
+        restored = {"connection": "offline", "list": {"heat_setpoint": 70.0, "cool_setpoint": 76.0},
+                    "detail": {"heat_setpoint": 70.0, "cool_setpoint": 76.0}}
         with patch.object(probe, "read_pair", new_callable=AsyncMock, side_effect=[not_restored, restored]) as read, \
                 patch.object(probe.asyncio, "sleep", new_callable=AsyncMock):
             found, last = await probe.read_sequence(object(), "not_displayed", 0, base,
@@ -118,6 +142,36 @@ class CloudPair(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(read.await_count, 2)
         self.assertEqual(found, restored)
         self.assertEqual(last, restored)
+
+    async def test_restore_waits_for_mode_and_other_setpoint_too(self):
+        base_list = {"heat_setpoint": 70.0, "cool_setpoint": 76.0,
+                     "mode": "off", "fan_mode": "auto", "schedule_enabled": True}
+        start = {"connection": "online", "list": base_list, "detail": dict(base_list)}
+        mismatch = dict(base_list, heat_setpoint=69.0, mode="cool")
+        partial = {"connection": "online", "list": mismatch, "detail": dict(mismatch)}
+        fully_restored = {"connection": "online", "list": dict(base_list), "detail": dict(base_list)}
+        with patch.object(probe, "read_pair", new_callable=AsyncMock,
+                          side_effect=[partial, fully_restored]) as read, \
+             patch.object(probe.asyncio, "sleep", new_callable=AsyncMock):
+            found, last = await probe.read_sequence(object(), "synthetic", 0, start,
+                            attempts=2, interval=15, label="RESTORE", changed={"list": ["cool_setpoint"],
+                                                                         "detail": ["cool_setpoint"]})
+        self.assertEqual(read.await_count, 2)
+        self.assertEqual(found, fully_restored)
+        self.assertEqual(last, fully_restored)
+
+    async def test_restore_not_confirmed_if_only_cooling_reverts(self):
+        base_list = {"heat_setpoint": 70.0, "cool_setpoint": 76.0, "mode": "off"}
+        before = {"connection": "online", "list": base_list, "detail": dict(base_list)}
+        mismatch = dict(base_list, mode="cool")
+        after = {"connection": "online", "list": mismatch, "detail": dict(mismatch)}
+        with patch.object(probe, "read_pair", new_callable=AsyncMock,
+                          return_value=after), \
+             patch.object(probe.asyncio, "sleep", new_callable=AsyncMock):
+            found, last = await probe.read_sequence(object(), "synthetic", 0, before,
+                            attempts=2, interval=15, label="RESTORE", changed={"list": ["cool_setpoint"]})
+        self.assertIsNone(found)
+        self.assertEqual(last, after)
 
     async def test_readonly_probe_does_not_issue_mutations(self):
         # The test tool uses only the well-known read methods; even when app changes,
