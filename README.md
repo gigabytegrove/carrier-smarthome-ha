@@ -1,6 +1,8 @@
+**Alpha 7 correction (October 22, 2026):** The thermostat experienced an actual Wi-Fi dropout before the successful Alpha 6 app/cloud test. It reconnected after a restart with no Wi-Fi reconfiguration; Carrier then reported online and both GraphQL read paths tracked official-app changes. That makes a real connectivity loss the leading explanation for earlier offline readings; previous suspicion of a broken online flag is superseded. Alpha 7 marks live climate entities unavailable when Carrier reports offline while preserving clearly labeled last-reported diagnostics. No Matter. See research/ALPHA7_WIFI_RECONNECT.md.
+
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** HACS-installable native Carrier cloud alpha `0.1.0a6`; authenticated discovery and cloud telemetry verified against the owner account on 2026-10-22, but firmware connectivity fields and device write control are not validated.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** HACS-installable native Carrier cloud alpha `0.1.0a7`; authenticated discovery and cloud telemetry verified against the owner account on 2026-10-22, but firmware connectivity fields and device write control are not validated.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 

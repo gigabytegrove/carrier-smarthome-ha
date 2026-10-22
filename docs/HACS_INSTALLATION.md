@@ -17,7 +17,7 @@ No Matter setup, pairing code, Wi-Fi address, MQTT broker, or local IP is needed
 - [ ] HA starts successfully with the custom integration installed.
 - [ ] Carrier account authentication completes in the HA UI.
 - [ ] One Carrier cloud-reported thermostat and associated sensors appear.
-- [ ] When Carrier reports offline, the climate entity shows *last cloud-reported, unverified* values; live statistical sensors remain unavailable, and the Carrier-reported connectivity binary sensor shows **off**. This is not proof that the physical thermostat is unreachable.
+- [ ] When Carrier reports offline, the live climate entity and statistical sensors are **unavailable**; separately labeled last-cloud-reported diagnostics remain accessible, and the Carrier-reported connectivity binary sensor shows **off**. This is not proof that the physical thermostat is unreachable.
 - [ ] With thermostat online, compare displayed temperature, setpoints, and mode with the Carrier SmartHome mobile app.
 - [ ] Leave experimental writes **off** until online telemetry and identity are verified.
 - [ ] Use **Settings → Devices & services → Carrier SmartHome → ⋮ → Download diagnostics** if you need to share sanitized diagnostic output. Check contents before sharing any diagnostics.
@@ -47,3 +47,7 @@ The owner has verified that the reported cloud record matches the thermostat MAC
 On Windows, run `tools/Compare-AppChange.ps1` from a current clone. The script first reads two cloud sources, pauses while you make a **manual, reversible one-degree change** in the official phone app, reads the cloud again, and asks you to **manually restore** the original setting. It then checks whether both queried sources return to baseline.
 
 Only the owner makes or restores thermostat changes. The script never issues thermostat commands, does not log identifiers, and must not be considered a substitute for live HA control validation. It does send credentials and a private serial to Carrier for authenticated reads, as expected.
+
+## Alpha 7 correction: thermostat Wi-Fi dropout
+
+The owner reported that the thermostat actually lost Wi-Fi before the successful Alpha 6 app/cloud comparison. Restart restored connectivity without reprovisioning; Carrier subsequently reported online, and both GraphQL queries tracked the official-app setpoint change. This is consistent with the earlier offline flag reflecting real disconnection. The exact disconnection timing and cause were not captured. Alpha 7 therefore requires online status for live climate entities while retaining cached-value diagnostics. No Matter.

@@ -53,6 +53,15 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         self._attr_unique_id = f"{serial}_zone_{zone}_climate"
 
     @property
+    def available(self):
+        """Only expose live thermostat climate data when Carrier reports online.
+
+        The owner reported a real Wi-Fi disconnect before the successful cloud
+        comparison; cached data are preserved in separate diagnostic sensors.
+        """
+        return super().available and connectivity_state(self.system) == "online"
+
+    @property
     def hvac_modes(self):
         # Do not offer mode-change controls before explicit opt-in.
         if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)

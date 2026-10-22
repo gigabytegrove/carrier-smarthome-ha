@@ -155,14 +155,18 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         await cl.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
         self.assertTrue(entities[0].available)
         self.coordinator.data['serial-test']['connection']['isConnected'] = False
-        self.assertTrue(entities[0].available)
+        self.assertFalse(entities[0].available)
         self.assertEqual(entities[0].extra_state_attributes['carrier_reported_connection'], 'offline')
         self.assertEqual(entities[0].extra_state_attributes['telemetry_freshness'], 'unverified_may_be_cached')
         self.entry.options = {'enable_control': True}
         self.assertEqual(entities[0].supported_features, ClimateEntityFeature(0))
         self.assertEqual(entities[0].hvac_modes, [HVACMode.OFF])
-        with self.assertRaisesRegex(Exception, 'connectivity is unverified'):
+        with self.assertRaisesRegex(Exception, 'unavailable'):
             entities[0]._require_control()
+        self.coordinator.data['serial-test']['connection']['isConnected'] = True
+        self.assertTrue(entities[0].available)
+        self.coordinator.last_update_success = False
+        self.assertFalse(entities[0].available)
 
 
 if __name__ == '__main__':
