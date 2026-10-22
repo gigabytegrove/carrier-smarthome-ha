@@ -47,7 +47,11 @@ class CoordinatorPushTests(unittest.IsolatedAsyncioTestCase):
         stubs['homeassistant.config_entries'].ConfigEntryAuthFailed=type('ConfigEntryAuthFailed',(Exception,),{})
         update=stubs['homeassistant.helpers.update_coordinator']
         update.DataUpdateCoordinator=DummyHACoordinator
-        update.UpdateFailed=type('UpdateFailed',(Exception,),{})
+        class UpdateFailed(Exception):
+            def __init__(self, message, *, retry_after=None):
+                super().__init__(message)
+                self.retry_after = retry_after
+        update.UpdateFailed=UpdateFailed
         self.patch=patch.dict(sys.modules,stubs)
         self.patch.start()
         for name in ('const','models','api'):
@@ -140,6 +144,7 @@ class CoordinatorPushTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(self.mod.UpdateFailed) as cm:
             await self.coordinator._async_update_data()
         self.assertIn('Retry-After', str(cm.exception))
+        self.assertEqual(cm.exception.retry_after, 120)
         self.assertEqual(self.coordinator.last_error_kind, 'rate_limited')
         self.assertGreater(self.coordinator.next_poll_wait_seconds, 0)
         self.assertGreaterEqual(self.coordinator.update_interval.total_seconds(), 120)

@@ -136,8 +136,10 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             raise ConfigEntryAuthFailed("Carrier SmartHome authentication failed") from exc
         except CarrierRateLimitError as exc:
             self._failure("rate_limited", exc.retry_after)
-            # UpdateFailed does not have a public retry_after keyword contract.
-            raise UpdateFailed("Carrier rate-limited polling; respecting Retry-After") from exc
+            # Home Assistant's coordinator honors UpdateFailed.retry_after and
+            # schedules the next refresh without hammering Carrier.
+            raise UpdateFailed("Carrier rate-limited polling; respecting Retry-After",
+                               retry_after=exc.retry_after) from exc
         except CarrierError as exc:
             retry = min(MAX_POLL_BACKOFF_SECONDS, POLL_INTERVAL.total_seconds() * (2 ** min(self.consecutive_errors, 3)))
             self._failure("transport_or_graphql", retry)
