@@ -93,7 +93,13 @@ Testing is offline: simulated GraphQL responses, URL safety, HAR secret redactio
 
 - No APK/XAPK binary or decrypted secrets committed. Never publish captured authorization headers, session cookies, device serial numbers or raw HAR files.
 - All network probes are read-only. TCP connect tests are limited to visible, specifically routed, or authorized RFC1918 subnets (maximum /24 each); no attempt to bypass authentication or certificate pinning.
-- The thermostat's Matter support is separate from proprietary cloud control; proprietary LAN API support remains unproven.
+- This project does **not** use Matter for integration, bridging, fallback, or discovery. Carrier SmartHome cloud API control is the priority; proprietary local API support remains unproven.
 - Document evidence sources precisely and label **unverified** conclusions. The authenticated TSTATCCEWF-01 read/write path has **not** yet been exercised.
 
 See `research/ANALYSIS_REPORT.md`, `research/CLOUD_PROTOCOL.md`, `research/LOCAL_PROTOCOL.md`, `research/TEST_PLAN.md`, and `research/STATUS.md`.
+
+## Identifying the TSTATCCEWF-01 from Omada's client export
+
+The October 22, 2026 Omada client archive identifies this unit as `Smart Thermostat-144B` (the owner-verified label suffix), previously at `redacted.invalid` on VLAN 30. It was offline when exported, so that IP is **not verified as current**. Historical leases show address changes; no thermostat IP is hardcoded. Another previously suspected device, `redacted.invalid`, is identified as a Sainlogic station. See [`research/OMADA_DEVICE_IDENTITY.md`](research/OMADA_DEVICE_IDENTITY.md).
+
+**Offline recheck on Windows (no network traffic or device control):** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Review-OmadaExport.ps1`. The script reads the latest Omada `Client_*.zip` from Downloads and the existing private `iot-private.json` scan automatically. It selects this thermostat by its verified `144B` label suffix. Raw exports, device MACs, serials, and onboarding details must remain off GitHub.
