@@ -8,7 +8,7 @@
 - Polling, connection recovery, reauthentication and managed HA platform lifecycle.
 - Experimental HVAC mode/setpoint mutation with validation, disabled unless the owner explicitly enables it in integration options.
 - No Matter, firmware modifications, local connection impersonation or fake entity data.
-- Includes independent read-only cloud smoke test for Windows/PC before Home Assistant installation.
+- Includes independent read-only cloud smoke test for Windows/PC before Home Assistant installation, plus `tools/Test-Cloud.ps1` isolated environment setup.
 - Existing IoT VLAN, Omada identification, APK GraphQL catalog and LAN research retained unchanged.
 
 **Testing:** Offline unit tests completed; does not claim live Carrier account or Home Assistant core validation. Actual success of the SmartHome credentials, cloud schema, command execution and device compatibility still needs user-side evidence. Treat this as an engineering alpha, not a production HVAC controller.

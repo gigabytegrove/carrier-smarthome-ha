@@ -264,3 +264,18 @@ class TransportTests(unittest.IsolatedAsyncioTestCase):
         session = FakeSession(FakeResponse(200, b'{"data":{"ok":true}}'))
         client = api.CarrierSmartHomeClient(session, 'user', 'password')
         self.assertTrue((await client._post(api.GRAPHQL, {}))['data']['ok'])
+
+
+class EmptyPrimaryListTests(unittest.IsolatedAsyncioTestCase):
+    async def test_empty_primary_list_tries_apk_location_discovery(self):
+        client = api.CarrierSmartHomeClient(object(), 'account', 'pw')
+        async def gql(name, _document, _variables):
+            if name == 'getEntryLevelSystems':
+                return {'entryLevelSystems': []}
+            if name == 'getUserWithDevices':
+                return {'user': {'locations': [{'entryLevels': [{'serial': 'active-serial'}]}]}}
+            return {'entryLevelSystem': {'serial': 'active-serial', 'zones': [{'index': 0}]}}
+        client._graphql = AsyncMock(side_effect=gql)
+        result = await client.async_get_systems()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['serial'], 'active-serial')

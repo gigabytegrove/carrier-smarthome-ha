@@ -36,3 +36,15 @@ class ArtifactTests(unittest.TestCase):
 
     def test_research_covers_setup(self):
         self.assertIn('Carrier SmartHome', (ROOT/'research/TEST_TODAY.md').read_text())
+
+class SecurityFlowTests(unittest.TestCase):
+    def test_ui_password_field_masked(self):
+        code = (PACKAGE / 'config_flow.py').read_text()
+        self.assertIn('TextSelectorType.PASSWORD', code)
+        self.assertNotIn('vol.Required(CONF_PASSWORD): str', code)
+
+    def test_windows_runner_uses_isolated_environment(self):
+        code = (ROOT/'tools/Test-Cloud.ps1').read_text()
+        self.assertIn('-m venv', code)
+        self.assertIn('Smoke-TestSmartHomeCloud.py', code)
+        self.assertNotIn('Write-Host $password', code)

@@ -7,6 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
 from .const import CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, DOMAIN
@@ -18,7 +19,7 @@ def _credentials_schema(defaults: dict | None = None):
     defaults = defaults or {}
     return vol.Schema({
         vol.Required(CONF_USERNAME, default=defaults.get(CONF_USERNAME, "")): str,
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
     })
 
 
@@ -71,7 +72,7 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_update_reload_and_abort(entry, data_updates={CONF_PASSWORD: password})
         return self.async_show_form(step_id="reauth_confirm",
-                                    data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}), errors=errors)
+                                    data_schema=vol.Schema({vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}), errors=errors)
 
     @staticmethod
     def async_get_options_flow(config_entry):
