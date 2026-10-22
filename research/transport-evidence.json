@@ -1,0 +1,621 @@
+{
+  "native_dex_urls": [
+    {
+      "url": "https://dataservice.infinity.iot.carrier.com/",
+      "dex": "classes3.dex",
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://platform.iot.carrier.com/",
+      "dex": "classes3.dex",
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://sso.carrier.com/oauth2/default/v1/authorize",
+      "dex": "classes3.dex",
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://sso.carrier.com/oauth2/default/v1/token",
+      "dex": "classes3.dex",
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "wss://realtime.infinity.iot.carrier.com/",
+      "dex": "classes3.dex",
+      "status": "string literal; runtime use unknown"
+    }
+  ],
+  "hermes_urls": [
+    {
+      "url": "https://legacy.myinfinitytouch.carrier.com/legal",
+      "string_ids": [
+        28730
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/login",
+      "string_ids": [
+        28741
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/a_infinity_installation_manual.pdf",
+      "string_ids": [
+        9502
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/a_infinity_owners_manual.pdf",
+      "string_ids": [
+        27398
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/a_infinity_remote_access_registration_guide.pdf",
+      "string_ids": [
+        27400
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/bc_infinity_installation_manual.pdf",
+      "string_ids": [
+        27402
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/bc_infinity_occupancy_sensing_sequence_of_operation.pdf",
+      "string_ids": [
+        24586
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/bc_infinity_owners_manual.pdf",
+      "string_ids": [
+        27404
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/bc_infinity_remote_access_registration_guide.pdf",
+      "string_ids": [
+        27406
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/export-tool-setup.exe",
+      "string_ids": [
+        28744
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/export-tool.dmg",
+      "string_ids": [
+        28745
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_20_vs_hp.html",
+      "string_ids": [
+        28746
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_21_vs_air_conditioner.html",
+      "string_ids": [
+        22969
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_23_vs_hp.html",
+      "string_ids": [
+        28747
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_26_ac_infinity_24_hp_software.html",
+      "string_ids": [
+        11434
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_gas_furnace.html",
+      "string_ids": [
+        28748
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/infinity_vs_ultimate_cold_climate_hp.html",
+      "string_ids": [
+        28749
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/series_A_software.html",
+      "string_ids": [
+        28750
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/series_B_software.html",
+      "string_ids": [
+        27463
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/series_B_software_release_notes.pdf",
+      "string_ids": [
+        27408
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/series_C_software.html",
+      "string_ids": [
+        28751
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/series_C_software_release_notes.pdf",
+      "string_ids": [
+        27424
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://my.carrier.com/profile/help/download-latest-firmware/using_wifi_range_extenders.pdf",
+      "string_ids": [
+        27426
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://pprod.consumerportal.carrier.com/login",
+      "string_ids": [
+        28763
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://prod.consumerportal.carrier.com/login",
+      "string_ids": [
+        28764
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/device-manual/AirMonitorDeviceManual.json",
+      "string_ids": [
+        13199
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/device-manual/AirPurifierDeviceManual.json",
+      "string_ids": [
+        28766
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/device-manual/SmartThermostatDeviceManual.json",
+      "string_ids": [
+        28767
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/device-manual/WallControllerDeviceManual.json",
+      "string_ids": [
+        28768
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Bryant/AirMonitorFAQScreen.json",
+      "string_ids": [
+        28769
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Bryant/AirPurifierFAQScreen.json",
+      "string_ids": [
+        16477
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Bryant/DeviceSpecificFAQScreen.json",
+      "string_ids": [
+        18342
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Bryant/WC_General_FAQ_Bryant.json",
+      "string_ids": [
+        28770
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Bryant/WallControllerFAQScreen.json",
+      "string_ids": [
+        28771
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Carrier/AirMonitorFAQScreen.json",
+      "string_ids": [
+        28772
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Carrier/AirPurifierFAQScreen.json",
+      "string_ids": [
+        28773
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Carrier/DeviceSpecificFAQScreen.json",
+      "string_ids": [
+        28774
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Carrier/WC_General_FAQ_Carrier.json",
+      "string_ids": [
+        14081
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Carrier/WallControllerFAQScreen.json",
+      "string_ids": [
+        28775
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Ion/AirMonitorFAQScreen.json",
+      "string_ids": [
+        13898
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Ion/AirPurifierFAQScreen.json",
+      "string_ids": [
+        28776
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Ion/DeviceSpecificFAQScreen.json",
+      "string_ids": [
+        28780
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Ion/WC_General_FAQ_ION.json",
+      "string_ids": [
+        9051
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/faq/Ion/WallControllerFAQScreen.json",
+      "string_ids": [
+        28781
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/bryant_vpp_how_to_sign_up.mp4",
+      "string_ids": [
+        7330
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/bryant_vpp_what_is_smart_save.mp4",
+      "string_ids": [
+        28782
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/carrier_vpp_how_to_sign_up.mp4",
+      "string_ids": [
+        28784
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/carrier_vpp_what_is_smart_save.mp4",
+      "string_ids": [
+        28785
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/ion_vpp_how_to_sign_up.mp4",
+      "string_ids": [
+        28786
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://resources.dataservice.infinity.iot.carrier.com/smarthome/ion_vpp_what_is_smart_save.mp4",
+      "string_ids": [
+        28787
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/contact-us/",
+      "string_ids": [
+        7364
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/find-a-dealer/",
+      "string_ids": [
+        7283
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/legal/privacy-notice/",
+      "string_ids": [
+        7368
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/legal/terms-of-use/",
+      "string_ids": [
+        28793
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/products/indoor-air-quality/",
+      "string_ids": [
+        28794
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/products/thermostats/smart-thermostats/smartsave-faqs",
+      "string_ids": [
+        15676
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/products/thermostats/smart-thermostats/smartsave-program-overview",
+      "string_ids": [
+        28795
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/products/thermostats/smart-thermostats/smartsave-terms",
+      "string_ids": [
+        28797
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/residential/en/us/products/thermostats/smart-thermostats/smartsave-terms/",
+      "string_ids": [
+        28798
+      ],
+      "status": "string literal; runtime use unknown"
+    },
+    {
+      "url": "https://www.carrier.com/us/en/residential/find-a-dealer/schedule/",
+      "string_ids": [
+        28799
+      ],
+      "status": "string literal; runtime use unknown"
+    }
+  ],
+  "hermes_environment_keys": [
+    {
+      "key": "API_URL",
+      "string_ids": [
+        45013
+      ]
+    },
+    {
+      "key": "ENTRA_CLIENT_ID",
+      "string_ids": [
+        68197
+      ]
+    },
+    {
+      "key": "ENTRA_TENANT_URL",
+      "string_ids": [
+        68720
+      ]
+    },
+    {
+      "key": "ENTRY_TIER_ENV_URL",
+      "string_ids": [
+        16170
+      ]
+    },
+    {
+      "key": "HASURA_API_URL",
+      "string_ids": [
+        17479
+      ]
+    },
+    {
+      "key": "OKTA_CLIENT_ID",
+      "string_ids": [
+        68777
+      ]
+    },
+    {
+      "key": "OKTA_TOKEN_URL",
+      "string_ids": [
+        18239
+      ]
+    },
+    {
+      "key": "REST_API_URL",
+      "string_ids": [
+        18243
+      ]
+    },
+    {
+      "key": "SOCIAL_LOGIN_ISSUER",
+      "string_ids": [
+        67720
+      ]
+    },
+    {
+      "key": "WEBSOCKET_API_URL",
+      "string_ids": [
+        18246
+      ]
+    }
+  ],
+  "graphql_routes": [
+    {
+      "route": "/graphql",
+      "string_ids": [
+        7308
+      ]
+    },
+    {
+      "route": "/graphql-no-auth",
+      "string_ids": [
+        7309
+      ]
+    }
+  ],
+  "local_protocol_symbols": [
+    {
+      "symbol": "LocalControl",
+      "string_ids": [
+        41647
+      ]
+    },
+    {
+      "symbol": "LocalControlReqCommand",
+      "string_ids": [
+        67576
+      ]
+    },
+    {
+      "symbol": "LocalControlReqCommand: OnResponse - Data (Bytes) = ",
+      "string_ids": [
+        13790
+      ]
+    },
+    {
+      "symbol": "LocalControlReqCommand: OnResponse - Key (Bytes) = ",
+      "string_ids": [
+        18411
+      ]
+    },
+    {
+      "symbol": "LocalControlReqCommand: OnResponse - decrypted Data = ",
+      "string_ids": [
+        18413
+      ]
+    },
+    {
+      "symbol": "LocalControlReqCommand: OnResponse - payload = ",
+      "string_ids": [
+        18414
+      ]
+    },
+    {
+      "symbol": "LocalControlReqPacket",
+      "string_ids": [
+        65749
+      ]
+    },
+    {
+      "symbol": "LocalControlReqPacket.ToJson() ",
+      "string_ids": [
+        1633
+      ]
+    },
+    {
+      "symbol": "MqttProxy",
+      "string_ids": [
+        43319
+      ]
+    },
+    {
+      "symbol": "MqttProxyControl",
+      "string_ids": [
+        43320
+      ]
+    },
+    {
+      "symbol": "SendLocalControlCommand",
+      "string_ids": [
+        47282
+      ]
+    },
+    {
+      "symbol": "SendLocalControlCommandRead",
+      "string_ids": [
+        47283
+      ]
+    },
+    {
+      "symbol": "SendLocalControlCommandWrite",
+      "string_ids": [
+        48788
+      ]
+    },
+    {
+      "symbol": "sendLocalControlCommand",
+      "string_ids": [
+        6816
+      ]
+    }
+  ],
+  "counts": {
+    "hermes_string_records": 80776,
+    "native_dex_files": 7,
+    "carrier_url_literals_hermes": 60,
+    "carrier_url_literals_native": 5,
+    "config_keys": 10,
+    "local_protocol_symbols": 14
+  }
+}

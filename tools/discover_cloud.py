@@ -125,7 +125,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--offline', action='store_true', help='Report APK-derived candidates only, without any network')
     parser.add_argument('--output', type=Path, help='Private JSON evidence output')
+    parser.add_argument('--timeout', type=float, default=5.0)
+    parser.add_argument('--max-assets', type=int, default=6)
     args = parser.parse_args(argv)
+    if not 1 <= args.timeout <= 15 or not 0 <= args.max_assets <= 24:
+        parser.error('timeout must be 1–15 and max-assets 0–24')
     root = Path(__file__).resolve().parents[1]
     native_path = root / 'research' / 'native-dex-findings.json'
     native = json.loads(native_path.read_text(encoding='utf-8')) if native_path.exists() else {}
@@ -134,7 +138,7 @@ def main(argv=None):
         'cloud_endpoints_from_native_apk': native.get('embedded_carrier_endpoints', []),
         'graphql_route_literals': ['/graphql', '/graphql-no-auth'],
         'runtime_configuration_keys': list(APPLICABLE_KEYS),
-        'public_portals': [] if args.offline else inspect_public_portals(),
+        'public_portals': [] if args.offline else inspect_public_portals(limit_assets=args.max_assets, timeout=args.timeout),
         'cloud_authenticated': False,
         'model_backend_confirmed': False,
     }
