@@ -58,13 +58,13 @@ Use a securely captured, user-authorized web login (or mobile app traffic metada
 
 ## Actual cloud development gates
 
-**C1:** Resolve production SmartHome host and selected login mechanism. **Unverified.**
+**C1:** Confirm a working Carrier GraphQL host and `assistedLogin` mechanism for this owner account. **PASS (live owner test 2026-10-22).**
 
-**C2:** Authenticate a test owner account with correct renewal strategy and safe storage. **Unverified.**
+**C2:** Authenticate owner account. **PASS (live owner test);** token renewal over time and long-term Home Assistant credential handling remain **untested**.
 
-**C3:** Match `getUserWithDevices` entry to a TSTATCCEWF-01, verify model and serial without publishing them. **Unverified.**
+**C3:** Discover entry-level devices: **PASS** with `entryLevelSystems` (one thermostat/zone). **Not yet resolved:** API reports `TSTATCCEEF-01`, while physical device label is `TSTATCCEWF-01`; API-to-physical serial correlation and secondary APK query still require verification.
 
-**C4:** Read and normalize thermostat climate status (modes, heat/cool setpoints, temperatures, humidity, connectivity). **Unverified.**
+**C4:** Read and normalize temperatures, modes, heat/cool setpoints, humidity and connectivity: **code/offline tests PASS; real telemetry values still unverified.** Smoke test `0.1.0a2` reports sanitized live values, distinguishing cloud offline from unknown connectivity.
 
 **C5:** Update and restore a single setpoint, respecting device limits and verifying feedback, without changing installer/safety settings. **Unverified.**
 

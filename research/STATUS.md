@@ -29,3 +29,12 @@ The device's IoT network is user-confirmed as `redacted.invalid/16`. A dedicated
 
 ### First targeted VLAN scan and follow-up
 Owner-run targeted scan completed 2026-10-22: 65,534 IPv4 addresses probed; 63 ICMP/neighbor candidates exclusively in redacted.invalid/24; 10 open TCP **port results**, with no confirmed thermostat identity. Original Windows route output was incomplete; corrected scanner code now uses `Get-NetRoute` and describes the result as route-table evidence only. Added `Run-Discovery.ps1 -ReviewOnly` to list already-detected devices/ports directly from the user's existing private JSON without repeating probes. The script never publishes private device information. The next evidence needed is a candidate IP/hostname or DHCP lease correlation, while cloud authentication research proceeds independently.
+
+
+## 2026-10-22: First authenticated native cloud test (owner supplied)
+
+- `assistedLogin` returned successfully; authenticated `entryLevelSystems` returned one thermostat and one zone. This is the first **owner-verified** cloud milestone.
+- Owner's test printed `Connected devices: 0`; cloud status is not the same as network ping. Thermostat had been removed from its mounting plate for label photography; actual reason and current online status are not proven.
+- Cloud `model` was `TSTATCCEEF-01`, physical label `TSTATCCEWF-01`. Do not remap these as if equivalent without device and API validation.
+- Alpha `0.1.0a2` adds sanitized zone telemetry and optional APK `getEntryLevelSystemData` cross-check; no write requests.
+- Next gate: device reports online and returns plausible current room temperature and setpoints; then install HA alpha. Native proprietary LAN protocol remains unverified. No Matter support.

@@ -1,6 +1,7 @@
 """Pure data normalization for Carrier entry-level thermostat responses."""
 from __future__ import annotations
 from typing import Any
+import re
 
 
 def _number(value: Any) -> float | None:
@@ -69,4 +70,51 @@ def sanitize_device_summary(systems: list[dict[str, Any]]) -> dict[str, Any]:
         "models": sorted({str(s.get("model")) for s in systems if s.get("model")}),
         "online_count": sum(_object(s.get("connection")).get("isConnected") is True for s in systems),
         "zone_count": sum(len(zone_indices(s)) for s in systems),
+        "offline_count": sum(_object(s.get("connection")).get("isConnected") is False for s in systems),
+        "unknown_connection_count": sum(type(_object(s.get("connection")).get("isConnected")) is not bool for s in systems),
     }
+
+
+def connectivity_state(system: dict[str, Any]) -> str:
+    """Do not confuse an absent isConnected field with a confirmed offline state."""
+    status = _object(system.get("connection")).get("isConnected")
+    if status is True:
+        return "online"
+    if status is False:
+        return "offline"
+    return "unknown"
+
+
+def sanitize_telemetry(systems: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Expose only climate fields; never include serials, device IDs, names or locations.
+
+    This output is safe to copy into issue reports even when cloud devices are
+    offline; an offline device can retain *stale* temperature values.
+    """
+    devices = []
+    for system in systems[:20]:
+        model = system.get("model")
+        if not isinstance(model, str) or not re.fullmatch(r"[A-Za-z0-9_-]{3,40}", model):
+            model = "unknown"
+        unit = temperature_unit(system.get("temp_unit_format")) or "unknown"
+        zones = []
+        for index in zone_indices(system)[:8]:
+            raw = get_zone(system, index)
+            if raw is None:
+                continue
+            values = zone_values(raw)
+            mode = values["mode"]
+            if not isinstance(mode, str) or mode not in {"off", "heat", "cool", "auto", "fanonly"}:
+                mode = "unknown"
+            zones.append({
+                "index": index,
+                "mode": mode,
+                "room_temperature": values["temperature"],
+                "heat_setpoint": values["heat_setpoint"],
+                "cool_setpoint": values["cool_setpoint"],
+                "humidity_percent": values["humidity"],
+                "outside_temperature": values["outside_temperature"],
+            })
+        devices.append({"model": model, "cloud_connection": connectivity_state(system),
+                        "temperature_unit": unit, "zones": zones})
+    return devices
