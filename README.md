@@ -22,36 +22,36 @@ This project is **not** the older Carrier Infinity custom integration. We are bu
 
 The app includes `getUserWithDevices`, `getEntryLevelSystemData`, `getEntryLevelSchedules`, `updateEntryLevelZone`, and `updateEntryLevelComfortProfile`. These are exact operation strings, not guessed API endpoints or validated responses. Cloud discovery must prove authentication, the active hostname, and the backend family for this model.
 
-## Zero-URL, zero-IP discovery on Windows
+## Targeted IoT VLAN discovery (known network)
 
-You do **not** need to know your thermostat's IP address or Carrier's cloud URL. Clone this private repository using your existing GitHub authentication and run:
+**Confirmed network:** the owner's Carrier thermostat is associated with **`redacted.invalid/16`**, *not* the computer's `192.168.0.x` LAN. No thermostat IP address has yet been identified. The scanner now targets **only** `redacted.invalid/16` by default, without requiring a thermostat IP, router login, or cloud URL.
+
+Run the **existing** entry point in Windows PowerShell:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Run-Discovery.ps1
 ```
 
-That script does three **read-only** things: discovers **all visible connected and specifically routed private LANs / IoT VLANs** (each limited to `/24`, eight networks by default), collects per-subnet ICMP/neighbor/TCP evidence, and displays native APK cloud service evidence. If Python is installed, it also inspects public Carrier portal JavaScript without logging in or asking for a token. Results are stored under `%LOCALAPPDATA%\CarrierSmartHome-Research\<UTC-date>`; they are **not** uploaded to GitHub.
-
-**IoT VLAN support:** If the thermostat is on a different private VLAN and your PC has a connected interface or specific route for it, the scanner finds the subnet automatically. If **only the primary LAN is reported**, a normal default gateway route does not reveal other VLAN subnet addresses. In that case, run discovery on a device connected to the IoT VLAN, or provide the actual authorized subnet from your router with `-AdditionalSubnets`. We **do not guess** an IoT CIDR. The default scan performs a bounded TCP connect sweep even for devices that ignore ping; use `-Quick` for a faster partial scan.
+The script performs a bounded 65,534-host **ICMP** discovery on the confirmed IoT network (up to 128 requests concurrently), then tests common TCP listeners **only on responding/neighbor-cache hosts**. This avoids sending six TCP connects to every address on the /16 by default. Response-free devices and blocked inter-VLAN traffic remain possible; absence from the report does **not** mean the thermostat was ruled out. The general 192.168 LAN **is not scanned**.
 
 ```powershell
-.\tools\Run-Discovery.ps1 -Quick
-.\tools\Run-Discovery.ps1 -MaxNetworks 12
-# Only when router VLAN settings confirm that subnet:
-.\tools\Run-Discovery.ps1 -AdditionalSubnets 'redacted.invalid/24'
+# Inspect the exact plan without network requests:
+.\tools\Discover-CarrierIoT.ps1 -PlanOnly
+# Optional thorough scan: include TCP 80/443 even when ping is blocked (more traffic/time):
+.\tools\Run-Discovery.ps1 -DeepIoT
+# Only when deliberately wanted: also scan other connected private networks:
+.\tools\Run-Discovery.ps1 -IncludeOtherNetworks
+# Limit the scan to a particular confirmed /24 inside the IoT VLAN:
+.\tools\Run-Discovery.ps1 -IoTSubnet 'redacted.invalid/24'
 ```
 
-`redacted.invalid/24` is a documentation example, **not a discovered network**. See [`research/VLAN_DISCOVERY.md`](research/VLAN_DISCOVERY.md) for routed-VLAN, mDNS, Matter/IPv6 limitations, and security boundaries.
+**Routing and Matter caveats:** Your Windows PC may send packets toward this VLAN via its existing router, but firewall rules can prevent replies. We do not add routes or bypass segmentation. Matter runs over IPv6/UDP and mDNS; an IPv4-only scan cannot establish a Matter endpoint or prove the absence of proprietary control. For mDNS on the IoT VLAN, use a scanner connected directly to that VLAN or a permitted mDNS reflector.
 
-More thorough cross-platform discovery (Python 3.10+; Windows/Linux) is also available:
+Reports go under `%LOCALAPPDATA%\CarrierSmartHome-Research\<UTC-date>` and may contain private IP/MAC information; **do not commit or post raw scans**. The cloud phase still investigates APK-derived services without guessed URLs, and an authenticated control request remains unverified.
 
-```bash
-python tools/auto_discover.py --list-only
-python tools/auto_discover.py --output carrier-private-local.json
-python tools/discover_cloud.py --output carrier-public-cloud.json
-```
+The original multi-network scanner remains available for general research as `tools/Probe-CarrierSmartHome.ps1`. The independent Python `tools/auto_discover.py` still enforces /24-sized scopes and is **not** the preferred scanner for this known /16.
 
-The private discovery JSON may contain LAN IP/MAC addresses. Keep it private. A detected TCP port or mDNS service does **not** identify a thermostat unless its MAC/hostname/serial is correlated.
+See [`research/IOT_VLAN_172_20.md`](research/IOT_VLAN_172_20.md) for scope, scan-depth tradeoffs, output details and limitations.
 
 ## Cloud-first next stage
 

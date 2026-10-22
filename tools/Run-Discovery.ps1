@@ -7,7 +7,11 @@ param(
     [switch]$NoTcp,
     [switch]$Quick,
     [string[]]$AdditionalSubnets = @(),
-    [int]$MaxNetworks = 8
+    [int]$MaxNetworks = 8,
+    [string]$IoTSubnet = '172.20.0.0/16',
+    [switch]$IncludeOtherNetworks,
+    [switch]$DeepIoT,
+    [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -16,6 +20,7 @@ $destination = Join-Path $env:LOCALAPPDATA ('CarrierSmartHome-Research\' + $stam
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
 Write-Host "`n=== CARRIER SMARTHOME AUTOMATIC DISCOVERY ===" -ForegroundColor Cyan
 Write-Host "Device model: TSTATCCEWF-01 | Research directory: $destination"
+Write-Host 'IoT target: 172.20.0.0/16 unless -IoTSubnet is supplied; 192.168 is excluded by default.'
 Write-Host 'No Carrier account credentials, thermostat IP, or API URL required.'
 
 $results = [ordered]@{
@@ -27,25 +32,6 @@ $results = [ordered]@{
     endpoint_authenticated = $false
     thermostat_ip_confirmed = $false
 }
-if (-not $SkipLocal) {
-    Write-Host "`n=== AUTOMATIC LOCAL LAN DISCOVERY ===" -ForegroundColor Cyan
-    $script = Join-Path $PSScriptRoot 'Probe-CarrierSmartHome.ps1'
-    try {
-        $params = @{Output = (Join-Path $destination 'lan-private.json')}
-        if ($NoTcp) {$params['NoPortProbe'] = $true}
-        if ($Quick) {$params['Quick'] = $true}
-        $params['AdditionalSubnets'] = $AdditionalSubnets
-        $params['MaxNetworks'] = $MaxNetworks
-        & $script @params
-        $results.local_discovery = 'completed; not model-confirmed'
-        $lan = Get-Content -LiteralPath $params['Output'] -Raw | ConvertFrom-Json
-        $results.local_networks_scanned = [int]$lan.networks_scanned
-        $results.local_network_cidrs = @($lan.network_results | ForEach-Object { $_.subnet })
-    } catch {
-        $results.local_discovery = 'failed'
-        Write-Warning ('Local discovery could not complete: ' + $_.Exception.Message)
-    }
-}
 Write-Host "`n=== OFFLINE CLOUD EVIDENCE ===" -ForegroundColor Cyan
 $report = Join-Path $repo 'research\transport-evidence.json'
 if (Test-Path -LiteralPath $report) {
@@ -54,7 +40,7 @@ if (Test-Path -LiteralPath $report) {
     $info.native_dex_urls | ForEach-Object {Write-Host ('  ' + $_.url)}
     Write-Host ('GraphQL paths: ' + (($info.graphql_routes | ForEach-Object {$_.route}) -join ', '))
 }
-if (-not $SkipPublicCloud) {
+if (-not $SkipPublicCloud -and -not $PlanOnly) {
     $py = Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($py) {
         Write-Host "`n=== PUBLIC PORTAL CONFIGURATION DISCOVERY ===" -ForegroundColor Cyan
@@ -65,6 +51,46 @@ if (-not $SkipPublicCloud) {
     } else {
         $results.cloud_discovery = 'Python not found; native APK evidence still available'
         Write-Warning 'Python was not detected; public cloud JavaScript discovery was skipped.'
+    }
+}
+
+if (-not $SkipLocal) {
+    Write-Host "`n=== TARGETED CARRIER IoT VLAN DISCOVERY ===" -ForegroundColor Cyan
+    $script = Join-Path $PSScriptRoot 'Discover-CarrierIoT.ps1'
+    try {
+        $params = @{ Subnet = $IoTSubnet; Output = (Join-Path $destination 'iot-private.json') }
+        if ($NoTcp) { $params['NoTcp'] = $true }
+        if ($DeepIoT) { $params['Deep'] = $true }
+        if ($PlanOnly) { $params['PlanOnly'] = $true }
+        # Quick only affects the optional general-LAN sweep; the IoT /16 ICMP sweep
+        # must remain complete rather than silently sampling 1/256 of the network.
+        & $script @params
+        if ($PlanOnly) {
+            $results.local_discovery = 'plan-only; no network probes'
+        } else {
+            $results.local_discovery = 'IoT network probed; thermostat not identified'
+            $iot = Get-Content -LiteralPath $params['Output'] -Raw | ConvertFrom-Json
+            $results.local_networks_scanned = 1
+            $results.local_network_cidrs = @($iot.target)
+            $results.iot_hosts_pinged = [int]$iot.addresses_pinged
+            $results.iot_candidates = @($iot.candidate_addresses).Count
+            $results.iot_tcp_listeners = @($iot.tcp_open).Count
+        }
+    } catch {
+        $results.local_discovery = 'failed'
+        Write-Warning ('IoT discovery failed: ' + $_.Exception.Message)
+    }
+    if ($IncludeOtherNetworks) {
+        Write-Host "`n=== OPTIONAL OTHER PRIVATE LAN DISCOVERY ===" -ForegroundColor Cyan
+        $general = Join-Path $PSScriptRoot 'Probe-CarrierSmartHome.ps1'
+        try {
+            $generalParams = @{Output = (Join-Path $destination 'other-lans-private.json')}
+            if ($NoTcp) {$generalParams['NoPortProbe'] = $true}
+            if ($Quick) {$generalParams['Quick'] = $true}
+            $generalParams['AdditionalSubnets'] = $AdditionalSubnets
+            $generalParams['MaxNetworks'] = $MaxNetworks
+            if (-not $PlanOnly) { & $general @generalParams }
+        } catch { Write-Warning ('Optional general LAN discovery failed: ' + $_.Exception.Message) }
     }
 }
 ($results | ConvertTo-Json -Depth 6) | Set-Content -Path (Join-Path $destination 'status.json') -Encoding UTF8
