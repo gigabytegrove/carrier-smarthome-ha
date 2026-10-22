@@ -1,7 +1,7 @@
 {
   "domain": "carrier_smarthome",
   "name": "Carrier SmartHome (Native Cloud Alpha)",
-  "version": "0.1.0a7",
+  "version": "0.1.0a8",
   "documentation": "https://github.com/gigabytegrove/carrier-smarthome-ha",
   "issue_tracker": "https://github.com/gigabytegrove/carrier-smarthome-ha/issues",
   "codeowners": [],

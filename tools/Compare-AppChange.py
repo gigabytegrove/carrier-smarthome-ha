@@ -34,15 +34,9 @@ from models import connectivity_state, get_zone, zone_indices, zone_values  # no
 # Only whitelisted, control-relevant fields can appear on screen.
 TARGET_FIELDS = ("heat_setpoint", "cool_setpoint")
 DISPLAY_FIELDS = TARGET_FIELDS + ("mode", "fan_mode", "schedule_enabled")
-
-def deviations_from_baseline(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
-    """Return every known thermostat field that has not been restored."""
-    return [field for field in DISPLAY_FIELDS
-            if before.get(field) is not None and after.get(field) != before[field]]
-
-def fully_restored(before: dict[str, Any], after: dict[str, Any]) -> bool:
-    """Check the whole observed state, not only a changed setpoint."""
-    return bool(before) and bool(after) and not deviations_from_baseline(before, after)
+# All observable baseline settings must match before claiming complete restoration.
+# A setpoint-only restoration is NOT proof that HVAC mode or the other target
+# returned to their original states.
 
 
 def clean_values(raw_zone: dict[str, Any]) -> dict[str, Any]:
@@ -58,22 +52,50 @@ def changed_targets(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
 
 
 def matches_baseline(original: dict[str, Any], current: dict[str, Any], fields: list[str]) -> bool:
-    """Restore confirmation requires a known baseline for every modified field."""
+    """Restore confirmation requires a known baseline for every requested field."""
     return bool(fields) and all(original.get(k) is not None
                                 and current.get(k) == original.get(k) for k in fields)
 
 
+def baseline_differences(original: dict[str, Any], current: dict[str, Any]) -> list[str]:
+    """Compare all readable settings, not just the setpoint chosen for the test.
+
+    Unknown baseline fields cannot be verified and are omitted. Missing values
+    for known baseline fields count as differences, never as a successful restore.
+    """
+    return [key for key in DISPLAY_FIELDS if original.get(key) is not None
+            and current.get(key) != original[key]]
+
+
+def matches_complete_baseline(original: dict[str, Any], current: dict[str, Any]) -> bool:
+    """Require both original setpoints and all known displayed settings."""
+    return (bool(original) and all(original.get(key) is not None for key in TARGET_FIELDS)
+            and not baseline_differences(original, current))
+
+
+def deviations_from_baseline(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+    """Preserve the Alpha 6 hotfix's baseline-difference helper."""
+    return baseline_differences(before, after)
+
+
+def fully_restored(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    """Preserve the Alpha 6 hotfix API with stricter required setpoint checking."""
+    return matches_complete_baseline(before, after)
+
+
 def interpretation(before: dict[str, Any], middle: dict[str, Any] | None,
                    restored: dict[str, Any] | None) -> str:
-    """Strictly classify what the GraphQL pair actually demonstrated."""
+    """Strictly classify both setpoint detection and all observable restoration."""
     if middle is None:
         return "NO_SETPOINT_CHANGE_OBSERVED"
     changes = changed_targets(before, middle)
     if not changes:
         return "NO_SETPOINT_CHANGE_OBSERVED"
-    if restored is None or not fully_restored(before, restored):
+    if restored is None or not matches_baseline(before, restored, changes):
         return "SETPOINT_CHANGE_OBSERVED_RESTORE_NOT_CONFIRMED"
-    return "APP_TO_GRAPHQL_CHANGE_AND_RESTORE_CONFIRMED"
+    if not matches_complete_baseline(before, restored):
+        return "SETPOINT_RESTORED_OTHER_SETTINGS_DIFFER"
+    return "APP_TO_GRAPHQL_CHANGE_AND_FULL_OBSERVED_BASELINE_RESTORE_CONFIRMED"
 
 
 def display(label: str, snapshot: dict[str, Any]) -> None:
@@ -139,9 +161,13 @@ async def read_sequence(client: CarrierSmartHomeClient, serial: str, index: int,
                 observed = last
                 break
         else:
-            if all(fully_restored(baseline[source], last[source])
-                   for source in ("list", "detail") if baseline[source]):
-                print("  All observed baseline settings restored in both GraphQL sources.")
+            # ALL known baseline fields must match in ALL readable query views.
+            # Merely seeing the chosen cooling setpoint restored missed a prior
+            # field-test's changed HVAC mode and changed heating setpoint.
+            sources = [src for src in ("list", "detail")
+                       if all(baseline[src].get(key) is not None for key in TARGET_FIELDS)]
+            if sources and all(matches_complete_baseline(baseline[src], last[src]) for src in sources):
+                print("  Every recorded baseline setting restored in all readable GraphQL sources.")
                 observed = last
                 break
     return observed, last
@@ -160,7 +186,7 @@ async def exercise(args: argparse.Namespace) -> int:
         return 2
     print("\nCARRIER SMARTHOME | OFFICIAL APP ↔ NATIVE GRAPHQL TEST")
     print("This script sends READS ONLY. It cannot change or restore HVAC settings.")
-    print("If you make a change in the app, manually restore it even if this test fails.")
+    print("If you make a change in the app, manually restore ALL baseline settings even if this test fails.")
     async with aiohttp.ClientSession(trust_env=False) as session:
         client = CarrierSmartHomeClient(session, username, password)
         systems = await client.async_get_systems()
@@ -182,7 +208,7 @@ async def exercise(args: argparse.Namespace) -> int:
         if not all(baseline["list"].get(field) is not None for field in TARGET_FIELDS):
             print("STOP: Carrier did not provide both setpoints; cannot verify restoration.")
             return 5
-        print("\nRecord BOTH original setpoints displayed above.")
+        print("\nRecord BOTH original setpoints AND the original HVAC mode, fan mode and schedule state displayed above.")
         print("In the official Carrier SmartHome app, change ONE setpoint by 1 degree")
         print("(prefer cooling) and verify the app accepts it. Do not change HVAC mode.")
         print("Only do this if you can safely restore the original setting.")
@@ -198,19 +224,19 @@ async def exercise(args: argparse.Namespace) -> int:
         changed = sorted(set(found["list"] + found["detail"]))
         print("\nCHANGE RESULT:", ", ".join(
             f"{source}={','.join(changes) if changes else 'no_change'}" for source, changes in found.items()))
-        print("IMPORTANT: Restore the original setpoint in the official app NOW, regardless of the result.")
-        if not prompt_step("STEP 2 — Restore the exact original app setpoint and confirm in the app."):
+        print("IMPORTANT: Restore ALL original observed settings in the official app NOW, including HVAC mode, both setpoints, fan and schedule.")
+        if not prompt_step("STEP 2 — Restore original heat/cool targets AND mode/fan/schedule in the app."):
             print("RESTORE NOT VERIFIED — manually check the official Carrier app.")
             return 6
         # Do not claim restoration when there is no observed intermediate change.
         restored_read: dict[str, Any] | None = None
         if changed:
-            restored_read, last_restore = await read_sequence(
+            restored_read, final_read = await read_sequence(
                 client, serial, index, baseline, attempts=args.samples, interval=args.interval,
                 label="AFTER APP RESTORE", changed=found,
             )
         else:
-            restored_read, _ = await read_sequence(
+            restored_read, final_read = await read_sequence(
                 client, serial, index, baseline, attempts=1, interval=args.interval,
                 label="AFTER APP RESTORE", changed={},
             )
@@ -225,28 +251,31 @@ async def exercise(args: argparse.Namespace) -> int:
         print("\nFINAL READ-ONLY RESULTS")
         for source, result in classifications.items():
             print(f"  {source}: {result}")
-        print("  GraphQL status flag (not physical connectivity):", last_changed["connection"])
-        final_snapshot = restored_read or last_restore
-        remaining = {}
+        print("  GraphQL status flag (not physical connectivity):", final_read["connection"])
+        all_differences = {}
         for source in ("list", "detail"):
-            if baseline[source] and final_snapshot[source]:
-                remaining[source] = deviations_from_baseline(baseline[source], final_snapshot[source])
-        for source, fields in remaining.items():
-            if fields:
-                print(f"  WARNING {source}: baseline mismatch in {', '.join(fields)}")
-        complete = bool(changed) and all(
-            fully_restored(baseline[source], final_snapshot[source])
-            for source in ("list", "detail") if baseline[source]
-        )
-        if changed and not complete:
-            print("FULL RESTORE NOT CONFIRMED: check heat, cool, mode, fan and schedule in Carrier's app.")
+            if not baseline[source]:
+                continue
+            discrepancies = baseline_differences(baseline[source], final_read[source])
+            if discrepancies:
+                all_differences[source] = discrepancies
+                for key in discrepancies:
+                    # Explicitly expose only the five whitelisted thermostat fields.
+                    print(f"  RESTORE MISMATCH {source}.{key}: "
+                          f"original={baseline[source].get(key)} "
+                          f"final={final_read[source].get(key)}")
         print("  No mutation or Matter request was sent; credentials and serial were sent only to Carrier for login/reads.")
         print("  No account identifiers, passwords, tokens, hardware IDs or device names were printed or saved.")
+        if all_differences:
+            print("WARNING: FULL RESTORATION FAILED. Restore ALL original settings in the official app.")
+            return 7
         if changed and not restored_read:
-            print("WARNING: Cloud restoration was NOT confirmed. Check the original targets in the app.")
+            print("WARNING: Cloud restoration was NOT confirmed. Check the original settings in the app.")
+            return 6
         if not changed:
-            print("The phone app may use a different backend, or these GraphQL views may cache the values.")
-        return 0 if not changed or complete else 7
+            print("No app-setpoint change was verified; this is NOT a passed change-and-restore test.")
+            return 8
+        return 0
 
 
 def main() -> int:
