@@ -36,12 +36,12 @@ class Alpha10ContractTests(unittest.TestCase):
     def test_cloud_write_protection_and_version(self):
         src = (PKG / "control.py").read_text()
         self.assertIn("async with coordinator.write_lock", src)
-        self.assertIn("await coordinator.async_request_refresh()", src)
+        self.assertIn("await coordinator.async_refresh()", src)
         self.assertIn("Carrier thermostat disconnected", src)
         self.assertIn("math.isfinite", src)
         self.assertNotIn("Enable experimental Carrier", src)
-        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.0")
-        self.assertIn('carrier-smarthome-ha/0.5.0', (PKG / "api.py").read_text())
+        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.1")
+        self.assertIn('carrier-smarthome-ha/0.5.1', (PKG / "api.py").read_text())
 
 
 if __name__ == "__main__":
