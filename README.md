@@ -1,8 +1,29 @@
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a2` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a3` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
+
+## Alpha 3: installation and owner-side verification
+
+The October 22 owner-side read-only cloud test authenticated successfully and loaded a Carrier entry-level thermostat (one zone). Its *cloud-reported* model is `TSTATCCEEF-01`, different from the physical `TSTATCCEWF-01` label. The cloud currently says **offline**, so the reported room temperature and setpoints may be cached. These readings are not proof of live control. The first actual Home Assistant installation remains untested.
+
+**Test commands on Windows (inside a clone of this repo):**
+
+```powershell
+# First-time: creates an isolated Python environment, then tests native Carrier login.
+.\tools\Test-Cloud.ps1
+# Later: reuses the environment; records privacy-safe changes over 3 samples.
+.\tools\Observe-Cloud.ps1 -Samples 3 -IntervalSeconds 60
+# Additional read-only APK-derived endpoint discovery; no HVAC changes.
+.\tools\Probe-CloudFeatures.ps1
+# Verify a CURRENT Omada lease before single-host TCP checks (plan only).
+.\tools\Probe-VerifiedCarrierLAN.ps1 -PlanOnly
+```
+
+**Home Assistant install:** Copy `custom_components/carrier_smarthome` to `/config/custom_components/carrier_smarthome` on your HA server, restart Home Assistant, then select **Settings → Devices & services → Add integration → Carrier SmartHome (Native Cloud Alpha)**. Enter your account credentials in the HA setup UI. Climate, outdoor temperature, humidity and cloud connectivity entities should appear if setup succeeds. **Experimental thermostat controls are OFF by default; leave them off while Carrier reports the thermostat offline.** Unknown live behavior is an alpha limitation—not a successful test. After any installed update, restart or reload the integration.
+
+Cloud API credentials are collected on your own machine and never committed. This project does **not** implement Matter. For detailed claims and evidence gates see [`research/VERIFIED_CLOUD_PROTOCOL.md`](research/VERIFIED_CLOUD_PROTOCOL.md) and [`research/ALPHA3_TEST_MATRIX.md`](research/ALPHA3_TEST_MATRIX.md).
 
 ## What we extracted from the actual XAPK
 
@@ -24,7 +45,7 @@ The app includes `getUserWithDevices`, `getEntryLevelSystemData`, `getEntryLevel
 
 ## Targeted IoT VLAN discovery (known network)
 
-**Confirmed network:** the owner's Carrier thermostat is associated with **`172.20.0.0/16`**, *not* the computer's `192.168.0.x` LAN. No thermostat IP address has yet been identified. The scanner now targets **only** `172.20.0.0/16` by default, without requiring a thermostat IP, router login, or cloud URL.
+**Confirmed network:** the owner's Carrier thermostat is associated with **`172.20.0.0/16`**, *not* the computer's `192.168.0.x` LAN. Historical Omada client export associates the thermostat with a last-known IP; this is not a confirmed current DHCP lease. The scanner now targets **only** `172.20.0.0/16` by default, without requiring a thermostat IP, router login, or cloud URL.
 
 **Already ran the full sweep?** Use the saved results; **do not scan the `/16` again** just to obtain a device list:
 
@@ -53,7 +74,7 @@ The script performs a bounded 65,534-host **ICMP** discovery on the confirmed Io
 .\tools\Run-Discovery.ps1 -IoTSubnet '172.20.64.0/24'
 ```
 
-**Routing and Matter caveats:** Your Windows PC may send packets toward this VLAN via its existing router, but firewall rules can prevent replies. We do not add routes or bypass segmentation. Matter runs over IPv6/UDP and mDNS; an IPv4-only scan cannot establish a Matter endpoint or prove the absence of proprietary control. For mDNS on the IoT VLAN, use a scanner connected directly to that VLAN or a permitted mDNS reflector.
+**Routing and Matter caveats:** Your Windows PC may send packets toward this VLAN via its existing router, but firewall rules can prevent replies. We do not add routes or bypass segmentation. Matter runs over IPv6/UDP and mDNS; an IPv4-only scan cannot establish a Matter endpoint or prove the absence of proprietary control. This project does not commission devices with Matter; no mDNS or Matter discovery substitutes for a demonstrated proprietary Carrier LAN protocol.
 
 Reports go under `%LOCALAPPDATA%\CarrierSmartHome-Research\<UTC-date>` and may contain private IP/MAC information; **do not commit or post raw scans**. The cloud phase still investigates APK-derived services without guessed URLs, and an authenticated control request remains unverified.
 
@@ -65,7 +86,7 @@ See [`research/IOT_VLAN_172_20.md`](research/IOT_VLAN_172_20.md) for scope, scan
 
 1. **Static extraction complete:** `research/transport-evidence.json`, `research/native-dex-findings.json`, `research/graphql/`, and `research/graphql-catalog.json` contain source-tagged evidence.
 2. **Endpoint proof:** On 2026-10-22 an owner-run read-only test successfully authenticated at the APK-derived GraphQL service and discovered one entry-level device and one zone. The backend returned model `TSTATCCEEF-01`, while the thermostat label identifies `TSTATCCEWF-01`; this mapping is unresolved. Cloud connection was reported offline at test time.
-3. **User-authorized session capture:** When needed, capture a browser session from Carrier SmartHome's existing web portal, then analyze **locally** with `python tools/analyze_har.py private.har --output safe-capture-summary.json`. The analyzer records only Carrier hosts, safe route patterns, GraphQL operation names, variable names, and authentication **mechanism**, never values. Never publish/upload the original HAR.
+3. **Optional user-authorized session capture:** When needed, capture a browser session from Carrier SmartHome's existing web portal, then analyze **locally** with `python tools/analyze_har.py private.har --output safe-capture-summary.json`. The analyzer records only Carrier hosts, safe route patterns, GraphQL operation names, variable names, and authentication **mechanism**, never values. Never publish/upload the original HAR.
 4. **Authenticated owner query:** The `entryLevelSystems` login/list flow now works on a real account. The detailed APK query is added as an optional read-only cross-check in the smoke test. No secrets or device serials are printed.
 5. **Write controls:** Only after reading actual schema, verify reversible heat/cool setpoint changes; add schedule/profile writes later.
 6. **Home Assistant package:** An installable native cloud alpha is now provided under `custom_components/carrier_smarthome`; device discovery works outside HA. HA runtime and actual write operations are not yet owner-verified, and controls remain opt-in.
@@ -75,7 +96,7 @@ See [`research/IOT_VLAN_172_20.md`](research/IOT_VLAN_172_20.md) for scope, scan
 ## Local investigation in parallel
 
 - DHCP/ARP/MAC and subnet discovery → automatically identify **candidate** IPs.
-- mDNS → check Matter discovery, especially Matter operational IPv6/UDP behavior.
+- Read-only protocol fingerprinting only after a **current online Omada MAC/IP identity match**; no Matter protocol.
 - Optional bounded TCP connects (no HTTP commands, no login, no MQTT publishes).
 - Correlate a cloud-reported `connection.macaddress` or `connection.deviceId` to LAN neighbors when authenticated API listing is working.
 - APK symbols `LocalControlReqPacket`, `SendLocalControlCommandRead`, `SendLocalControlCommandWrite`, and `MqttProxy` are **research leads only**. They may apply to another SmartHome product.
@@ -93,7 +114,7 @@ Testing is offline: simulated GraphQL responses, URL safety, HAR secret redactio
 
 - No APK/XAPK binary or decrypted secrets committed. Never publish captured authorization headers, session cookies, device serial numbers or raw HAR files.
 - All network probes are read-only. TCP connect tests are limited to visible, specifically routed, or authorized RFC1918 subnets (maximum /24 each); no attempt to bypass authentication or certificate pinning.
-- The thermostat's Matter support is separate from proprietary cloud control; proprietary LAN API support remains unproven.
+- Matter is explicitly excluded. Proprietary LAN API support remains unproven.
 - Document evidence sources precisely and label **unverified** conclusions. The authenticated TSTATCCEWF-01 read/write path has **not** yet been exercised.
 
 See `research/ANALYSIS_REPORT.md`, `research/CLOUD_PROTOCOL.md`, `research/LOCAL_PROTOCOL.md`, `research/TEST_PLAN.md`, and `research/STATUS.md`.

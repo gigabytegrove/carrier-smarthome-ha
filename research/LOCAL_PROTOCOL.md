@@ -21,7 +21,7 @@ Hermes and native identifiers include `LocalControl`, `LocalControlReqPacket`, `
 
 Once C3 provides `connection.macaddress` and the owner has run the local probe, compare the reported MAC to LAN neighbor-cache MACs. A match becomes strong device identity evidence, subject to VLAN bridges, MAC randomization, and the cloud returning a different interface MAC. DHCP lease name/manufacturer is supporting evidence, not conclusive.
 
-With a confirmed IP, only then inspect open ports and protocol fingerprints with read-only requests. For Matter, use Home Assistant's official Matter server and normal commissioning, not raw proprietary probes. Never send guessed MQTT payloads or installers' commands.
+With a confirmed IP, only then inspect open ports and protocol fingerprints with read-only requests. Matter is explicitly out of scope. Never send guessed MQTT payloads, BLE provisioning commands or installer commands.
 
 ## Local progress criteria
 
@@ -33,8 +33,13 @@ With a confirmed IP, only then inspect open ports and protocol fingerprints with
 
 **L4:** If there is an authenticated proprietary LAN protocol, document read-only session setup and one proven request. **Unknown.**
 
-**L5:** Preserve Matter as standard local basic control and avoid duplicate/reentrant climate commands from cloud vs Matter. **Design requirement.**
+**L5:** No Matter transport, dependencies or fallback. Proprietary native local control must be proven independently or remain unsupported. **Locked requirement.**
 
 ## Multi-VLAN discovery update (2026-10-22)
 
 The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `192.168.0.0/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
+
+
+## October 22, 2026 update
+
+Omada offline export identified the physical unit by MAC/label suffix. Its last-known IPv4 address is **not** a current lease. `tools/Probe-VerifiedCarrierLAN.py` now requires a matching, currently CONNECTED Omada export before probing common TCP listener ports on exactly one approved IPv4 host. It does not send HTTP, MQTT, BLE, Matter or thermostat control commands. Public Carrier Quick Start instructions confirm BLE-based **onboarding**, not native LAN control. Do not infer a local API from the app's `LocalControl` strings.
