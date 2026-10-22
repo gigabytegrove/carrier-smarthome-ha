@@ -19,6 +19,7 @@ def module(path, name):
 cloud = module('tools/discover_cloud.py', 'cloud_discovery')
 native = module('research/analyze_native_apk.py', 'native_analyzer')
 catalog = module('research/build_graphql_catalog.py', 'graphql_catalog')
+probe = module('tools/probe_cloud.py', 'cloud_probe')
 
 
 class CloudDiscoveryTests(unittest.TestCase):
@@ -39,6 +40,21 @@ class CloudDiscoveryTests(unittest.TestCase):
         data = cloud.public_evidence('const REST_API_URL="https://api.carrier.com/graphql?access_token=SECRET";')
         self.assertEqual(data['embedded_api_config'], [{'key': 'REST_API_URL', 'value': 'https://api.carrier.com/graphql'}])
         self.assertNotIn('SECRET', str(data))
+
+
+class AuthenticatedQueryToolTests(unittest.TestCase):
+    def test_requires_explicit_observed_url(self):
+        data = {'public_portals': [{'status': 'public_html_retrieved',
+                'embedded_api_config': [{'key': 'HASURA_API_URL',
+                'value': 'https://api.carrier.com/graphql'}]}]}
+        self.assertEqual(probe.endpoint_from_discovery(data), 'https://api.carrier.com/graphql')
+        for invalid in ({'public_portals': []},
+                        {'public_portals': [{'status': 'public_html_retrieved',
+                          'embedded_api_config': [{'key': 'API_URL', 'value': 'https://api.carrier.com'}]}]},
+                        {'public_portals': [{'status': 'public_html_retrieved',
+                          'embedded_api_config': [{'key': 'HASURA_API_URL', 'value': 'https://evil.example/graphql'}]}]}):
+            with self.assertRaises(ValueError):
+                probe.endpoint_from_discovery(invalid)
 
 
 class NativeDexTests(unittest.TestCase):

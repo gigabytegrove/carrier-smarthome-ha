@@ -12,7 +12,7 @@ Unofficial, experimental research project for **Carrier Smart Thermostat TSTATCC
 - GraphQL route strings `/graphql` and `/graphql-no-auth`; runtime config keys `HASURA_API_URL`, `REST_API_URL`, `ENTRY_TIER_ENV_URL`, `OKTA_TOKEN_URL` and related settings.
 - Proprietary `LocalControl`/MQTT symbols in Hermes; applicability to **this thermostat** remains **unproven**.
 
-See [full GraphQL inventory](research/GRAPHQL_CATALOG.md), [DEX findings](research/native-dex-findings.json), [APK report](research/ANALYSIS_REPORT.md), and [evidence ledger](research/STATUS.md).
+See [full GraphQL inventory](research/GRAPHQL_CATALOG.md), [native DEX findings](research/native-dex-findings.json), [auth findings](research/AUTHENTICATION_FINDINGS.md), [APK report](research/ANALYSIS_REPORT.md), and [evidence ledger](research/STATUS.md).
 
 ## Zero-knowledge discovery: you do NOT supply a thermostat IP or API host
 
@@ -57,7 +57,7 @@ Pass no arguments to query Matter-related local multicast advertisements and you
 5. Add proper Home Assistant config flow, climate entity, capability-backed sensors, rate-limited coordinator, reauth and diagnostics.
 6. Validate Matter/local discovery independently and see whether any **additional**, device-specific proprietary LAN API is available. Keep local and cloud experiments separate so that one cannot interfere with the other.
 
-Existing `tools/probe_cloud.py` is an explicit authorized **read-only GraphQL** tool. It requires an actual observed endpoint and session token because the login process is not yet established. It is **not** the recommended first step; `discover_cloud.py` now handles initial endpoint research automatically.
+Existing `tools/probe_cloud.py` is an explicit authorized **read-only GraphQL** tool. Once a discovery report contains exactly one explicitly observed Carrier HASURA GraphQL URL, it can use `--discovery-report` instead of asking for that URL. It still requires an account-authorized session token because the actual login process is not yet established. It is **not** the recommended first step; `discover_cloud.py` now handles initial endpoint research automatically.
 
 ## Repository structure
 

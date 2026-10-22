@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Explicit, read-only GraphQL check. Requires user-supplied authorized endpoint/token.
+"""Explicit, read-only GraphQL check using an observed endpoint and authorized token.
 
-Never auto-guesses Carrier hostnames, handles logins, or prints response values.
+Supply --discovery-report from discover_cloud.py to avoid having to know an API URL.
+Does not guess hostnames, log in, or print response values.
 """
 from __future__ import annotations
 import argparse
@@ -32,15 +33,50 @@ def inspect_shape(value, depth=0):
     return type(value).__name__
 
 
+def endpoint_from_discovery(report: dict) -> str:
+    """Select only one explicit authenticated GraphQL URL recovered from public JS.
+
+    Never build guessed /graphql routes onto static APK IoT hostnames.
+    """
+    configs = []
+    for site in report.get('public_portals', []):
+        if site.get('status') != 'public_html_retrieved':
+            continue
+        for item in site.get('embedded_api_config', []):
+            if item.get('key') != 'HASURA_API_URL':
+                continue
+            value = item.get('value')
+            if not isinstance(value, str):
+                continue
+            url = urlsplit(value)
+            if (url.scheme == 'https' and url.hostname and
+                    (url.hostname == 'carrier.com' or url.hostname.endswith('.carrier.com')) and
+                    not url.username and not url.password and url.path not in ('', '/') and
+                    'graphql' in url.path.lower()):
+                configs.append(value)
+    configs = sorted(set(configs))
+    if len(configs) != 1:
+        raise ValueError('Discovery did not establish exactly one public, explicit Carrier GraphQL endpoint')
+    return configs[0]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--endpoint', required=True, help='HTTPS GraphQL URL observed in the official app/browser')
+    parser.add_argument('--endpoint', help='HTTPS GraphQL URL observed in the official app/browser')
+    parser.add_argument('--discovery-report', type=Path, help='Auto-generated JSON from tools/discover_cloud.py')
     parser.add_argument('--query', required=True, type=Path, help='Read-only GraphQL query .graphql file')
     parser.add_argument('--variables', type=Path, help='JSON file of GraphQL variables (keep private)')
     parser.add_argument('--token-file', type=Path, help='Plain Bearer token file (keep private)')
     parser.add_argument('--prompt-token', action='store_true', help='Enter access token without echo')
     parser.add_argument('--timeout', type=float, default=12.0)
     args = parser.parse_args(argv)
+    if bool(args.endpoint) == bool(args.discovery_report):
+        parser.error('Choose exactly one of --endpoint or --discovery-report')
+    if args.discovery_report:
+        try:
+            args.endpoint = endpoint_from_discovery(json.loads(args.discovery_report.read_text(encoding='utf-8')))
+        except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError) as exc:
+            parser.error(f'Cannot resolve a verified GraphQL URL from discovery report: {exc}')
     url = urlsplit(args.endpoint)
     if url.scheme != 'https' or not url.hostname or url.username or url.password or url.fragment:
         parser.error('Endpoint must be an HTTPS URL without embedded credentials or a fragment')
