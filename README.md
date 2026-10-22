@@ -4,6 +4,20 @@
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
+## Install with HACS (public repository)
+
+This repository is public and includes `hacs.json` and a valid custom integration at `custom_components/carrier_smarthome/`. To install the current **0.1.0a3 experimental build**:
+
+1. In Home Assistant, open **HACS → three-dot menu → Custom repositories**.
+2. Paste `https://github.com/gigabytegrove/carrier-smarthome-ha` and select **Integration** as the category.
+3. Add the repository, find **Carrier SmartHome Native** in HACS, and select **Download**. If HACS offers a version selection, choose **main** (this repository may not yet have a tagged GitHub release).
+4. Restart Home Assistant, then open **Settings → Devices & services → Add integration**, search **Carrier SmartHome (Native Cloud Alpha)**, and sign into your own Carrier SmartHome account.
+5. Keep **experimental controls disabled** during the first test. The thermostat last reported *offline* in the Carrier cloud; cached readings are possible.
+
+This is a **custom repository**, not a listing in the HACS default catalog. Installing it does **not** require Matter. HACS download only installs code; Home Assistant setup is still required.
+
+**Public-repository privacy notice:** Research notes and commit history may contain historical local-network details. Never commit raw Omada client exports, actual device serials, account credentials, authentication captures, or pairing information. Removing a detail from the current README does not remove it from Git history.
+
 ## Alpha 3: installation and owner-side verification
 
 The October 22 owner-side read-only cloud test authenticated successfully and loaded a Carrier entry-level thermostat (one zone). Its *cloud-reported* model is `TSTATCCEEF-01`, different from the physical `TSTATCCEWF-01` label. The cloud currently says **offline**, so the reported room temperature and setpoints may be cached. These readings are not proof of live control. The first actual Home Assistant installation remains untested.
