@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
+import time
+from datetime import datetime, timedelta, timezone
 from copy import deepcopy
 
 from homeassistant.config_entries import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import CarrierAuthError, CarrierError, CarrierRateLimitError, CarrierSmartHomeClient
-from .const import DOMAIN, POLL_INTERVAL
+from .const import DOMAIN, POLL_INTERVAL, TRANSIENT_GRACE_SECONDS, MAX_POLL_BACKOFF_SECONDS
 from .models import connectivity_state, zone_indices, get_zone, zone_values
 
 
@@ -22,6 +25,49 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.write_lock = asyncio.Lock()
         # Remember only a mode Carrier actually reported, never guess a default.
         self._last_non_off_modes: dict[tuple[str, int], str] = {}
+        # These fields contain only status/timing, never credentials or IDs.
+        self.last_poll_utc: str | None = None
+        self.last_error_kind: str | None = None
+        self.last_error_utc: str | None = None
+        self.consecutive_errors = 0
+        self._last_success_monotonic: float | None = None
+        self._next_poll_not_before = 0.0
+
+    @property
+    def seconds_since_success(self) -> int | None:
+        if self._last_success_monotonic is None:
+            return None
+        return max(0, int(time.monotonic() - self._last_success_monotonic))
+
+    @property
+    def next_poll_wait_seconds(self) -> int:
+        return max(0, math.ceil(self._next_poll_not_before - time.monotonic()))
+
+    @property
+    def telemetry_usable(self) -> bool:
+        """Bridge one short cloud failure, never an explicit device offline flag.
+
+        HA may show the last online readings briefly while API recovery is in
+        progress. Writes cannot use these readings: the command preflight
+        always requires coordinator.last_update_success.
+        """
+        age = self.seconds_since_success
+        return bool(self.data and
+                    (self.last_update_success or
+                     (age is not None and age <= TRANSIENT_GRACE_SECONDS)))
+
+    @property
+    def telemetry_in_grace(self) -> bool:
+        return bool(not self.last_update_success and self.telemetry_usable)
+
+    def _failure(self, kind: str, wait_seconds: float) -> None:
+        self.last_error_kind = kind
+        self.last_error_utc = datetime.now(timezone.utc).isoformat()
+        self.consecutive_errors += 1
+        delay = max(POLL_INTERVAL.total_seconds(), min(MAX_POLL_BACKOFF_SECONDS, wait_seconds))
+        self._next_poll_not_before = max(self._next_poll_not_before, time.monotonic() + delay)
+        self.update_interval = timedelta(seconds=delay)
+
 
     def last_non_off_mode(self, serial: str, index: int) -> str | None:
         return self._last_non_off_modes.get((serial, index))
@@ -80,14 +126,34 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         return False
 
     async def _async_update_data(self) -> dict[str, dict]:
+        # Don't hit Carrier again during Retry-After / bounded transport backoff.
+        if self.next_poll_wait_seconds:
+            raise UpdateFailed("Carrier cloud recovery cooldown active")
         try:
             systems = await self.client.async_get_systems()
         except CarrierAuthError as exc:
+            self._failure("authentication", POLL_INTERVAL.total_seconds())
             raise ConfigEntryAuthFailed("Carrier SmartHome authentication failed") from exc
         except CarrierRateLimitError as exc:
-            raise UpdateFailed("Carrier requested slower polling", retry_after=exc.retry_after) from exc
+            self._failure("rate_limited", exc.retry_after)
+            # UpdateFailed does not have a public retry_after keyword contract.
+            raise UpdateFailed("Carrier rate-limited polling; respecting Retry-After") from exc
         except CarrierError as exc:
-            raise UpdateFailed("Carrier SmartHome could not load devices") from exc
+            retry = min(MAX_POLL_BACKOFF_SECONDS, POLL_INTERVAL.total_seconds() * (2 ** min(self.consecutive_errors, 3)))
+            self._failure("transport_or_graphql", retry)
+            raise UpdateFailed("Carrier SmartHome cloud request failed; will retry") from exc
+        # A transient empty listing must not erase a previously discovered
+        # thermostat and make all entities unavailable without explanation.
+        if not systems and self.data:
+            self._failure("empty_listing", POLL_INTERVAL.total_seconds())
+            raise UpdateFailed("Carrier temporarily returned no thermostats; preserving last-known records")
+        # Only mark data fresh when the query actually completed successfully.
+        self._last_success_monotonic = time.monotonic()
+        self.last_poll_utc = datetime.now(timezone.utc).isoformat()
+        self.last_error_kind = None
+        self.consecutive_errors = 0
+        self._next_poll_not_before = 0.0
+        self.update_interval = POLL_INTERVAL
         result: dict[str, dict] = {}
         for system in systems:
             serial = system.get("serial")

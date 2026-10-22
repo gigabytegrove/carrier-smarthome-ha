@@ -176,13 +176,15 @@ class CarrierSmartHomeClient:
         self._expires = 0.0
         self._lock = asyncio.Lock()
         self._discovery_method = "systems"
+        # Honor Carrier HTTP 429 across listing, detail, and writes.
+        self._rate_limit_until = 0.0
 
     async def _post(self, url: str, data: Mapping[str, Any], *, token: str | None = None,
                     form: bool = False) -> dict[str, Any]:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.5.4"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.5.5"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
@@ -192,7 +194,9 @@ class CarrierSmartHomeClient:
                 if response.status in (401, 403):
                     raise CarrierAuthError("Carrier rejected the account/session")
                 if response.status == 429:
-                    raise CarrierRateLimitError(retry_after_seconds(response.headers.get("Retry-After")))
+                    delay = retry_after_seconds(response.headers.get("Retry-After"))
+                    self._rate_limit_until = max(self._rate_limit_until, time.monotonic() + delay)
+                    raise CarrierRateLimitError(delay)
                 if url in (NO_AUTH, REFRESH) and response.status == 400:
                     raise CarrierAuthError("Carrier login or refresh request rejected")
                 if not 200 <= response.status < 300:
@@ -296,6 +300,9 @@ class CarrierSmartHomeClient:
             return self._access_token
 
     async def _graphql(self, name: str, document: str, variables: dict[str, Any]) -> dict[str, Any]:
+        remaining = self._rate_limit_until - time.monotonic()
+        if remaining > 0:
+            raise CarrierRateLimitError(remaining)
         token = await self._token()
         payload = await self._post(GRAPHQL, {"operationName": name, "query": document,
                                                "variables": variables}, token=token)

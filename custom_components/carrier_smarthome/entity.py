@@ -37,8 +37,9 @@ class CarrierEntity(CoordinatorEntity):
 
     @property
     def available(self) -> bool:
-        # Base availability means GraphQL returned this record. Live climate
-        # and sensor entities ALSO check for Carrier-reported online status;
-        # explicitly labeled last-reported diagnostics use this base value.
-        return bool(self.coordinator.last_update_success and
+        # Base availability represents a successful GraphQL poll, regardless
+        # of thermostat Wi-Fi state. Live climate and measured sensors must
+        # additionally check connectivity_state(system) == "online".
+        # Last-cloud-reported diagnostic sensors intentionally use this base.
+        return bool(getattr(self.coordinator, "telemetry_usable", self.coordinator.last_update_success) and
                     self.serial in self.coordinator.data and self.zone_data)
