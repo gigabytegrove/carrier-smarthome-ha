@@ -44,39 +44,119 @@ def _powershell_json(script: str) -> Any:
 
 
 def windows_routes() -> list[dict]:
+    """All connected private IPv4 interfaces; do not depend on default gateway."""
     script = r'''
 $ErrorActionPreference='Stop'
-$routes=@(Get-NetRoute -AddressFamily IPv4 -DestinationPrefix '0.0.0.0/0' |
- Sort-Object RouteMetric,InterfaceMetric)
-$result=@()
-foreach($r in $routes){
- $ips=@(Get-NetIPAddress -AddressFamily IPv4 -InterfaceIndex $r.InterfaceIndex -ErrorAction SilentlyContinue)
- foreach($ip in $ips){
-   $result+=@{ip=$ip.IPAddress;prefix=[int]$ip.PrefixLength;gateway=$r.NextHop;
-             metric=[int]($r.RouteMetric+$r.InterfaceMetric);index=$r.InterfaceIndex}
- }
-}
-ConvertTo-Json -InputObject @($result) -Depth 5 -Compress
+$up=@(Get-NetIPInterface -AddressFamily IPv4 | Where-Object {$_.ConnectionState -eq 'Connected'} |
+ Select-Object -ExpandProperty InterfaceIndex -Unique)
+$rows=@(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$up -contains $_.InterfaceIndex} |
+ ForEach-Object {@{ip=$_.IPAddress;prefix=[int]$_.PrefixLength;
+ interface=$_.InterfaceAlias;metric=0}})
+ConvertTo-Json -InputObject @($rows) -Depth 4 -Compress
+'''
+    value = _powershell_json(script)
+    return value if isinstance(value, list) else [value]
+
+
+def windows_routed_cidrs() -> list[str]:
+    script = r'''
+$rows=@(Get-NetRoute -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+ Where-Object {$_.NextHop -and $_.NextHop -ne '0.0.0.0' -and
+ $_.DestinationPrefix -match '/\d+$'} |
+ Select-Object -ExpandProperty DestinationPrefix)
+ConvertTo-Json -InputObject @($rows) -Compress
 '''
     value = _powershell_json(script)
     return value if isinstance(value, list) else [value]
 
 
 def linux_routes() -> list[dict]:
-    def call(*args):
-        proc = subprocess.run(args, capture_output=True, text=True, timeout=10, check=True)
-        return json.loads(proc.stdout)
-    routes = call('ip', '-j', '-4', 'route', 'show', 'default')
-    addresses = call('ip', '-j', '-4', 'address', 'show')
-    by_dev = {r.get('ifname'): r for r in addresses}
+    result = subprocess.run(['ip', '-j', '-4', 'address', 'show', 'up'],
+                            capture_output=True, text=True, timeout=10, check=True)
+    addresses = json.loads(result.stdout)
     found = []
-    for route in routes:
-        for local in by_dev.get(route.get('dev'), {}).get('addr_info', []):
-            if local.get('family') == 'inet':
-                found.append({'ip': local.get('local'), 'prefix': local.get('prefixlen'),
-                              'gateway': route.get('gateway'), 'metric': int(route.get('metric', 0)),
-                              'interface': route.get('dev')})
+    for adapter in addresses:
+        for address in adapter.get('addr_info', []):
+            if address.get('family') == 'inet':
+                found.append({'ip': address.get('local'), 'prefix': address.get('prefixlen'),
+                              'interface': adapter.get('ifname'), 'metric': 0})
     return found
+
+
+def linux_routed_cidrs() -> list[str]:
+    result = subprocess.run(['ip', '-j', '-4', 'route', 'show'],
+                            capture_output=True, text=True, timeout=10, check=True)
+    routes = json.loads(result.stdout)
+    return [item.get('dst') for item in routes if item.get('gateway') and item.get('dst')
+            and item['dst'] != 'default']
+
+
+def safe_cidr(value: str, explicit: bool = False) -> ipaddress.IPv4Network:
+    try:
+        network = ipaddress.ip_network(value, strict=False)
+    except ValueError as exc:
+        raise ValueError(f'Invalid CIDR {value}: {exc}') from exc
+    if not isinstance(network, ipaddress.IPv4Network) or network.prefixlen < 24 or network.prefixlen > 32:
+        raise ValueError('Ranges must be private IPv4 /24 or smaller')
+    if not all(is_rfc1918(a) for a in (network.network_address, network.broadcast_address)):
+        raise ValueError('Non-RFC1918 network is not allowed')
+    return network
+
+
+def discovery_scopes(interfaces: list[dict], routed: list[str], extra: list[str] | None = None,
+                     max_networks: int = 8) -> tuple[list[dict], list[str]]:
+    """Choose only attached, explicitly routed, or caller-authorized private subnets.
+
+    Do not guess VLAN subnets from a router's default route.
+    """
+    if not 1 <= max_networks <= 16:
+        raise ValueError('max_networks must be 1-16')
+    found: dict[str, dict] = {}
+    warnings: list[str] = []
+
+    def add(network: ipaddress.IPv4Network, source: str, local_ip: str | None = None):
+        key = str(network)
+        row = found.setdefault(key, {'network': network, 'sources': [], 'local_ips': []})
+        if source not in row['sources']:
+            row['sources'].append(source)
+        if local_ip and local_ip not in row['local_ips']:
+            row['local_ips'].append(local_ip)
+
+    for entry in interfaces:
+        try:
+            ip = entry['ip']
+            network = private_route_network(ip, int(entry['prefix']))
+        except (ValueError, TypeError, KeyError):
+            continue
+        add(network, 'connected:' + str(entry.get('interface') or 'interface'), ip)
+        if int(entry['prefix']) < 24:
+            warnings.append(f'{ip}/{entry["prefix"]} wider than /24; only {network} scanned. '
+                            'Other slices require an explicit subnet or in-VLAN probe.')
+    for value in routed:
+        try:
+            cidr = safe_cidr(value)
+            if cidr.prefixlen > 30:
+                continue
+        except (ValueError, TypeError):
+            continue
+        add(cidr, 'specific_route')
+    for value in extra or []:
+        add(safe_cidr(value, explicit=True), 'user_authorized')
+    scopes = list(found.values())
+    if len(scopes) > max_networks:
+        warnings.append(f'{len(scopes)} private subnets found; limited to {max_networks} by safety cap.')
+    return scopes[:max_networks], warnings
+
+
+def auto_networks(extra: list[str] | None = None, max_networks: int = 8) -> tuple[list[dict], list[str]]:
+    if os.name == 'nt':
+        interfaces, routes = windows_routes(), windows_routed_cidrs()
+    else:
+        interfaces, routes = linux_routes(), linux_routed_cidrs()
+    scopes, warnings = discovery_scopes(interfaces, routes, extra, max_networks)
+    if not scopes:
+        raise RuntimeError('No visible connected private networks or authorized private subnets')
+    return scopes, warnings
 
 
 def select_network(routes: list[dict]) -> tuple[ipaddress.IPv4Network, dict]:
@@ -116,7 +196,7 @@ def report(network: ipaddress.IPv4Network, interface: dict, do_tcp=True,
            mdns_seconds=3, timeout=0.25) -> dict:
     if network.prefixlen < 24 or not all(is_rfc1918(a) for a in (network.network_address, network.broadcast_address)):
         raise ValueError('Scanning must be bounded to a private /24 or smaller')
-    known = neighbors()
+    known = [n for n in neighbors() if ipaddress.ip_address(n['ip']) in network]
     records, warnings = discover_mdns(mdns_seconds) if mdns_seconds else ([], [])
     # Some devices ignore ping; TCP connection attempts still discover listeners.
     target_addresses = [str(addr) for addr in network.hosts() if str(addr) != interface['ip']]
@@ -137,7 +217,11 @@ def report(network: ipaddress.IPv4Network, interface: dict, do_tcp=True,
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--no-tcp', action='store_true', help='Skip /24 TCP connection checks')
+    parser.add_argument('--no-tcp', action='store_true', help='Skip local TCP connection checks')
+    parser.add_argument('--cidr', action='append', default=[],
+                        help='Additional authorized private /24-or-smaller VLAN; repeat if needed')
+    parser.add_argument('--max-networks', type=int, default=8, help='Safety cap (1-16, default 8)')
+    parser.add_argument('--list-only', action='store_true', help='Report networks without probing hosts')
     parser.add_argument('--mdns-seconds', type=float, default=3)
     parser.add_argument('--timeout', type=float, default=0.25)
     parser.add_argument('--output', type=Path, help='Optional private JSON output file')
@@ -145,11 +229,38 @@ def main(argv=None) -> int:
     if not 0.05 <= args.timeout <= 3 or not 0 <= args.mdns_seconds <= 15:
         parser.error('Invalid timeout duration')
     try:
-        network, interface = auto_network()
-    except (RuntimeError, OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError) as exc:
-        print(f'FAIL: Automatic subnet detection: {type(exc).__name__}: {exc}', file=sys.stderr)
+        scopes, warnings = auto_networks(args.cidr, args.max_networks)
+    except (RuntimeError, OSError, subprocess.SubprocessError, ValueError,
+            json.JSONDecodeError) as exc:
+        print(f'FAIL: Network detection: {type(exc).__name__}: {exc}', file=sys.stderr)
         return 2
-    result = report(network, interface, not args.no_tcp, args.mdns_seconds, args.timeout)
+    if len(scopes) == 1:
+        warnings.append('Only one network visible. The router default route cannot tell us '                        'the IoT VLAN subnet; run there or provide an authorized --cidr.')
+    result: dict[str, Any] = {
+        'timestamp_utc': datetime.now(timezone.utc).isoformat(),
+        'model_target': 'TSTATCCEWF-01',
+        'network_count': len(scopes),
+        'networks': [],
+        'mdns_records': [],
+        'warnings': warnings,
+        'thermostat_ip_confirmed': False,
+        'local_api_verified': False,
+    }
+    if not args.list_only and args.mdns_seconds:
+        records, errors = discover_mdns(args.mdns_seconds)
+        result['mdns_records'] = records
+        result['warnings'].extend(errors)
+        result['warnings'].append('mDNS is scoped to the local multicast domain; '                                  'its records are not evidence about every VLAN.')
+    for item in scopes:
+        if args.list_only:
+            part = {'scope': str(item['network']), 'sources': item['sources'],
+                    'local_ips': item['local_ips'], 'discovered': False}
+        else:
+            part = report(item['network'], {'ip': item['local_ips'][0] if item['local_ips'] else ''},
+                          not args.no_tcp, 0, args.timeout)
+            part['sources'] = item['sources']
+            part['local_ips'] = item['local_ips']
+        result['networks'].append(part)
     text = json.dumps(result, indent=2) + '\n'
     print(text, end='')
     if args.output:

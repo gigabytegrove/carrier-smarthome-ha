@@ -17,3 +17,7 @@
 | Home Assistant entity registration and real device controls | NOT YET | Depends on successful live cloud path |
 
 No live Carrier account or TSTATCCEWF-01 was accessed during this research pass. All tests are offline and self-contained. Do not present cloud or local control as operational until observed against an owner device.
+
+## Multi-VLAN discovery update (2026-10-22)
+
+The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `redacted.invalid/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.

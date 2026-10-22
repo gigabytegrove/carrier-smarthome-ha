@@ -1,7 +1,14 @@
 # Automatic first-pass Carrier SmartHome research on Windows 10/11.
 # No IP, domain, token, username, or password required. Read-only.
 [CmdletBinding()]
-param([switch]$SkipLocal, [switch]$SkipPublicCloud, [switch]$NoTcp)
+param(
+    [switch]$SkipLocal,
+    [switch]$SkipPublicCloud,
+    [switch]$NoTcp,
+    [switch]$Quick,
+    [string[]]$AdditionalSubnets = @(),
+    [int]$MaxNetworks = 8
+)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')
@@ -26,8 +33,14 @@ if (-not $SkipLocal) {
     try {
         $params = @{Output = (Join-Path $destination 'lan-private.json')}
         if ($NoTcp) {$params['NoPortProbe'] = $true}
+        if ($Quick) {$params['Quick'] = $true}
+        $params['AdditionalSubnets'] = $AdditionalSubnets
+        $params['MaxNetworks'] = $MaxNetworks
         & $script @params
         $results.local_discovery = 'completed; not model-confirmed'
+        $lan = Get-Content -LiteralPath $params['Output'] -Raw | ConvertFrom-Json
+        $results.local_networks_scanned = [int]$lan.networks_scanned
+        $results.local_network_cidrs = @($lan.network_results | ForEach-Object { $_.subnet })
     } catch {
         $results.local_discovery = 'failed'
         Write-Warning ('Local discovery could not complete: ' + $_.Exception.Message)

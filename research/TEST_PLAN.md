@@ -23,3 +23,7 @@
 - mDNS name includes Matter: potentially Matter capable, **not** proof it is the thermostat until paired to DHCP/device identity.
 - GraphQL documents in APK: request templates, **not** evidence the server supports every field or model.
 - Never post raw network logs; retain local data privately and report sanitized summaries.
+
+## Multi-VLAN discovery update (2026-10-22)
+
+The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `redacted.invalid/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.

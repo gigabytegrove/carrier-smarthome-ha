@@ -30,11 +30,23 @@ You do **not** need to know your thermostat's IP address or Carrier's cloud URL.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Run-Discovery.ps1
 ```
 
-That script does three **read-only** things: identifies the active private IPv4 subnet automatically (limited to `/24`), collects LAN devices and checks common TCP ports, and displays native APK cloud service evidence. If Python is installed, it also inspects public Carrier portal JavaScript without logging in or asking for a token. Results are stored under `%LOCALAPPDATA%\CarrierSmartHome-Research\<UTC-date>`; they are **not** uploaded to GitHub.
+That script does three **read-only** things: discovers **all visible connected and specifically routed private LANs / IoT VLANs** (each limited to `/24`, eight networks by default), collects per-subnet ICMP/neighbor/TCP evidence, and displays native APK cloud service evidence. If Python is installed, it also inspects public Carrier portal JavaScript without logging in or asking for a token. Results are stored under `%LOCALAPPDATA%\CarrierSmartHome-Research\<UTC-date>`; they are **not** uploaded to GitHub.
+
+**IoT VLAN support:** If the thermostat is on a different private VLAN and your PC has a connected interface or specific route for it, the scanner finds the subnet automatically. If **only the primary LAN is reported**, a normal default gateway route does not reveal other VLAN subnet addresses. In that case, run discovery on a device connected to the IoT VLAN, or provide the actual authorized subnet from your router with `-AdditionalSubnets`. We **do not guess** an IoT CIDR. The default scan performs a bounded TCP connect sweep even for devices that ignore ping; use `-Quick` for a faster partial scan.
+
+```powershell
+.\tools\Run-Discovery.ps1 -Quick
+.\tools\Run-Discovery.ps1 -MaxNetworks 12
+# Only when router VLAN settings confirm that subnet:
+.\tools\Run-Discovery.ps1 -AdditionalSubnets 'redacted.invalid/24'
+```
+
+`redacted.invalid/24` is a documentation example, **not a discovered network**. See [`research/VLAN_DISCOVERY.md`](research/VLAN_DISCOVERY.md) for routed-VLAN, mDNS, Matter/IPv6 limitations, and security boundaries.
 
 More thorough cross-platform discovery (Python 3.10+; Windows/Linux) is also available:
 
 ```bash
+python tools/auto_discover.py --list-only
 python tools/auto_discover.py --output carrier-private-local.json
 python tools/discover_cloud.py --output carrier-public-cloud.json
 ```
@@ -72,7 +84,7 @@ Testing is offline: simulated GraphQL responses, URL safety, HAR secret redactio
 ## Safety, provenance and boundaries
 
 - No APK/XAPK binary or decrypted secrets committed. Never publish captured authorization headers, session cookies, device serial numbers or raw HAR files.
-- All network probes are read-only. TCP connect tests are limited to the selected local private subnet; no attempt to bypass authentication or certificate pinning.
+- All network probes are read-only. TCP connect tests are limited to visible, specifically routed, or authorized RFC1918 subnets (maximum /24 each); no attempt to bypass authentication or certificate pinning.
 - The thermostat's Matter support is separate from proprietary cloud control; proprietary LAN API support remains unproven.
 - Document evidence sources precisely and label **unverified** conclusions. The authenticated TSTATCCEWF-01 read/write path has **not** yet been exercised.
 
