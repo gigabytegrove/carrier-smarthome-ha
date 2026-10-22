@@ -5,12 +5,17 @@
       "user": {
         "title": "Sign in to Carrier SmartHome",
         "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. No Matter. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
-        "data": {"username": "Carrier account email or username", "password": "Password"}
+        "data": {
+          "username": "Carrier account email or username",
+          "password": "Password"
+        }
       },
       "reauth_confirm": {
         "title": "Reconnect Carrier SmartHome",
         "description": "Your Carrier session needs to be reauthenticated.",
-        "data": {"password": "Password"}
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -18,14 +23,21 @@
       "cannot_connect": "The Carrier SmartHome API could not be reached or returned an unexpected response.",
       "no_devices": "Login succeeded, but Carrier returned no entry-level thermostats for this account."
     },
-    "abort": {"already_configured": "This Carrier account is already configured.", "reauth_successful": "Carrier account reconnected."}
+    "abort": {
+      "already_configured": "This Carrier account is already configured.",
+      "reauth_successful": "Carrier account reconnected."
+    }
   },
   "options": {
     "step": {
       "init": {
         "title": "Carrier SmartHome options",
-        "description": "Experimental control sends real Carrier cloud changes to HVAC equipment. Leave OFF until live reads and model identity are verified.",
-        "data": {"enable_control": "Enable experimental thermostat writes"}
+        "description": "Mode (Off/Heat/Cool/Auto) and temperature changes are real HVAC commands. Enable mode control first, choose a Turn On mode, and test physically. Setpoint writes have an independent switch and are OFF by default. Writes require a fresh Carrier online read and verified readback.",
+        "data": {
+          "enable_control": "Enable experimental HVAC mode and power control",
+          "power_on_mode": "Mode used by the HVAC Power switch when turning ON (Unset = no automatic mode selection)",
+          "enable_setpoint_control": "Separately enable experimental temperature setpoint changes"
+        }
       }
     }
   }

@@ -1,7 +1,13 @@
 # Target a currently ONLINE Carrier thermostat identified by Omada hardware MAC.
 # Never scans a historical (offline) lease or the entire VLAN.
 [CmdletBinding()]
-param([string]$ArchivePath, [switch]$PlanOnly)
+param(
+    [string]$ArchivePath,
+    [string]$Suffix = '144B',
+    [ValidateRange(1,120)][int]$MaxAgeMinutes = 20,
+    [switch]$PlanOnly,
+    [switch]$HttpFingerprint
+)
 $ErrorActionPreference = 'Stop'
 if (-not $ArchivePath) {
     $ArchivePath = Get-ChildItem -Path (Join-Path $env:USERPROFILE 'Downloads') -Filter 'Client_*.zip' -File -ErrorAction SilentlyContinue |
@@ -10,7 +16,8 @@ if (-not $ArchivePath) {
 if (-not $ArchivePath) { throw 'Omada client export not found in Downloads.' }
 $py = Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $py) { throw 'Python 3.11+ is required.' }
-$argsForPython = @((Join-Path $PSScriptRoot 'Probe-VerifiedCarrierLAN.py'), $ArchivePath)
+$argsForPython = @((Join-Path $PSScriptRoot 'Probe-VerifiedCarrierLAN.py'), $ArchivePath, '--suffix', $Suffix, '--max-age-minutes', [string]$MaxAgeMinutes)
 if ($PlanOnly) { $argsForPython += '--plan' }
+if ($HttpFingerprint) { $argsForPython += '--http-fingerprint' }
 & $py.Source @argsForPython
 if ($LASTEXITCODE -ne 0) { throw "Carrier verified LAN probe stopped (exit $LASTEXITCODE)." }
