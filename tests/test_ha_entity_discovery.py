@@ -364,6 +364,23 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test',0,heat=70,cool=75)
         self.assertEqual(state['clsp']['current'],75)
 
+    async def test_setpoint_permission_independent_from_hvac_mode_permission(self):
+        climate=load('climate')
+        controls=[]
+        await climate.async_setup_entry(self.hass,self.entry,lambda es:controls.extend(es))
+        self.entry.options={'enable_control':False,'enable_setpoint_control':True}
+        zone=self.coordinator.data['serial-test']['zones'][0]
+        zone.update({'mode':'cool','htsp':{'current':70,'max':85},'clsp':{'current':76,'min':60}})
+        self.assertTrue(controls[0].supported_features & ClimateEntityFeature.TARGET_TEMPERATURE)
+        self.assertFalse(controls[0].supported_features & ClimateEntityFeature.TURN_OFF)
+        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
+        async def refresh():
+            if self.coordinator.client.async_update_zone.await_count:
+                zone['clsp']['current']=self.coordinator.client.async_update_zone.await_args.kwargs['cool']
+        self.coordinator.async_request_refresh=refresh
+        await controls[0].async_set_temperature(temperature=75)
+        self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test',0,heat=70,cool=75)
+
     async def test_target_mutation_not_repeated_if_readback_stale(self):
         cl=load('climate');control=load('control')
         c=[];await cl.async_setup_entry(self.hass,self.entry,lambda es:c.extend(es))
