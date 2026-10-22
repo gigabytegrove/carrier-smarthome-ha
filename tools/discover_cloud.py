@@ -133,9 +133,13 @@ def main(argv=None):
     root = Path(__file__).resolve().parents[1]
     native_path = root / 'research' / 'native-dex-findings.json'
     native = json.loads(native_path.read_text(encoding='utf-8')) if native_path.exists() else {}
+    built_path = root / 'research' / 'native-constant-xrefs.json'
+    built = json.loads(built_path.read_text(encoding='utf-8')).get('build_config', {}) if built_path.exists() else {}
     result = {
         'note': 'Addresses embedded in APK are candidate services; no login/control API is verified.',
         'cloud_endpoints_from_native_apk': native.get('embedded_carrier_endpoints', []),
+        'production_build_config': built,
+        'new_model_entry_tier_backend_verified': False,
         'graphql_route_literals': ['/graphql', '/graphql-no-auth'],
         'runtime_configuration_keys': list(APPLICABLE_KEYS),
         'public_portals': [] if args.offline else inspect_public_portals(limit_assets=args.max_assets, timeout=args.timeout),

@@ -11,6 +11,10 @@
 
 **Important:** An endpoint literal is not proof of selected runtime configuration. The old publicly documented carrier_api client already uses `dataservice.infinity.iot.carrier.com/graphql`; that does not verify it for a TSTATCCEWF-01. None of the available data proves the current user's device responds to the Entry Level API yet.
 
+## Direct production BuildConfig mappings
+
+DEX static field values explicitly configure `API_URL=https://dataservice.infinity.iot.carrier.com`, `REST_API_URL=https://platform.iot.carrier.com`, `OKTA_TOKEN_URL=https://sso.carrier.com/oauth2/default/v1/token`, `WEBSOCKET_API_URL=wss://realtime.infinity.iot.carrier.com`, and `ENTRY_TIER_ENV_URL=a2pznvrwmtzhom-ats.iot.us-east-1.amazonaws.com`. The last is an AWS IoT ATS hostname consistent with entry-level device MQTT provisioning or state communications. It is **not a LAN IP**. This evidence does **not** prove that this exact thermostat uses these services at runtime. See `BUILD_CONFIG_EVIDENCE.md`.
+
 ## Actual useful entry-level operation documents
 
 The following exact document files are in `research/graphql/entry_level/`:
