@@ -25,3 +25,7 @@ The scanner now includes multiple private connected networks, explicit routed VL
 ## 2026-10-22: IoT network scope corrected
 
 The device's IoT network is user-confirmed as `redacted.invalid/16`. A dedicated Windows scanner now covers that exact range by default; its default ICMP pass is all 65,534 usable addresses, but full silent-host TCP scanning is opt-in. The unrelated `192.168.0.x` network is excluded unless the operator deliberately chooses `-IncludeOtherNetworks`. No thermostat IP or proprietary local API has been verified; Windows execution and VLAN reachability remain untested until run on the owner's PC.
+
+
+### First targeted VLAN scan and follow-up
+Owner-run targeted scan completed 2026-10-22: 65,534 IPv4 addresses probed; 63 ICMP/neighbor candidates exclusively in redacted.invalid/24; 10 open TCP **port results**, with no confirmed thermostat identity. Original Windows route output was incomplete; corrected scanner code now uses `Get-NetRoute` and describes the result as route-table evidence only. Added `Run-Discovery.ps1 -ReviewOnly` to list already-detected devices/ports directly from the user's existing private JSON without repeating probes. The script never publishes private device information. The next evidence needed is a candidate IP/hostname or DHCP lease correlation, while cloud authentication research proceeds independently.

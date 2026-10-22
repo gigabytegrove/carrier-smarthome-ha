@@ -104,21 +104,49 @@ Write-Host 'Other networks (including 192.168.x.x) are excluded.'
 Write-Host 'ICMP and TCP connect checks only: no HTTP, MQTT, cloud login, or thermostat commands.'
 if ($Deep) { Write-Warning 'Deep mode additionally checks TCP 80/443 on all addresses not already tested.' }
 
-# Connection path is evidence, not proof of VLAN access.
+# Report the best-matching entry from the route table. Find-NetRoute returns
+# interface-oriented objects on some Windows builds and can leave NextHop and
+# DestinationPrefix empty; Get-NetRoute supplies the actual route properties.
+# This is a *route-table observation*, not proof that VLAN firewall rules allow traffic.
 $routeInfo = $null
 try {
-    $route = Find-NetRoute -RemoteIPAddress (ConvertTo-Address $scope.Start) -ErrorAction Stop |
-        Select-Object -First 1
-    if ($route) {
-        $routeInfo = [pscustomobject]@{
-            interface_alias = [string]$route.InterfaceAlias
-            next_hop = [string]$route.NextHop
-            destination_prefix = [string]$route.DestinationPrefix
-        }
-        Write-Host ('Windows route: {0}, via {1}, interface {2}' -f
-            $routeInfo.destination_prefix, $routeInfo.next_hop, $routeInfo.interface_alias)
+    $targetAddress = [uint64]$scope.Start
+    $routeMatches = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($item in @(Get-NetRoute -AddressFamily IPv4 -ErrorAction Stop)) {
+        $routeParts = ([string]$item.DestinationPrefix).Split('/')
+        if ($routeParts.Count -ne 2) { continue }
+        $bits = 0
+        if (-not [int]::TryParse($routeParts[1], [ref]$bits) -or $bits -lt 0 -or $bits -gt 32) { continue }
+        try { $routeStart = ConvertTo-Number $routeParts[0] } catch { continue }
+        $block = [uint64][Math]::Pow(2, 32 - $bits)
+        if ([Math]::Floor($targetAddress / $block) -ne [Math]::Floor($routeStart / $block)) { continue }
+        $routeMatches.Add([pscustomobject]@{
+            entry = $item
+            bits = $bits
+            metric = [int]$item.RouteMetric
+        })
     }
-} catch { Write-Warning 'Could not resolve Windows route; reachability will be determined by probes.' }
+    $best = $routeMatches | Sort-Object -Property @(
+        @{Expression={$_.bits};Descending=$true},
+        @{Expression={$_.metric};Descending=$false}
+    ) | Select-Object -First 1
+    if ($best) {
+        $routeInfo = [pscustomobject]@{
+            interface_alias = [string]$best.entry.InterfaceAlias
+            interface_index = [int]$best.entry.InterfaceIndex
+            next_hop = [string]$best.entry.NextHop
+            destination_prefix = [string]$best.entry.DestinationPrefix
+            route_metric = [int]$best.entry.RouteMetric
+        }
+        Write-Host ('Best matching Windows route: {0}, via {1}, interface {2}' -f
+            $routeInfo.destination_prefix, $routeInfo.next_hop, $routeInfo.interface_alias)
+        if ($best.bits -eq 0) {
+            Write-Warning 'Only the default IPv4 route matches this IoT address; the VLAN is not explicitly routed on Windows.'
+        }
+    } else {
+        Write-Warning 'No matching Windows IPv4 route was returned; ICMP results must be evaluated separately.'
+    }
+} catch { Write-Warning ('Unable to inspect Windows route table: ' + $_.Exception.Message) }
 
 $metadata = [ordered]@{
     generated_utc = [DateTime]::UtcNow.ToString('o')

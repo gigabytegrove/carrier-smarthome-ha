@@ -32,3 +32,25 @@ Before claiming that the thermostat has a local API, collect a model-confirming 
 - Cross-platform contract tests: `python -m unittest discover -s tests -v`
 - Native PowerShell plan/safety tests (on Windows): `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests\\Test-IoTDiscovery.ps1`
 - Real network scan has **not** been run from this analysis environment.
+
+## First owner-side full-range scan (2026-10-22)
+
+The owner ran `tools/Run-Discovery.ps1` against the configured IoT `/16` from Windows (`Ethernet 2`). The console reports:
+
+| Observation | Actual console result | Interpretation |
+|---|---:|---|
+| IP addresses attempted | 65,534 | Full `/16` ICMP sweep completed |
+| ICMP/neighbor candidates | 63 | The report keeps separate lists of real ICMP replies and neighbor records; counts must not be conflated |
+| TCP open port results | 10 | **Ports**, not necessarily ten hosts |
+| Candidate /24 | `redacted.invalid/24` | All reported candidates fall in this slice; does not establish thermostat is among them |
+| Wall-clock time | 277.6 seconds | Do not repeat full scan merely to read results |
+| IPv4 route | Blank prefix and next hop | Reporting defect in `Find-NetRoute` output; use `Get-NetRoute` |
+| Thermostat IP identified | No | No model identity, DHCP lease or cloud MAC correlation available |
+
+The **existing private** report is stored on the owner's PC under `%LOCALAPPDATA%\CarrierSmartHome-Research\20261022-114459\iot-private.json`. Never commit private raw scan reports to GitHub.
+
+Review the saved report with no network traffic using `tools/Run-Discovery.ps1 -ReviewOnly`. This uses `tools/Review-IoTScan.ps1`, which automatically finds the newest `iot-private.json` and runs the independently tested Python parser `tools/triage_iot.py`. The parser reports each candidate IP, actual ICMP evidence, any neighbor-cache MAC, and per-host TCP port list. It keeps separate totals for ports versus hosts with ports. It does **not** claim a host with open TCP 80/443 is the thermostat.
+
+For independent identity confirmation, compare the actual Carrier Wi-Fi client in the VLAN's router/DHCP client list with any available hostname/MAC. When the authenticated cloud `getUserWithDevices` flow works, correlate reported device identity and MAC if returned. Neither is required merely to review this scan. If MACs are absent, this is normal for traffic routed from the primary LAN into a different VLAN.
+
+The original scanner's route-line defect has been corrected by reading `Get-NetRoute` entries and selecting the longest IPv4 prefix match. The line is labelled a *route-table observation*, not a verified path through VLAN firewall rules. The correction applies to **future scans only**; the `-ReviewOnly` command does not rewrite old evidence.
