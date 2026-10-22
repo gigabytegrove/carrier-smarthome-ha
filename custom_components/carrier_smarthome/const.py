@@ -13,4 +13,4 @@ DEFAULT_POWER_ON_MODE = "unset"
 POWER_ON_MODES = ("unset", "heat", "cool", "auto", "fanonly")
 POLL_INTERVAL = timedelta(seconds=60)
 SUPPORTED_MODEL = "TSTATCCEWF-01"
-PLATFORMS = ["climate", "sensor", "binary_sensor", "switch", "select"]
+PLATFORMS = ["climate", "sensor", "binary_sensor", "switch"]

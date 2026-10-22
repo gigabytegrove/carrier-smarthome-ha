@@ -1,56 +1,47 @@
-# HACS installation and safe alpha verification
+# Install and operate Carrier SmartHome Native through HACS
 
-**Alpha 8 controls:** after HACS redownload and Home Assistant restart, go to **Settings → Devices & services → Carrier SmartHome → Configure/Options**. Select **Enable experimental HVAC mode and power control**, then choose **Power On mode** (Heat, Cool or Auto) for the on/off switch. Leave **experimental setpoint control disabled** for the initial on/off test. The device page should expose **HVAC power** and climate HVAC modes. Only test while Carrier shows Connected. Code changes need a HA restart; cloud mutations are not yet live-verified. Proprietary LAN probing requires a fresh Omada export, and no Matter code is used.
+This is a **public custom HACS Integration repository** for Carrier SmartHome's **native cloud GraphQL** API. It is not in HACS's default catalog, not the older Infinity integration, and it contains no Matter code.
 
+## Install / update
 
-This is an unofficial, experimental integration for Carrier SmartHome entry-tier devices, including the cloud-reported `TSTATCCEEF-01` class. The target physical housing is `TSTATCCEWF-01`; do not assume the cloud model string is the same hardware part number. The repository is public, but it is **not** part of the default HACS catalog.
+1. In HA open **HACS → ⋮ → Custom repositories**.
+2. Add `https://github.com/gigabytegrove/carrier-smarthome-ha` as an **Integration**.
+3. Find **Carrier SmartHome Native**, choose **Download**, and select `main` if asked for a version.
+4. Restart Home Assistant. **Settings → Devices & services → Add integration → Carrier SmartHome (Native Cloud Alpha)**; log in with the official Carrier SmartHome account.
+5. On updates, redownload the newer commit from HACS and restart/reload HA. Confirm `custom_components/carrier_smarthome/manifest.json` version `0.1.0a9` if HA is still using old code. No GitHub Release is required for this custom repository.
 
-## HACS installation
+## Enabling controls without confusing duplicates
 
-1. Open **Home Assistant → HACS → ⋮ → Custom repositories**.
-2. Paste `https://github.com/gigabytegrove/carrier-smarthome-ha`, set category **Integration**, and add.
-3. Find **Carrier SmartHome Native** in HACS, choose **Download**, and use `main` if prompted for a version.
-4. Restart Home Assistant.
-5. Go to **Settings → Devices & services → Add integration**, find **Carrier SmartHome (Native Cloud Alpha)**, and sign into your **own Carrier account**. Passwords are not needed in GitHub issues or logs.
+The **primary Climate entity** has HVAC Off / Heat / Cool / Auto / Fan Only, optional target temperature adjustments, and Auto/On fan mode. There is also one **HVAC Power** switch to turn the HVAC Off and back On with a user-specified mode. There are **no independent mode/fan select platforms** and no duplicate control entities. The two controls intentionally share the same guarded command handler.
 
-No Matter setup, pairing code, Wi-Fi address, MQTT broker, or local IP is needed for this cloud alpha. HACS installs only `custom_components/carrier_smarthome`, not the network research tools.
+All HVAC commands are **experimental writes** and **disabled by default**. Find **Settings → Devices & services → Carrier SmartHome → Configure** and explicitly enable:
 
-## First test checklist
+- **HVAC mode and power control:** Enables the climate mode selector and HVAC Power switch.
+- **Power On mode:** Must be Heat / Cool / Auto / Fan Only before the power switch can turn the equipment On. The default Unset deliberately prevents accidental mode selection.
+- **Fan Auto/On control:** Separately enable the climate fan selector; Circulation is not offered because the backend value is unverified.
+- **Setpoint changes:** Separately opt into climate temperature changes; this requires HVAC mode/power enabled too.
 
-- [ ] HA starts successfully with the custom integration installed.
-- [ ] Carrier account authentication completes in the HA UI.
-- [ ] One Carrier cloud-reported thermostat and associated sensors appear.
-- [ ] When Carrier reports offline, the live climate entity and statistical sensors are **unavailable**; separately labeled last-cloud-reported diagnostics remain accessible, and the Carrier-reported connectivity binary sensor shows **off**. This is not proof that the physical thermostat is unreachable.
-- [ ] With thermostat online, compare displayed temperature, setpoints, and mode with the Carrier SmartHome mobile app.
-- [ ] Leave experimental writes **off** until online telemetry and identity are verified.
-- [ ] Use **Settings → Devices & services → Carrier SmartHome → ⋮ → Download diagnostics** if you need to share sanitized diagnostic output. Check contents before sharing any diagnostics.
+An online Carrier device is required before any write. One command is sent, then bounded cloud read-back; on unconfirmed state the user must inspect the official Carrier app rather than repeatedly hitting the control. A failed readback is *not* proof the mutation failed; do not blindly retry. Changing HVAC mode or fan may physically start/stop equipment. The first live HA write must be tested under owner supervision.
 
-If nothing appears in HACS, check that its custom repository category is **Integration** and the URL is exact, then reload HACS. If the integration does not appear in Add integration after downloading, restart HA and refresh the browser. Look in **Settings → System → Logs** for the `carrier_smarthome` domain rather than sharing credentials.
+## Online, offline and diagnostics
 
-## How updates work
+When the Carrier `connection.isConnected` flag is true and cloud polling succeeds, live climate and sensor values are available. If it reports offline, live climate/measurements are unavailable. Separate **Last cloud-reported** sensors contain data that may be stale and are **disabled in the registry by default on new installations**; manually enable desired diagnostics as needed. Existing HA entity registry preferences are preserved during upgrades.
 
-A public custom HACS repo can be installed from its default branch without a GitHub Release. With no release, HACS displays a commit hash rather than a neat version; it still supports the update workflow. A separately published release can be added later, but is **not** required for initial installation. HACS installations must be restarted/reloaded for Python code updates to take effect.
+See **Settings → Devices & services → Carrier SmartHome → Download diagnostics** for sanitized diagnostics. Never post raw tokens, login details, serials, Omada exports, full MACs or pairing information.
 
-## Safe publication
+## If expected controls aren't visible
 
-Do not file issues containing usernames, tokens, raw HAR files, appliance pairing information, serials, full MAC addresses, private Omada archives or unredacted logs. **Changing files on `main` cannot delete any identifiers already present in GitHub commit history**; a deliberate history rewrite would require a separate safety review and approval.
+1. Verify the HACS installation shows the new version and restart HA after updating Python files.
+2. Confirm experimental mode/power control is enabled in **Configure**; otherwise the climate entity intentionally exposes only its current HVAC mode.
+3. Check the device is Carrier-reported **Connected** and the cloud API readable sensor is Connected; otherwise control is blocked.
+4. Click the **climate entity** in Controls to open the full HVAC mode and fan selector. The HVAC Power switch is an additional convenience, not a replacement for the climate control.
+5. For fan settings, separately enable fan control. For target temperatures, separately enable setpoint control.
+6. If startup or option save fails, consult **Settings → System → Logs** for domain `carrier_smarthome`, and report a sanitized stack trace (never credentials).
 
-## Project boundaries
+## Proprietary LAN reconnaissance
 
-Native Carrier SmartHome cloud GraphQL first; proprietary LAN control only after confirming it exists. No Matter integration, bridge, or fallback. Experimental HVAC commands are intentionally disabled by default and have not been verified against the owner's equipment.
+LAN control **has not** been verified. Export a **new Omada Client ZIP** while the thermostat is connected. `tools/Probe-VerifiedCarrierLAN.ps1 -PlanOnly -Suffix XXXX` validates online MAC/IP identity and export time before sending traffic. Replace `XXXX` locally with the last four MAC hex characters from the device label when multiple thermostats match. Do not add your MAC to the GitHub source. Next run the same command without `-PlanOnly` to test bounded TCP listeners; `-HttpFingerprint` optionally sends a single HTTP HEAD request to a verified device. A rejected old export is a safe stop; don't reuse an old DHCP lease. No Matter, MQTT write or broad network scan.
 
-## Alpha 5 connection discrepancy
+## Limitations and verification
 
-If your Carrier mobile app can control the thermostat but the `Carrier-reported device connection` sensor says `off`, that binary sensor is faithfully displaying Carrier's GraphQL flag; it does **not** prove the physical thermostat is unreachable. The `Native cloud API readable` sensor independently represents successful API polling. The climate entity displays unverified cloud-reported readings, with an explicit freshness warning. Experimental HVAC writes remain blocked whenever the online flag is false. See `research/ALPHA5_CONNECTION_DISCREPANCY.md` and `tools/Verify-CarrierConnectivity.ps1`.
-
-## Alpha 6: official-app to cloud correlation
-
-The owner has verified that the reported cloud record matches the thermostat MAC, yet **all three native GraphQL queries still report offline** while the phone app controls the unit. Do not treat this flag as authoritative reachability.
-
-On Windows, run `tools/Compare-AppChange.ps1` from a current clone. The script first reads two cloud sources, pauses while you make a **manual, reversible one-degree change** in the official phone app, reads the cloud again, and asks you to **manually restore** the original setting. It then checks whether both queried sources return to baseline.
-
-Only the owner makes or restores thermostat changes. The script never issues thermostat commands, does not log identifiers, and must not be considered a substitute for live HA control validation. It does send credentials and a private serial to Carrier for authenticated reads, as expected.
-
-## Alpha 7 correction: thermostat Wi-Fi dropout
-
-The owner reported that the thermostat actually lost Wi-Fi before the successful Alpha 6 app/cloud comparison. Restart restored connectivity without reprovisioning; Carrier subsequently reported online, and both GraphQL queries tracked the official-app setpoint change. This is consistent with the earlier offline flag reflecting real disconnection. The exact disconnection timing and cause were not captured. Alpha 7 therefore requires online status for live climate entities while retaining cached-value diagnostics. No Matter.
+Cloud sign-in, reads, MAC/device match and official-app-to-GraphQL convergence were owner-verified October 22, 2026. An actual thermostat Wi-Fi dropout explains the earlier offline response reasonably well. Mode, fan and setpoint **mutations from Home Assistant have not been owner-verified**; the code is opt-in and the test suite uses mocks. Local proprietary control remains a research topic. See [Changelog](../CHANGELOG.md) and [Alpha 8 cloud/LAN notes](../research/ALPHA8_CLOUD_CONTROLS_AND_LAN.md).

@@ -54,6 +54,8 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             title="Carrier SmartHome",
                             data={CONF_USERNAME: username, CONF_PASSWORD: password},
                             options={CONF_ENABLE_CONTROL: DEFAULT_ENABLE_CONTROL,
+                                     CONF_ENABLE_SETPOINT_CONTROL: DEFAULT_ENABLE_SETPOINT_CONTROL,
+                                     CONF_ENABLE_FAN_CONTROL: DEFAULT_ENABLE_FAN_CONTROL,
                                      CONF_POWER_ON_MODE: DEFAULT_POWER_ON_MODE})
         return self.async_show_form(step_id="user", data_schema=_credentials_schema(user_input), errors=errors)
 
@@ -86,23 +88,30 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class CarrierOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         if user_input is not None:
+            # Setpoint writes depend on mode/power control being enabled.
+            # Fail at setup instead of silently showing an inert thermostat UI.
+            if user_input[CONF_ENABLE_SETPOINT_CONTROL] and not user_input[CONF_ENABLE_CONTROL]:
+                return self.async_show_form(
+                    step_id="init", data_schema=self._schema(user_input),
+                    errors={"base": "setpoints_require_mode_control"})
             return self.async_create_entry(data={
                 CONF_ENABLE_CONTROL: bool(user_input[CONF_ENABLE_CONTROL]),
                 CONF_ENABLE_SETPOINT_CONTROL: bool(user_input[CONF_ENABLE_SETPOINT_CONTROL]),
                 CONF_ENABLE_FAN_CONTROL: bool(user_input[CONF_ENABLE_FAN_CONTROL]),
                 CONF_POWER_ON_MODE: user_input[CONF_POWER_ON_MODE],
             })
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema({
-                vol.Required(CONF_ENABLE_CONTROL,
-                    default=self.config_entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool,
-                vol.Required(CONF_ENABLE_SETPOINT_CONTROL,
-                    default=self.config_entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL)): bool,
-                vol.Required(CONF_ENABLE_FAN_CONTROL,
-                    default=self.config_entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)): bool,
-                vol.Required(CONF_POWER_ON_MODE,
-                    default=self.config_entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)):
-                    vol.In(POWER_ON_MODES),
-            }),
-        )
+        return self.async_show_form(step_id="init", data_schema=self._schema())
+
+    def _schema(self, overrides=None):
+        opts = overrides if overrides is not None else self.config_entry.options
+        return vol.Schema({
+            vol.Required(CONF_ENABLE_CONTROL,
+                default=opts.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool,
+            vol.Required(CONF_ENABLE_SETPOINT_CONTROL,
+                default=opts.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL)): bool,
+            vol.Required(CONF_ENABLE_FAN_CONTROL,
+                default=opts.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)): bool,
+            vol.Required(CONF_POWER_ON_MODE,
+                default=opts.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)):
+                vol.In(POWER_ON_MODES),
+        })

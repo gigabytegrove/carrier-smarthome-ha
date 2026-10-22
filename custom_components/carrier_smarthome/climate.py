@@ -4,7 +4,6 @@ from __future__ import annotations
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 from homeassistant.exceptions import HomeAssistantError
 
-from .api import CarrierError
 from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL,
                     CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL,
                     CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL, DOMAIN)
@@ -97,7 +96,7 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def fan_mode(self):
-        # The actual fan mode is a read-only property unless explicitly enabled.
+        # Reported current fan setting is always readable; writes are opt-in.
         return self._state.get("fan_mode")
 
     @property
@@ -118,21 +117,26 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
     def supported_features(self):
         if connectivity_state(self.system) != "online":
             return ClimateEntityFeature(0)
-        features = ClimateEntityFeature(0)
-        if self.entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL):
-            features |= ClimateEntityFeature.FAN_MODE
-        if self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
-            features |= ClimateEntityFeature.TURN_OFF
-            from .const import CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE
-            if self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE) != "unset":
-                features |= ClimateEntityFeature.TURN_ON
-        if self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
-            state = self._state
-            if state["heat_setpoint"] is not None and state["cool_setpoint"] is not None:
-                if self.hvac_mode == HVACMode.HEAT_COOL:
-                    features |= ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
-                elif self.hvac_mode in (HVACMode.HEAT, HVACMode.COOL):
-                    features |= ClimateEntityFeature.TARGET_TEMPERATURE
+        fan_feature = (ClimateEntityFeature.FAN_MODE
+                       if self.entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)
+                       else ClimateEntityFeature(0))
+        if not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
+            return fan_feature
+        # Home Assistant exposes an explicit Off action. Turn-on is deliberately
+        # not automatic unless the user selects a preferred power-on mode.
+        from .const import CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE
+        features = fan_feature | ClimateEntityFeature.TURN_OFF
+        if self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE) != "unset":
+            features |= ClimateEntityFeature.TURN_ON
+        if not self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
+            return features
+        state = self._state
+        if state["heat_setpoint"] is None or state["cool_setpoint"] is None:
+            return features
+        if self.hvac_mode == HVACMode.HEAT_COOL:
+            return features | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+        if self.hvac_mode in (HVACMode.HEAT, HVACMode.COOL):
+            return features | ClimateEntityFeature.TARGET_TEMPERATURE
         return features
 
     @property
@@ -193,8 +197,7 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         await self.async_set_hvac_mode(_TO_HA[configured])
 
     async def async_set_temperature(self, **kwargs):
-        if not self.available:
-            raise HomeAssistantError("Carrier thermostat unavailable; setpoint change blocked")
+        self._require_control()
         if not self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
             raise HomeAssistantError("Enable experimental setpoint writes separately in Carrier SmartHome options")
         state = self._state

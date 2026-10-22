@@ -39,4 +39,5 @@ class CurrentLeaseTests(unittest.TestCase):
         self.assertIn('[switch]$HttpFingerprint',text)
         self.assertIn('MaxAgeMinutes',text)
         self.assertIn('--suffix',text)
+        self.assertNotIn("$Suffix = '144B'",text)
 if __name__=='__main__':unittest.main()
