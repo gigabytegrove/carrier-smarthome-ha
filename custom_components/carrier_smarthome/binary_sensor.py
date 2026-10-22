@@ -61,8 +61,8 @@ class CarrierCloudConnectivity(CoordinatorEntity, BinarySensorEntity):
                 self.coordinator.data.get(self.serial, {})
             ),
             "local_network_reachability": "not_checked",
-            "status_reliability": "unverified_for_this_thermostat_model",
-            "interpretation": "Phone-app control may work even when Carrier reports disconnected",
+            "status_reliability": "reconnect_correlated_in_owner_test",
+            "interpretation": "Wi-Fi outage reported before test; online after restart",
         }
 
 

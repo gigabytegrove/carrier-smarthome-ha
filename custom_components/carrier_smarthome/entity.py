@@ -37,9 +37,8 @@ class CarrierEntity(CoordinatorEntity):
 
     @property
     def available(self) -> bool:
-        # An API-readable cloud record is not the same as a physically connected
-        # thermostat. Carrier has returned a false isConnected flag while the
-        # owner's phone app successfully controls the device. Permit read-only
-        # state display, but never interpret it as proof of fresh telemetry.
+        # Base availability means GraphQL returned this record. Live climate
+        # and sensor entities ALSO check for Carrier-reported online status;
+        # explicitly labeled last-reported diagnostics use this base value.
         return bool(self.coordinator.last_update_success and
                     self.serial in self.coordinator.data and self.zone_data)
