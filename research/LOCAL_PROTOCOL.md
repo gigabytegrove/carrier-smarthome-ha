@@ -1,45 +1,24 @@
-# Local IP discovery and proprietary LAN feasibility
+# Native proprietary LAN protocol status — v0.5.0
 
-The TSTATCCEWF-01 connects via Wi-Fi and has Matter support. Neither fact proves that the Carrier SmartHome app directly controls it using a proprietary TCP or HTTP listener. The actual device IP is assigned by the router's DHCP server and cannot be extracted from a generic APK.
+**Scope:** Carrier SmartHome entry-level thermostat `TSTATCCEWF-01` (cloud alias `TSTATCCEEF-01`), not legacy Infinity. No Matter transport, DNS interception, firmware replacement, secret extraction, or guessed HVAC command.
 
-## Cloud versus LAN boundary
+## Verified versus unresolved
 
-The Android production BuildConfig maps `ENTRY_TIER_ENV_URL` to `a2pznvrwmtzhom-ats.iot.us-east-1.amazonaws.com`, an AWS IoT Core ATS-style endpoint. This is a **public cloud hostname**, not a thermostat-local endpoint. MQTT-related app symbols therefore cannot be taken as evidence of local MQTT. `BUILD_CONFIG_EVIDENCE.md` has source mapping.
+- A real owner Carrier account can authenticate against native Carrier GraphQL, retrieve device mode, temperature, humidity and setpoints, and observe official-app changes in cloud telemetry.
+- Omada history identified the target Wi-Fi MAC, but an historical IP is **not** a current lease. The deep probe requires a new current connected-client ZIP and confirms one unique active MAC/IP in the authorized IoT VLAN before sending packets.
+- Native app BuildConfig contains an AWS IoT ATS hostname; this may be the endpoint for an **outbound** TLS/MQTT connection. It does not establish an inbound LAN MQTT port.
+- APK `LocalControlReqPacket`, `SendLocalControlCommandRead/Write` and `MqttProxy` symbols are leads only; usage on this thermostat is **unverified**.
+- Carrier's product description documents app/cloud remote control, not a public proprietary LAN API. Older Carrier Infinity local-control projects apply to different device families and may require intrusive DNS/firmware changes.
 
-## Verified source-code hints
+## v0.5.0 tool
 
-Hermes and native identifiers include `LocalControl`, `LocalControlReqPacket`, `LocalControlReqCommand`, `SendLocalControlCommandRead`, `SendLocalControlCommandWrite`, `MqttProxy` and `MqttProxyControl`. These show local/MQTT code in the **multi-device** SmartHome app, not that this specific thermostat uses that code path.
+[Read the comprehensive native LAN probe guide](../docs/LOCAL_PROBE_GUIDE.md). `tools/Probe-CarrierLocalDeep.ps1` (single engine Python + Windows wrapper) checks a currently verified single target. Legacy `Probe-VerifiedCarrierLAN` filenames are compatibility shims pointing at this engine, **not independent scanners**. With `-FullTCP` it attempts TCP 1–65535, with bounded concurrency and timeouts, then candidate HTTP/TLS/MQTT fingerprints and three read-only unicast UDP discovery requests. Only redacted summary data is saved. No local HVAC write is attempted.
 
-## Discovery now available without a known address
+## Follow-up proof criteria
 
-- Windows built-in: `tools/Run-Discovery.ps1` runs `tools/Probe-CarrierSmartHome.ps1` and detects an active private default-route subnet.
-- Cross-platform Python: `python tools/auto_discover.py` discovers active LAN interfaces, mDNS records, neighbor-cache addresses and common TCP listeners.
-- Both limit active scanning to a private /24 or smaller. No authentication attempts, configuration writes, or remote access.
-- Neighbor entries are **candidate IPs**, never verified thermostat identities. Lack of TCP listeners does not exclude operational Matter over IPv6/UDP.
+1. Connected current device record in Omada. **Tool implemented; fresh owner export required.**
+2. Actual device port/service evidence. **Not yet obtained.**
+3. Specific non-Matter local protocol, authentication and a read-only result. **Unknown.**
+4. Reversible local HVAC command with physical feedback, safety and rollback. **Unknown.**
 
-## How we will identify *the* thermostat IP
-
-Once C3 provides `connection.macaddress` and the owner has run the local probe, compare the reported MAC to LAN neighbor-cache MACs. A match becomes strong device identity evidence, subject to VLAN bridges, MAC randomization, and the cloud returning a different interface MAC. DHCP lease name/manufacturer is supporting evidence, not conclusive.
-
-With a confirmed IP, only then inspect open ports and protocol fingerprints with read-only requests. Matter is explicitly out of scope. Never send guessed MQTT payloads, BLE provisioning commands or installer commands.
-
-## Local progress criteria
-
-**L1:** Verify on-LAN private subnet, neighbor inventory, and mDNS/IPv6 results. **Tools implemented, device untested.**
-
-**L2:** Correlate device identity to a specific IP via cloud MAC or DHCP evidence. **Not tested.**
-
-**L3:** Determine whether local Carrier API is separate from Matter. **Unknown.**
-
-**L4:** If there is an authenticated proprietary LAN protocol, document read-only session setup and one proven request. **Unknown.**
-
-**L5:** No Matter transport, dependencies or fallback. Proprietary native local control must be proven independently or remain unsupported. **Locked requirement.**
-
-## Multi-VLAN discovery update (2026-10-22)
-
-The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `192.168.0.0/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
-
-
-## October 22, 2026 update
-
-Omada offline export identified the physical unit by MAC/label suffix. Its last-known IPv4 address is **not** a current lease. `tools/Probe-VerifiedCarrierLAN.py` now requires a matching, currently CONNECTED Omada export before probing common TCP listener ports on exactly one approved IPv4 host. It does not send HTTP, MQTT, BLE, Matter or thermostat control commands. Public Carrier Quick Start instructions confirm BLE-based **onboarding**, not native LAN control. Do not infer a local API from the app's `LocalControl` strings.
+A positive listener test only proves a listener. A negative result can be caused by firewall/VLAN rules or an outbound-only/cloud architecture. For references and research boundaries see [LOCAL_PROTOCOL_050.md](LOCAL_PROTOCOL_050.md).
