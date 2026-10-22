@@ -30,8 +30,10 @@ class Alpha10ContractTests(unittest.TestCase):
         self.assertIn("entry.version > 2", integration)
         self.assertIn('options={}', integration)
         self.assertIn('old.domain == "switch"', integration)
-        self.assertIn('old.platform == DOMAIN', integration)
+        self.assertIn('if old.platform != DOMAIN:', integration)
         self.assertIn('old.unique_id.endswith("_hvac_power")', integration)
+        self.assertIn('_last_cloud_reported_stage_status', integration)
+        self.assertIn('_last_cloud_reported_current_scene', integration)
 
     def test_cloud_write_protection_and_version(self):
         src = (PKG / "control.py").read_text()
@@ -40,8 +42,8 @@ class Alpha10ContractTests(unittest.TestCase):
         self.assertIn("Carrier thermostat disconnected", src)
         self.assertIn("math.isfinite", src)
         self.assertNotIn("Enable experimental Carrier", src)
-        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.5")
-        self.assertIn('carrier-smarthome-ha/0.5.5', (PKG / "api.py").read_text())
+        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.6")
+        self.assertIn('carrier-smarthome-ha/0.5.6', (PKG / "api.py").read_text())
 
 
 if __name__ == "__main__":

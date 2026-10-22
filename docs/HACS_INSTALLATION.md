@@ -4,7 +4,7 @@
 
 **Branding:** `custom_components/carrier_smarthome/brand/icon.png` carries the owner-provided SmartHome app icon. Home Assistant 2026.3+ loads custom integration brand assets locally. HACS 2.0.x may independently show a placeholder repository icon; that is not the HA integration icon.
 
-**Versions:** `manifest.json` is `0.5.5` in this release. Until a GitHub Release named `v0.5.5` is published, HACS custom-repository download UI may correctly say `Commit <hash> will be downloaded`. A downloadable commit isn't a semver release. To install updated code, use HACS Redownload on `main` or the published release, **restart Home Assistant**, and verify the `integration_manifest.version` in HA diagnostics. Never infer the running version from `gh repo clone` on another computer.
+**Versions:** `manifest.json` is `0.5.6` in this release. Until a GitHub Release named `v0.5.6` is published, HACS custom-repository download UI may correctly say `Commit <hash> will be downloaded`. A downloadable commit isn't a semver release. To install updated code, use HACS Redownload on `main` or the published release, **restart Home Assistant**, and verify the `integration_manifest.version` in HA diagnostics. Never infer the running version from `gh repo clone` on another computer.
 
 If the GitHub CLI release-check command reports `release not found`, PowerShell 5.1 with `$ErrorActionPreference='Stop'` can stop on `gh` stderr before conditional logic. Instead use `gh release list --repo ... --json tagName --jq ...` (success even when there are no releases) to detect the tag; publish it with `gh release create <tag> --target <commit> --notes-file <path>` and verify with `gh release view` **only after** creation. Don't use GitHub Actions.
 
@@ -15,7 +15,7 @@ If the GitHub CLI release-check command reports `release not found`, PowerShell 
 3. **Settings → Devices & services → Add integration → Carrier SmartHome**. Enter Carrier credentials in HA, not on GitHub.
 4. Open the thermostat climate entity. Its standard mode selector has Off, Heat, Cool, Heat/Cool and Fan Only, independent of integration options. Select the desired mode to turn the system on. When already on, select Off to stop heating/cooling. Fan Auto/On and temperature target controls live in the same climate entity. The retired HVAC Power switch should disappear on setup as part of a targeted registry cleanup.
 5. **First write test:** Check the official Carrier app and thermostat are online. Try ONE reversible mode command while observing the physical system. Wait for the HA readback; do not repeatedly click if the command times out. Restore the desired HVAC mode from the official app if unconfirmed.
-6. If Carrier reports disconnected, live controls are unavailable and labeled last-cloud-reported diagnostic sensors can remain visible as potentially stale.
+6. If Carrier reports disconnected, live controls are unavailable and historical cloud diagnostic sensors (concise names, stale-data attributes) can remain visible as potentially stale.
 
 **Known limits:** Authenticated cloud reads and official-app → cloud synchronization have been proved. Home Assistant Off/Cool mode changes have been owner-verified on the real thermostat. Other mode and fan mutations have not all been verified. Fan On is an experimental Carrier GraphQL value; Circulation is not exposed. `turn_on` cannot invent an initial mode. If no prior non-Off Carrier mode has been observed since startup, select Heat, Cool or Auto manually. No Matter and no verified proprietary LAN API.
 
@@ -36,6 +36,10 @@ The PowerShell observer only READS Carrier and does not itself update Home Assis
 The owner can now investigate the **previously identified** `<thermostat-ip>` IP directly using `tools/Probe-CarrierLocalDeep.ps1 -DirectIP '<thermostat-ip>' -AcknowledgeIpRisk -PlanOnly` and then an explicitly selected full scan. This bypasses the repeatedly stale ZIP requirement, **not** the possibility of DHCP reassignment. The tool tests one host; never a subnet. There is no functional local HVAC driver as of this release. No Matter.
 
 Release publication must include **a real GitHub Release** at the precise git commit and manifest version. After cloning on Windows, run `tools/Publish-CarrierRelease.ps1 -ExpectedCommit <verified sha>`. It uses `gh release list` (rather than error-generating `gh release view` on a missing release), checks the HEAD and changelog, and verifies the resulting tag target. It never uses GitHub Actions.
+
+## v0.5.6 sensor naming
+
+Ten historical cloud diagnostics use familiar names such as **Max Heating Setpoint** (`htsp.max`) and **Min Cooling Setpoint** (`clsp.min`). They are **not** asserted live: inspect their `value_freshness` and `value_source` attributes. Existing entity IDs and history are preserved; only the two unsupported always-unavailable diagnostic entities are retired. User-customized names are not overwritten.
 
 ## v0.5.5 cloud availability / recovery diagnostics
 
