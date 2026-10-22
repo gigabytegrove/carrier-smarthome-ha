@@ -322,7 +322,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
             await units[0].async_set_temperature(temperature=float('nan'))
         self.coordinator.client.async_update_zone.assert_not_awaited()
 
-    async def test_parallel_mode_writes_serialized(self):
+    async def test_overlapping_mode_writes_are_rejected_not_queued(self):
         climate = load('climate')
         units = []
         await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
@@ -344,9 +344,12 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         two = asyncio.create_task(units[0].async_set_hvac_mode(HVACMode.HEAT))
         await asyncio.sleep(0)
         self.assertEqual(writes, ['cool'])
+        with self.assertRaisesRegex(Exception, 'still being verified'):
+            await two
         release_first.set()
-        await asyncio.gather(one, two)
-        self.assertEqual(writes, ['cool', 'heat'])
+        await one
+        self.assertEqual(writes, ['cool'])
+        self.assertEqual(state['mode'], 'cool')
 
 
     async def test_delayed_carrier_propagation_confirms_after_multiple_real_polls(self):
@@ -442,6 +445,32 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, mode='off')
         self.assertEqual(state['mode'], 'off')
         self.assertEqual(poll_count, 7)
+
+    async def test_detail_only_confirmation_publishes_observed_mode_to_ha(self):
+        climate = load('climate')
+        control = load('control')
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        state = self.coordinator.data['serial-test']['zones'][0]
+        state['mode'] = 'cool'  # Listing has not converged yet.
+        self.coordinator.client = types.SimpleNamespace(
+            async_update_zone=AsyncMock(),
+            async_get_system_detail=AsyncMock(return_value={
+                'serial': 'serial-test', 'connection': {'isConnected': True},
+                'zones': [{'index': 0, 'mode': 'off'}],
+            }),
+        )
+        self.coordinator.async_refresh = AsyncMock()  # Forced reads still stale.
+        # Real CarrierCoordinator is tested separately for its publish logic.
+        self.coordinator.publish_verified_detail = lambda serial, index, detail, desired: (
+            state.update({'mode': desired['mode']}) or True
+        )
+        with patch.object(control.asyncio, 'sleep', new_callable=AsyncMock):
+            await units[0].async_set_hvac_mode(HVACMode.OFF)
+        self.assertEqual(state['mode'], 'off')
+        self.assertEqual(self.coordinator.async_refresh.await_count, 3)
+        self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, mode='off')
+        self.coordinator.client.async_get_system_detail.assert_awaited_once_with('serial-test')
 
     async def test_detail_mismatch_prevents_stale_noop_for_explicit_off_request(self):
         climate = load('climate')

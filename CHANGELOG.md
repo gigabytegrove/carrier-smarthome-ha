@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.2 — Home Assistant cloud synchronization and stale-command prevention
+
+- Owner confirmed native HA Off/Cool toggles appear in both independent Carrier GraphQL views, while HA presentation lagged. Manual temperature adjustments during tests were intentional.
+- Push only verified detail-query mode, fan, or target values to the HA DataUpdateCoordinator immediately when the account listing is behind; preserve unrelated sensor values and device identity. This is a verified state push, **not optimistic control**.
+- Reject overlapping mode/fan/setpoint writes while a previous command is awaiting confirmation, instead of silently queueing stale user actions behind a potentially 64-second lock. Never issue a repeated mutation automatically.
+- Check independent detail at 8 seconds and later bounded intervals, maintaining the existing 64-second observation window and rate-limit protection.
+- Reduce routine cloud polling from 60 to 30 seconds; preserve cloud rate-limit backoff, no new background services and no Matter.
+- Update regression tests for delayed confirmation, state publishing, offline safety, overlapping command rejection, and HACS compatibility.
+- A PowerShell clone of v0.5.1 alone does **not** prove the running Home Assistant integration was upgraded; verify the manifest shown by HA diagnostics.
+
 ## v0.5.1 — Carrier delayed cloud confirmation (no duplicate HVAC writes)
 
 - Confirmed against the owner's thermostat: Carrier acknowledged HA's mode mutation; the physical setting changed after the old short verification window, which caused a misleading HA service error.

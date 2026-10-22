@@ -43,8 +43,15 @@ def _target_ok(current: dict, desired: dict) -> bool:
 
 async def _write_verified(coordinator, serial: str, index: int,
                           desired: dict, payload: dict) -> None:
-    # One per-account write lock; the same thermostat cannot receive racing
-    # mode, target, and fan updates from concurrent HA service calls.
+    # Do NOT queue HVAC commands behind a previous command's extended
+    # confirmation window. Queued Cool/Off actions can execute much later and
+    # appear to randomly override the operator's most recent selection.
+    # A single HA event loop acquires an uncontended asyncio lock atomically.
+    if coordinator.write_lock.locked():
+        raise HomeAssistantError(
+            "Previous Carrier command still being verified; no new HVAC command "
+            "was sent. Check the current mode before trying again"
+        )
     async with coordinator.write_lock:
         _state(coordinator, serial, index)
         try:
@@ -117,13 +124,20 @@ async def _write_verified(coordinator, serial: str, index: int,
                     ) from (failure if isinstance(failure, BaseException) else None)
             # Consult the independent APK-derived detail view after the
             # initial short wait. Never accept a mismatched serial or zone.
-            if attempt in (2, 4, 6, 8) and hasattr(coordinator.client, "async_get_system_detail"):
+            if attempt in (1, 3, 5, 7, 8) and hasattr(coordinator.client, "async_get_system_detail"):
                 try:
                     detail = await coordinator.client.async_get_system_detail(serial)
                     if (detail.get("serial") == serial
                             and connectivity_state(detail) == "online"):
                         detail_zone = get_zone(detail, index)
                         if detail_zone is not None and _target_ok(zone_values(detail_zone), desired):
+                            # A verified detail response may lead the account
+                            # listing. Publish only the observed target fields
+                            # immediately to the coordinator so HA's climate
+                            # entity updates instead of waiting for the next
+                            # 60-second background poll. Never predict a state.
+                            if hasattr(coordinator, "publish_verified_detail"):
+                                coordinator.publish_verified_detail(serial, index, detail, desired)
                             detail_confirmed = True
                             break
                 except CarrierRateLimitError as exc:
@@ -136,9 +150,9 @@ async def _write_verified(coordinator, serial: str, index: int,
                     # remains authoritative if it becomes current later.
                     pass
         if detail_confirmed:
-            # The detailed GraphQL query confirmed the actual requested state;
-            # HA's regular coordinator polling will reconcile its summary.
-            # Do not synthesize a state or issue another mutation.
+            # The verified detailed GraphQL view confirmed the command. When
+            # supported, publish its observed fields through the coordinator;
+            # routine account-list polling still reconciles independently.
             return
         if last_read_error:
             raise HomeAssistantError(
