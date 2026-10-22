@@ -34,3 +34,7 @@ With a confirmed IP, only then inspect open ports and protocol fingerprints with
 **L4:** If there is an authenticated proprietary LAN protocol, document read-only session setup and one proven request. **Unknown.**
 
 **L5:** Preserve Matter as standard local basic control and avoid duplicate/reentrant climate commands from cloud vs Matter. **Design requirement.**
+
+## Multi-VLAN discovery update (2026-10-22)
+
+The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `192.168.0.0/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
