@@ -1,8 +1,20 @@
+## Testable native-cloud Home Assistant alpha — v0.1.0a1
+
+**An installable Home Assistant integration is now available.** Its first test is Carrier's *own cloud GraphQL API*, not Matter. The alpha supplies UI account sign-in, automatic token refresh, genuine climate/temperature/humidity/connectivity entities, polling, reauthentication, and separately opt-in experimental HVAC mode/setpoint writes. All values are from real API responses; we have **not yet tested this specific user's account or thermostat live**. Writes start **OFF**.
+
+**To test today:** [read the complete instructions](research/TEST_TODAY.md) or run the **read-only** `python tools/Smoke-TestSmartHomeCloud.py` from this repo (requires `aiohttp`). To install, copy `custom_components/carrier_smarthome/` into Home Assistant's `/config/custom_components/`, restart Home Assistant, then add **Carrier SmartHome (Native Cloud Alpha)** under Devices & services. Enter only your normal Carrier SmartHome credentials; no server URL, Matter pairing, MAC or thermostat IP is required.
+
+The independent `dahlb/carrier_api` code revealed a previously overlooked entry-level system query and working legacy account login flow, corroborated by the extracted SmartHome APK. Its operation may vary by account/device. The APK-derived alternative `getUserWithDevices` and `getEntryLevelSystemData` are also implemented. Existing proprietary-LAN and Omada research remains in parallel. **No Matter dependency, integration or fallback will be added.**
+
+Details: [release notes](research/RELEASE_NOTES_v0.1.0-alpha.1.md) · [API provenance and limitations](research/ALPHA_CLOUD_IMPLEMENTATION.md).
+
+---
+
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** research and protocol discovery (not an installable HA integration yet).
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native-cloud installable alpha v0.1.0a1; live owner-account verification pending.
 
-This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. Home Assistant's existing Matter integration is a valid local alternative, not proof that Carrier exposes a separate IP API.
+This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. Matter is explicitly out of scope; we are working on Carrier's native cloud protocol and researching proprietary local control.
 
 ## What we extracted from the actual XAPK
 
@@ -24,7 +36,7 @@ The app includes `getUserWithDevices`, `getEntryLevelSystemData`, `getEntryLevel
 
 ## Targeted IoT VLAN discovery (known network)
 
-**Confirmed network:** the owner's Carrier thermostat is associated with **`redacted.invalid/16`**, *not* the computer's `192.168.0.x` LAN. No thermostat IP address has yet been identified. The scanner now targets **only** `redacted.invalid/16` by default, without requiring a thermostat IP, router login, or cloud URL.
+**Confirmed network:** the owner's Carrier thermostat is associated with **`redacted.invalid/16`**, *not* the computer's `192.168.0.x` LAN. The owner-verified Omada export identified a historical thermostat IP; current lease is not guaranteed. The scanner now targets **only** `redacted.invalid/16` by default, without requiring a thermostat IP, router login, or cloud URL.
 
 **Already ran the full sweep?** Use the saved results; **do not scan the `/16` again** just to obtain a device list:
 
@@ -32,7 +44,7 @@ The app includes `getUserWithDevices`, `getEntryLevelSystemData`, `getEntryLevel
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Run-Discovery.ps1 -ReviewOnly
 ```
 
-The review-only mode locates the newest `iot-private.json` automatically and prints all candidate IPs, the separate ICMP/neighbor evidence, and the exact open ports per host. It does not perform any network traffic or cloud requests. The first owner-side scan on 2026-10-22 found 63 candidates (all in `redacted.invalid/24`) and 10 **port results** (not necessarily 10 hosts). Thermostat identity remains unconfirmed. See `research/IOT_VLAN_172_20.md`.
+The review-only mode locates the newest `iot-private.json` automatically and prints all candidate IPs, the separate ICMP/neighbor evidence, and the exact open ports per host. It does not perform any network traffic or cloud requests. The first owner-side scan on 2026-10-22 found 63 candidates (all in `redacted.invalid/24`) and 10 **port results** (not necessarily 10 hosts). The owner-verified Omada MAC/serial correlation established device identity, but current lease remains unverified. See `research/IOT_VLAN_172_20.md`.
 
 Run the **existing** entry point in Windows PowerShell:
 
@@ -68,7 +80,7 @@ See [`research/IOT_VLAN_172_20.md`](research/IOT_VLAN_172_20.md) for scope, scan
 3. **User-authorized session capture:** When needed, capture a browser session from Carrier SmartHome's existing web portal, then analyze **locally** with `python tools/analyze_har.py private.har --output safe-capture-summary.json`. The analyzer records only Carrier hosts, safe route patterns, GraphQL operation names, variable names, and authentication **mechanism**, never values. Never publish/upload the original HAR.
 4. **Authenticated owner query:** Once the actual endpoint and authentication flow are verified, read `getUserWithDevices`, select the user's TSTATCCEWF-01 by reported model/serial, and read `getEntryLevelSystemData` with a privacy-preserving client.
 5. **Write controls:** Only after reading actual schema, verify reversible heat/cool setpoint changes; add schedule/profile writes later.
-6. **Home Assistant package:** Build a native custom integration after successful live read, login refresh, and write tests; do not fabricate a working integration before the protocol is verified.
+6. **Home Assistant alpha:** installable integration is now present, with actual API operations and no simulated devices. Live owner validation still required; writes start disabled.
 
 `tools/cloud_protocol.py` already enforces Carrier-only HTTPS GraphQL endpoints, token redaction, response limits, no redirects, and read-only queries. It does not implement invented OAuth parameters or a fake password login.
 

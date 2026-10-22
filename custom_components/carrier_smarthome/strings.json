@@ -1,0 +1,32 @@
+{
+  "title": "Carrier SmartHome (Native Cloud Alpha)",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sign in to Carrier SmartHome",
+        "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. No Matter. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
+        "data": {"username": "Carrier account email or username", "password": "Password"}
+      },
+      "reauth_confirm": {
+        "title": "Reconnect Carrier SmartHome",
+        "description": "Your Carrier session needs to be reauthenticated.",
+        "data": {"password": "Password"}
+      }
+    },
+    "error": {
+      "invalid_auth": "Carrier did not accept the credentials or login method.",
+      "cannot_connect": "The Carrier SmartHome API could not be reached or returned an unexpected response.",
+      "no_devices": "Login succeeded, but Carrier returned no entry-level thermostats for this account."
+    },
+    "abort": {"already_configured": "This Carrier account is already configured.", "reauth_successful": "Carrier account reconnected."}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Carrier SmartHome options",
+        "description": "Experimental control sends real Carrier cloud changes to HVAC equipment. Leave OFF until live reads and model identity are verified.",
+        "data": {"enable_control": "Enable experimental thermostat writes"}
+      }
+    }
+  }
+}
