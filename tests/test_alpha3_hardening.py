@@ -72,7 +72,7 @@ class NewValidationTests(unittest.IsolatedAsyncioTestCase):
 class LocalIdentityTests(unittest.TestCase):
     def test_refuses_stale_ip(self):
         with self.assertRaisesRegex(ValueError, 'not connected'):
-            local.connected_target({'status': 'NOT CONNECTED IN EXPORT', 'last_ip': '172.20.0.51'})
+            local.connected_target({'status': 'NOT CONNECTED IN EXPORT', 'last_ip': '172.20.0.151'})
 
     def test_refuses_other_network(self):
         with self.assertRaisesRegex(ValueError, 'outside'):
@@ -80,10 +80,10 @@ class LocalIdentityTests(unittest.TestCase):
 
     def test_refuses_ambiguous_lease(self):
         with self.assertRaisesRegex(ValueError, 'ambiguous'):
-            local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.51', 'same_ip_other_macs': 1})
+            local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.151', 'same_ip_other_macs': 1})
 
     def test_current_known_host_allows_check(self):
-        self.assertEqual(local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.51', 'same_ip_other_macs': 0}), '172.20.0.51')
+        self.assertEqual(local.connected_target({'status': 'CONNECTED', 'current_ip': '172.20.0.151', 'same_ip_other_macs': 0}), '172.20.0.151')
 
     def test_no_credentials_or_commands_in_ports(self):
         self.assertEqual(local.PORTS, (80, 443, 8080, 8443, 1883, 8883))

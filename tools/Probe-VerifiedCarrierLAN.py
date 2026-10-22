@@ -54,7 +54,7 @@ async def probe(ip: str) -> dict[int, bool]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('omada_export', type=Path)
-    parser.add_argument('--suffix', default='144B', help='Thermostat label suffix; 144B identifies research unit')
+    parser.add_argument('--suffix', default='', help='Optional last four hex digits of thermostat MAC; use only to resolve multiple matches')
     parser.add_argument('--plan', action='store_true', help='Verify identity, but do not send any packets')
     args = parser.parse_args()
     try:

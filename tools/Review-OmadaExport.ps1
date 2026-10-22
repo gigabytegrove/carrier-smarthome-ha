@@ -1,7 +1,7 @@
 # Analyze an existing Omada Client_*.zip export and the saved IoT scan.
 # Works offline; never contacts Omada, Carrier, or thermostat. PowerShell 5.1+.
 [CmdletBinding()]
-param([string]$ArchivePath, [string]$ScanPath, [string]$MacSuffix = '144B')
+param([string]$ArchivePath, [string]$ScanPath, [string]$MacSuffix = '')
 $ErrorActionPreference = 'Stop'
 if (-not $ArchivePath) {
     $downloads = Join-Path $env:USERPROFILE 'Downloads'
@@ -23,7 +23,8 @@ if (-not $ScanPath) {
 }
 $py = Get-Command py.exe, python.exe, python3.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $py) { throw 'Python is required. It was used by the earlier Carrier research tools.' }
-$arguments = @((Join-Path $PSScriptRoot 'omada_identity.py'), $ArchivePath, '--suffix', $MacSuffix)
+$arguments = @((Join-Path $PSScriptRoot 'omada_identity.py'), $ArchivePath)
+if ($MacSuffix) { $arguments += @('--suffix', $MacSuffix) }
 if ($ScanPath) { $arguments += @('--scan', $ScanPath) }
 Write-Host "`n=== CARRIER SMARTHOME OMADA EXPORT REVIEW ===" -ForegroundColor Cyan
 Write-Host "Export: $ArchivePath"
