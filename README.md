@@ -76,3 +76,7 @@ You can also [report an issue](https://github.com/gigabytegrove/carrier-smarthom
 Your account credentials are stored by Home Assistant for Carrier authentication; this project does not require Matter pairing or a separate cloud account. **Never post** credentials, raw diagnostics, MACs, IP addresses, serials, unredacted packet captures, or authentication tokens in public GitHub issues.
 
 Carrier SmartHome is an **independent community integration**, not affiliated with, endorsed by, or supported by Carrier. Carrier names, logos, and product marks belong to their respective owners. The project icon identifies the supported Carrier equipment; its inclusion does not imply an official relationship.
+
+## Local-control research — current state
+
+Local proprietary control is **not yet demonstrated** on TSTATCCEWF-01. The Wi-Fi/cloud integration works; the APK contains local-command names but no verified LAN HVAC protocol has been identified. For live single-device discovery **without an Omada ZIP**, see [Live Connected Clients procedure](docs/LOCAL_PROBE_GUIDE.md). It requires the actual current IP and full MAC from the Omada Connected Clients screen and never reuses the historical lease. Manual selection is owner-attested, not independently authenticated. No Matter implementation is included.

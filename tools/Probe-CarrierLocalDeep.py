@@ -112,6 +112,36 @@ def verify_identity(rows: dict[str, list[dict[str, str]]], suffix: str) -> tuple
                      'active_ip_unique': True, 'identity_method': 'Omada current MAC match'}
 
 
+def verify_live_ui_selection(ip_text: str, mac_text: str, suffix: str, confirmation: str) -> tuple[str, dict[str, Any]]:
+    """Owner-attested live Omada client: never confuse this with cryptographic/ARP proof.
+
+    Owner must read current, CONNECTED thermostat's IPv4 and full Wi-Fi MAC
+    directly from Omada, not cached DHCP or historical files. This alternative
+    avoids a ZIP export, but makes its assurance limitation explicit.
+    """
+    if confirmation != 'I-SEE-IT-CONNECTED':
+        raise ValueError('Open Omada Connected Clients right now and confirm exactly I-SEE-IT-CONNECTED.')
+    requested = mac(mac_text)
+    if not requested or not suffix or not re.fullmatch(r'[A-Fa-f0-9]{4}', suffix):
+        raise ValueError('A full valid Wi-Fi MAC and its 4-character suffix are required.')
+    if not requested.endswith(suffix.upper()):
+        raise ValueError('Current MAC does not match the expected thermostat MAC suffix.')
+    try:
+        ip = ipaddress.ip_address(ip_text)
+    except ValueError:
+        raise ValueError('Enter the current thermostat IPv4 shown in Omada, not an old lease.') from None
+    if (ip.version != 4 or ip not in AUTHORIZED
+            or ip in (AUTHORIZED.network_address, AUTHORIZED.broadcast_address)):
+        raise ValueError('Live IP must be in the preauthorized IoT network; no packets sent.')
+    # This method verifies only provided syntax and consistency, not an
+    # independently authenticated association. Report that limitation clearly.
+    return str(ip), {'online_verified': False, 'vlan_verified': True,
+                     'active_ip_unique': False,
+                     'owner_reports_current_connected': True,
+                     'independently_verified': False,
+                     'identity_method': 'live Omada UI owner attestation, not machine-verified'}
+
+
 def scan_ports(full: bool) -> list[int]:
     return list(range(1, MAX_PORTS + 1)) if full else sorted(set(range(1, 1025)).union(EXTRA_TCP))
 
@@ -342,7 +372,10 @@ def conclusions(result: dict[str, Any]) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--omada', required=True, type=Path)
+    parser.add_argument('--omada', type=Path, help='fresh exported Omada client ZIP')
+    parser.add_argument('--manual-ip', help='IP shown NOW in Omada Connected Clients; private, never exported')
+    parser.add_argument('--manual-mac', help='full MAC shown NOW in Omada; private, never exported')
+    parser.add_argument('--manual-confirm', help='type I-SEE-IT-CONNECTED after viewing the live Omada UI')
     parser.add_argument('--suffix', required=True, help='last 4 hex digits of thermostat MAC, entered locally')
     parser.add_argument('--max-age-minutes', type=int, default=30)
     parser.add_argument('--controller-utc-offset', type=int, choices=range(-12, 15))
@@ -355,17 +388,31 @@ def main(argv: list[str] | None = None) -> int:
     if not 1 <= args.concurrency <= 64 or not 0.2 <= args.tcp_timeout <= 2.0:
         parser.error('Concurrency must be 1-64; TCP timeout 0.2-2.0s')
     try:
-        fresh = verify_fresh_export(args.omada, args.max_age_minutes,
-                                    clock_offset_hours=args.controller_utc_offset)
-        ip, identity = verify_identity(read_archive(args.omada), args.suffix)
+        manual = args.manual_ip is not None or args.manual_mac is not None or args.manual_confirm is not None
+        if manual:
+            if args.omada is not None:
+                raise ValueError('Choose either fresh Omada ZIP or explicit live-UI selection, never both.')
+            ip, identity = verify_live_ui_selection(args.manual_ip or '', args.manual_mac or '',
+                                                    args.suffix, args.manual_confirm or '')
+            fresh = {'verification': 'owner viewed currently connected client; clock time not independently verified'}
+        else:
+            if args.omada is None:
+                raise ValueError('Supply a fresh --omada ZIP or explicitly confirm the live Omada UI.')
+            fresh = verify_fresh_export(args.omada, args.max_age_minutes,
+                                        clock_offset_hours=args.controller_utc_offset)
+            ip, identity = verify_identity(read_archive(args.omada), args.suffix)
     except (ValueError, OSError, zipfile.BadZipFile) as exc:
         print('SAFE STOP:', str(exc), file=sys.stderr)
-        print('No network traffic sent. Export live connected clients again.', file=sys.stderr)
+        print('No network traffic sent. Use a fresh export or open the live Connected Clients screen.', file=sys.stderr)
         return 2
-    print('CARRIER SMARTHOME | v0.5.0 | LOCAL PROPRIETARY PROTOCOL RECONNAISSANCE')
-    print('Fresh Omada online client: VERIFIED; unique active MAC/IP: VERIFIED')
-    print('Controller timestamp interpreted as:', fresh['controller_clock'])
-    print('Omada ZIP filename:', args.omada.name)
+    print('CARRIER SMARTHOME | PROPRIETARY LAN PROTOCOL RECONNAISSANCE')
+    if manual:
+        print('LIVE UI: owner attestation ONLY; no independent MAC/IP association check.')
+        print('If your screenshot is old, STOP. Never scan an assumed or saved lease.')
+    else:
+        print('Fresh Omada online client: VERIFIED; unique active MAC/IP: VERIFIED')
+        print('Controller timestamp interpreted as:', fresh['controller_clock'])
+        print('Omada ZIP filename:', args.omada.name)
     print('Target IP/MAC/name withheld from report. Only one authorized host is probed.')
     if args.plan:
         print('PLAN ONLY: PASS, absolutely no network packets sent.')
@@ -380,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
     for line in findings:
         print(' -', line)
     report = {'version': '0.5.0', 'at_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-              'identity_verified': identity, 'export_freshness': fresh, 'scan_scope': 'single current Omada thermostat',
+              'identity_verified': identity, 'export_freshness': fresh, 'scan_scope': 'one owner-selected Carrier IoT host',
               'full_tcp': args.full_tcp, 'no_matter': True, 'no_hvac_commands': True,
               'results': results, 'interpretation': findings}
     if args.output:

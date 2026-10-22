@@ -22,3 +22,11 @@
 4. Reversible local HVAC command with physical feedback, safety and rollback. **Unknown.**
 
 A positive listener test only proves a listener. A negative result can be caused by firewall/VLAN rules or an outbound-only/cloud architecture. For references and research boundaries see [LOCAL_PROTOCOL_050.md](LOCAL_PROTOCOL_050.md).
+
+## Live Connected Clients option
+
+An alternative to fresh ZIP is now available: the owner reads the CURRENT IP and full MAC directly from Omada's Connected Clients screen and confirms the live screen in the Windows probe (`-LiveOmada`). Validation is syntax/network/suffix only; this is **not independent proof of a MAC-to-IP binding**. The report explicitly marks it as owner-attested and never includes the IP or MAC. The old saved 08:14 ZIP never gets silently used as a fallback. Keep the sample rate bounded and run the full scan only once.
+
+## Additional owner-provided Android APK string-table evidence (v1.2.42)
+
+A fresh offline inspection of the original Hermes v96 JS bundle (80,776 string entries) found the exact symbol names `sendLocalControlCommand`, `SendLocalControlCommandRead`, `SendLocalControlCommandWrite`, `GenerateLocalcontrolRequestPacket`, and `LocalControlReqPacket`. It also contains diagnostic messages concerning an encrypted/decrypted response and a key, `MqttProxyControl`, and an independent `getEtBleSessionKey` GraphQL operation. **These strings do not establish which transport carries a command, whether it runs for this model, or how to authenticate.** In particular, BLE session keys may be for device provisioning. Do not send guessed encrypted packets, publish MQTT messages, or flash firmware. Correlate traffic from an actual authorized app operation and the exact model first.
