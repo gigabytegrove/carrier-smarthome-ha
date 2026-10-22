@@ -1,0 +1,11 @@
+query wallControllerReminders($serial: String!) {
+  wallControllerReminders(serial: $serial) {
+    serial
+    reminders {
+      id
+      message
+      type
+      timestamp
+    }
+  }
+}

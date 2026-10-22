@@ -1,0 +1,5 @@
+mutation updateIntelisense($input: IntelisenseInput!) {
+  updateIntelisense(input: $input) {
+    success
+  }
+}

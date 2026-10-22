@@ -1,0 +1,5 @@
+mutation updateEntryLevelSystem($input: EntryLevelSystemInput!) {
+  updateEntryLevelSystem(input: $input) {
+    success
+  }
+}

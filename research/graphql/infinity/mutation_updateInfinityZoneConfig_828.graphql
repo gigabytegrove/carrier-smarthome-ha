@@ -1,0 +1,5 @@
+mutation updateInfinityZoneConfig($input: InfinityZoneConfigInput!) {
+  updateInfinityZoneConfig(input: $input) {
+    etag
+  }
+}

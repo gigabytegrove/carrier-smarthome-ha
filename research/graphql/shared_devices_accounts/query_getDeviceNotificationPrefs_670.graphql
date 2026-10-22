@@ -1,0 +1,12 @@
+query getDeviceNotificationPrefs($username: String!, $locationId: String!, $deviceId: String!, $phoneId: String!) {
+  deviceNotificationPrefs(
+    input: {username: $username, locationId: $locationId, deviceId: $deviceId, phoneId: $phoneId}
+  ) {
+    enabled
+    pm2p5
+    tvoc
+    rh
+    dailyAverage
+    weeklyAverage
+  }
+}

@@ -1,0 +1,13 @@
+mutation fetchAccessToken($input: FetchAccessTokenInput!) {
+  fetchAccessToken(input: $input) {
+    success
+    errorMessage
+    data {
+      token_type
+      expires_in
+      access_token
+      scope
+      refresh_token
+    }
+  }
+}

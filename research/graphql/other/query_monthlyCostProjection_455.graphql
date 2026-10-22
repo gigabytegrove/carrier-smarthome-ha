@@ -1,0 +1,9 @@
+query monthlyCostProjection($input: MonthlyProjectionInput!) {
+  monthlyCostProjection(input: $input) {
+    actualSpending
+    confidenceLevel
+    projectedCost
+    usageCategory
+    vsLastMonth
+  }
+}

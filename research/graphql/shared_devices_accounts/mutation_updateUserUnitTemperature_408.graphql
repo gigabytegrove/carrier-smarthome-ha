@@ -1,0 +1,9 @@
+mutation updateUserUnitTemperature($tempUnitFormat: TempUnitFormat!, $locationId: String) {
+  updateUserUnitTemperature(
+    tempUnitFormat: $tempUnitFormat
+    locationId: $locationId
+  ) {
+    success
+    payload
+  }
+}

@@ -1,0 +1,21 @@
+query getLocationInvites($input: GetLocationInvitesInput!) {
+  locationInvites(input: $input) {
+    success
+    data {
+      total
+      invites {
+        locationId
+        invitedBy
+        token
+        status
+        createdAt
+        expiresAt
+        invitedUser
+      }
+    }
+    error {
+      code
+      message
+    }
+  }
+}

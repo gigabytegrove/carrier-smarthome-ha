@@ -1,0 +1,19 @@
+query getGooglePlaceDetail($placeId: String!) {
+  googlePlaceDetail(placeId: $placeId) {
+    result {
+      formatted_address
+      address_components {
+        long_name
+        short_name
+        types
+      }
+      name
+      place_id
+      reference
+      types
+      url
+      vicinity
+    }
+    status
+  }
+}

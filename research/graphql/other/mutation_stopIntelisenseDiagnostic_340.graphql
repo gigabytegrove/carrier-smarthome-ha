@@ -1,0 +1,6 @@
+mutation stopIntelisenseDiagnostic($deviceId: String!) {
+  stopSTEDiagnostic(deviceId: $deviceId) {
+    success
+    message
+  }
+}

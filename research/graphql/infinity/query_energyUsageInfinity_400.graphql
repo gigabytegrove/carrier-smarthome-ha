@@ -1,0 +1,21 @@
+query energyUsageInfinity($input: GetEnergyUsageInput!) {
+  energyUsageInfinity(input: $input) {
+    success
+    message
+    energyUsage {
+      timeBucket
+      totalKwh
+      totalGas
+      totalElectricityDollars
+      totalGasDollars
+      outsideTemperature
+      zoneSettings {
+        zoneNumber
+        coolingSetpoint
+        heatingSetpoint
+        highestRoomTemperature
+        lowestRoomTemperature
+      }
+    }
+  }
+}

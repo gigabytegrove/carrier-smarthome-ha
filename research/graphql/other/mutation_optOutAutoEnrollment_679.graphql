@@ -1,0 +1,6 @@
+mutation optOutAutoEnrollment($input: OptOutAutoEnrollmentInput!) {
+  optOutAutoEnrollment(input: $input) {
+    success
+    payload
+  }
+}

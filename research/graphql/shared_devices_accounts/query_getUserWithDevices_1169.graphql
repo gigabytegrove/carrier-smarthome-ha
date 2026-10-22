@@ -1,0 +1,49 @@
+query getUserWithDevices($userName: String!, $appVersion: String, $brand: String, $os: String, $osVersion: String) {
+  user(
+    userName: $userName
+    appVersion: $appVersion
+    brand: $brand
+    os: $os
+    osVersion: $osVersion
+  ) {
+    username
+    first
+    last
+    email
+    emailVerified
+    secondaryEmail
+    secondaryEmailVerified
+    phone1
+    promoEmail
+    acceptedTermsOfServiceDateTime
+    creationSource
+    postal
+    locations {
+      locationId
+      name
+      street1
+      street2
+      city
+      state
+      country
+      postal
+      devices {
+        deviceId
+        type
+        thingName
+        tempUnit
+        name
+      }
+      entryLevels {
+        serial
+        connection {
+          isConnected
+          deviceId
+          ssid
+          macaddress
+          rssi
+        }
+      }
+    }
+  }
+}

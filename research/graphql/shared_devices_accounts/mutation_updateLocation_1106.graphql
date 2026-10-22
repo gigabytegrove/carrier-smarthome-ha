@@ -1,0 +1,5 @@
+mutation updateLocation($input: UpdateLocationInput!) {
+  updateLocation(input: $input) {
+    locationId
+  }
+}

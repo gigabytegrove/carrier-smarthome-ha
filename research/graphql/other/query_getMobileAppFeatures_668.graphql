@@ -1,0 +1,27 @@
+query getMobileAppFeatures($username: String!, $brand: String!, $os: String!) {
+  mobileAppFeatures(input: {username: $username, brand: $brand, os: $os}) {
+    userFeatures {
+      featureId
+      enabled
+      description
+    }
+    osFeatures {
+      featureId
+      enabled
+    }
+    defaultFeatures {
+      featureId
+      enabled
+      name
+      isBeta
+      sortIndex
+      startTimestamp
+      endTimestamp
+      description
+      relatedModules
+      setupRequired
+      releaseDate
+      releaseVersion
+    }
+  }
+}

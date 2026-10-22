@@ -1,0 +1,16 @@
+query InfinityNotifications($serial: String!) {
+  infinityNotifications(serial: $serial) {
+    notifications {
+      message
+      timestamp
+      userConfirmed
+      userDeleted
+      dealerDeleted
+      type
+      code
+      location
+      id
+      serial
+    }
+  }
+}

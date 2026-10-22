@@ -1,0 +1,179 @@
+query getInfinitySystem($serial: String!) {
+  profile: infinityProfile(serial: $serial) {
+    serial
+    name
+    firmware
+    model
+    idutype
+    idusource
+  }
+  status: infinityStatus(serial: $serial) {
+    localTime
+    localTimeOffset
+    utcTime
+    wcTime
+    isDisconnected
+    cfgem
+    mode
+    vacatrunning
+    oat
+    odu {
+      type
+      opstat
+      opmode
+      iducfm
+      lat
+      oducoiltmp
+      blwrpm
+      linevolt
+      lockactive
+      locktime
+      comprpm
+      suctpress
+      sucttemp
+      suctsupheat
+      dischargetmp
+      sparesensorstatus
+      sparesensorvalue
+      exvpos
+      curtail
+      statpress
+      enterreftmp
+      availminheatstage
+      availmaxheatstage
+      availmincoolstage
+      availmaxcoolstage
+      opminheatstage
+      opmaxheatstage
+      opmincoolstage
+      opmaxcoolstage
+      lowambientcooling
+    }
+    filtrlvl
+    idu {
+      type
+      opstat
+      cfm
+      pwmblower
+      iducfm
+      blwrpm
+      statpress
+      coiltemp
+      inducerrpm
+      lat
+      lockoutactive
+      lockouttime
+    }
+    vent
+    ventlvl
+    humid
+    humlvl
+    uvlvl
+    zones {
+      id
+      rt
+      rh
+      fan
+      htsp
+      clsp
+      hold
+      enabled
+      currentActivity
+    }
+  }
+  config: infinityConfig(serial: $serial) {
+    timestamp
+    etag
+    mode
+    cfgem
+    cfgdead
+    cfghumid
+    erate
+    grate
+    heatsource
+    vacat
+    vacstart
+    vacend
+    vacmint
+    vacmaxt
+    vacfan
+    fueltype
+    gasunit
+    cfgvent
+    cfghumid
+    cfguv
+    cfgfan
+    cfgzoning
+    vacat
+    filtertype
+    filterinterval
+    humidityVacation {
+      rclgovercool
+      ventspdclg
+      ventclg
+      rhtg
+      humidifier
+      humid
+      venthtg
+      rclg
+      ventspdhtg
+    }
+    zones {
+      id
+      name
+      enabled
+      hold
+      holdActivity
+      otmr
+      program {
+        id
+        day {
+          id
+          zoneId
+          period {
+            id
+            zoneId
+            dayId
+            activity
+            time
+            enabled
+          }
+        }
+      }
+      activities {
+        id
+        zoneId
+        type
+        fan
+        previousFan
+        htsp
+        clsp
+      }
+    }
+    wholeHouse {
+      hold
+      holdActivity
+      otmr
+      activities {
+        id
+        htsp
+        clsp
+        fan
+      }
+    }
+    humidityAway {
+      humid
+      humidifier
+      rhtg
+      rclg
+      rclgovercool
+    }
+    humidityHome {
+      humid
+      humidifier
+      rhtg
+      rclg
+      rclgovercool
+    }
+  }
+}

@@ -1,0 +1,6 @@
+mutation SetUserPreferences($locationId: String!, $preferences: PreferencesInput!) {
+  setUserPreferences(locationId: $locationId, preferences: $preferences) {
+    success
+    message
+  }
+}

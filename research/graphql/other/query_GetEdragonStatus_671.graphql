@@ -1,0 +1,18 @@
+query GetEdragonStatus($bess_sn: String!) {
+  edragonStatus(bess_sn: $bess_sn) {
+    bms {
+      nominal_battery_energy_limit
+      calibration_urgency
+      cell_balancing_urgency
+      max_charge_current
+      max_discharge_current
+      battery_voltage
+      battery_current
+      SOC
+      max_temperature
+      min_temperature
+      SOH
+      battery_system_state
+    }
+  }
+}

@@ -1,0 +1,10 @@
+query getAutoEnrollmentStatus($input: GetAutoEnrollmentStatusInput!) {
+  getAutoEnrollmentStatus(input: $input) {
+    data {
+      enrollmentStatus
+    }
+    error {
+      message
+    }
+  }
+}

@@ -1,0 +1,45 @@
+query getUserPreferences($locationId: String!) {
+  getUserPreferences(locationId: $locationId) {
+    geofenceRadius
+    basicPreferences {
+      eventActions {
+        enterEvent {
+          event
+          action
+        }
+        exitEvent {
+          event
+          action
+        }
+      }
+      dwellEvents {
+        type
+        duration
+        action
+      }
+    }
+    advancedPreferences {
+      frequencyOfChecks
+      aggregationRules
+      geofenceRadius
+      isEnabled
+      latitude
+      longitude
+      phones {
+        uuid
+        name
+        isEnabled
+        hasLocationPermissions
+        lastSeen
+      }
+    }
+    notificationPreferences {
+      leaveHome {
+        push
+      }
+      returnHome {
+        push
+      }
+    }
+  }
+}

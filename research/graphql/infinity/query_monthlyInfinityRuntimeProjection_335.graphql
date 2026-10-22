@@ -1,0 +1,9 @@
+query monthlyInfinityRuntimeProjection($input: MonthlyProjectionInput!) {
+  monthlyInfinityRuntimeProjection(input: $input) {
+    projectedRuntime
+    actualRuntime
+    vsLastMonth
+    usageCategory
+    confidenceLevel
+  }
+}

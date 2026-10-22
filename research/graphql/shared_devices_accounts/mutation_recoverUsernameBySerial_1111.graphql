@@ -1,0 +1,9 @@
+mutation recoverUsernameBySerial($input: RecoverUsernameBySerialInput) {
+  recoverUsernameBySerial(input: $input) {
+    success
+    email
+    username
+    message
+    statusCode
+  }
+}

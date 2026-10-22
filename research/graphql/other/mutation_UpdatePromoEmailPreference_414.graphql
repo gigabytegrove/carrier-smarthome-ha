@@ -1,0 +1,7 @@
+mutation UpdatePromoEmailPreference($username: String!, $promoEmail: String!) {
+  updatePromoEmailPreference(
+    input: {username: $username, promoEmail: $promoEmail}
+  ) {
+    success
+  }
+}

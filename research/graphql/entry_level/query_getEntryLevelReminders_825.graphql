@@ -1,0 +1,7 @@
+query getEntryLevelReminders($serial: String!) {
+  entryLevelReminders(serial: $serial) {
+    id
+    message
+    type
+  }
+}

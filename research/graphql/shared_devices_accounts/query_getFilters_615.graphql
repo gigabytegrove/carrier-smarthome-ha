@@ -1,0 +1,8 @@
+query getFilters($input: GetFiltersInput!) {
+  getFilters(input: $input) {
+    success
+    data {
+      ...FilterFields
+    }
+  }
+}

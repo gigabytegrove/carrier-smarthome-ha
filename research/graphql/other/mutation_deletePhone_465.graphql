@@ -1,0 +1,3 @@
+mutation deletePhone($input: DeletePhoneInput) {
+  deletePhone(input: $input)
+}

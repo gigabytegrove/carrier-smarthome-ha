@@ -1,0 +1,10 @@
+query GetEDragonRuntimeData($input: GetEDragonRuntimeDataInput!) {
+  edragonRuntimeData(input: $input) {
+    deviceId
+    periodStart
+    dischargeHours
+    avgDischarge
+    totalDischarge
+    batteryCoveragePercent
+  }
+}

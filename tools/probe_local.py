@@ -21,23 +21,25 @@ import sys
 import time
 
 TCP_PORTS = (80, 443, 8080, 8443, 1883, 8883)
+RFC1918 = tuple(ipaddress.ip_network(cidr) for cidr in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"))
+
+
+def is_rfc1918(ip: ipaddress.IPv4Address) -> bool:
+    return any(ip in network for network in RFC1918)
 SERVICE_TYPES = ("_services._dns-sd._udp.local", "_matter._tcp.local",
                  "_matterc._udp.local", "_matterd._udp.local")
 
 
 def private_ip(value: str) -> ipaddress.IPv4Address:
     ip = ipaddress.ip_address(value)
-    if not isinstance(ip, ipaddress.IPv4Address) or not ip.is_private or ip.is_loopback or ip.is_link_local:
+    if not isinstance(ip, ipaddress.IPv4Address) or not is_rfc1918(ip):
         raise argparse.ArgumentTypeError("Provide a private IPv4 LAN address (not loopback/link-local)")
     return ip
 
 
 def private_net(value: str) -> ipaddress.IPv4Network:
     net = ipaddress.ip_network(value, strict=False)
-    if not isinstance(net, ipaddress.IPv4Network) or net.prefixlen < 24 or not all(
-        address.is_private and not address.is_loopback and not address.is_link_local
-        for address in (net.network_address, net.broadcast_address)
-    ):
+    if not isinstance(net, ipaddress.IPv4Network) or net.prefixlen < 24 or not all(is_rfc1918(address) for address in (net.network_address, net.broadcast_address)):
         raise argparse.ArgumentTypeError("Explicit scan range must be a private IPv4 /24 or smaller")
     return net
 

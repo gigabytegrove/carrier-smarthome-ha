@@ -1,70 +1,82 @@
 # Carrier SmartHome for Home Assistant
 
-**Research/experimental** project for **Carrier TSTATCCEWF-01**, running the **Carrier SmartHome** app (`com.carrier.home`). This is **not** the legacy Carrier Infinity integration. No thermostat-control integration is published yet; this repository contains tested read-only discovery utilities and documented APK findings.
+Unofficial, experimental research project for **Carrier Smart Thermostat TSTATCCEWF-01** using the **Carrier SmartHome** Android app (`com.carrier.home`). This is **not** the legacy `ha_carrier` Infinity integration.
 
-## Research status
+**Project focus:** reverse-engineer the official app exhaustively; validate its **cloud API first**, while investigating safe **local LAN / Matter** operation in parallel. The integration isn't installable yet; claiming otherwise would be misleading.
 
-| Area | Evidence | Status |
-|---|---|---|
-| Android app | SmartHome `1.2.42`, version code `854`; uploaded XAPK | Static analysis complete |
-| GraphQL | `entryLevelSystem`, `entryLevelSchedules`, `updateEntryLevelZone` operations | Operation strings recovered; backend untested |
-| Cloud base URL, OAuth | Configuration names in APK; no validated production host or login | Requires user-authorized traffic capture |
-| Proprietary LAN API | `SendLocalControlCommandRead/Write` symbols exist in app | **Not linked to TSTATCCEWF-01** |
-| Matter | Thermostat model supports Matter over Wi-Fi | Test with HA's native Matter integration |
-| Device IP | Not contained in APK; assigned by local DHCP | Discover on user's LAN |
+## Already extracted from SmartHome 1.2.42
 
-## Run safe discovery on Windows
+- **140** GraphQL operation/fragment definitions recovered: 58 queries, 77 mutations, 5 fragments; **137** complete document strings and **3** marked partial fragments.
+- Distinct **entry-level** and legacy **Infinity** API families; no unsupported assumption that the two protocols work with the same device.
+- Native DEX strings identifying Carrier data service, platform, SSO and realtime WebSocket *candidates*. All are identified as **embedded strings**, not verified active requests for this model.
+- GraphQL route strings `/graphql` and `/graphql-no-auth`; runtime config keys `HASURA_API_URL`, `REST_API_URL`, `ENTRY_TIER_ENV_URL`, `OKTA_TOKEN_URL` and related settings.
+- Proprietary `LocalControl`/MQTT symbols in Hermes; applicability to **this thermostat** remains **unproven**.
 
-From a checked-out copy of this **private** repository, in Windows PowerShell:
+See [full GraphQL inventory](research/GRAPHQL_CATALOG.md), [DEX findings](research/native-dex-findings.json), [APK report](research/ANALYSIS_REPORT.md), and [evidence ledger](research/STATUS.md).
+
+## Zero-knowledge discovery: you do NOT supply a thermostat IP or API host
+
+### A. Windows: discover local network devices automatically
+
+From a clone of the repository, in **Windows PowerShell** (no Python or admin rights needed):
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Probe-CarrierSmartHome.ps1
-# Once the thermostat IP is known from your router, test common TCP listeners:
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Probe-CarrierSmartHome.ps1 -Target redacted.invalid
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Probe-CarrierSmartHome.ps1 -Output "$env:TEMP\carrier-smarthome-lan.json"
 ```
 
-Replace `redacted.invalid` with the IP reported by your router. No IP is assumed or inferred from the XAPK. The Windows probe reads existing neighbor entries and probes **only an explicit private IP**. A thermostat not in the neighbor list is normal. Reachable TCP port != a working control API; no exposed ports != no Matter connectivity.
+It identifies your LAN default route, limits discovery to **at most one directly connected private /24**, performs a bounded ICMP sweep, reads the OS neighbor table, and checks common TCP listeners for **detected LAN neighbors**. No router settings, credentials, assumed IP, thermostat changes, HTTP commands, or firmware operations.
 
-## Run enhanced local discovery with Python 3.10+
+**Important:** a discovered IP is a *candidate LAN device*, not a proven thermostat. Devices may block ICMP and Matter devices use local IPv6/UDP. DHCP labels and Matter mDNS evidence help correlate the identity; even then, no conventional open TCP port does not mean no local control.
 
-```bash
-python tools/probe_local.py
-python tools/probe_local.py --target redacted.invalid
-# Opt-in, bounded TCP scan of a subnet YOU own:
-python tools/probe_local.py --cidr redacted.invalid/24 --scan
+### B. Find Carrier cloud configuration automatically
+
+With **Python 3.10+** (standard library only):
+
+```powershell
+py -3 .\tools\discover_cloud.py --output "$env:TEMP\carrier-smarthome-cloud.json"
 ```
 
-The Python probe queries Matter-related mDNS records, reads ARP/neighbors, and optionally tests TCP connectivity for ports `80,443,8080,8443,1883,8883`. It does not send HTTP, MQTT, Matter commissioning, or thermostat commands. Note that Matter normally uses **UDP 5540**, and mDNS may report nothing for already commissioned devices. Check your router DHCP lease list as the **most reliable way** to find the device IP. Do not scan networks you do not manage.
+No API URL, username, password, token, device ID or manual browser inspection is required. The tool prints the app's recovered public cloud candidates, then reads only unauthenticated **Carrier-owned public portal HTML and same-origin JavaScript** to look for runtime API configuration. No login, GraphQL account queries, or thermostat changes are attempted. It will label unknowns accurately if nothing additional is exposed by the public web client.
 
-## Cloud API research (no guessing)
+Run `py -3 .\tools\discover_cloud.py --offline` to skip all network requests and display APK-only candidates.
 
-1. Sign in to [Carrier SmartHome](https://my.carrier.com/) in a browser you control, or observe your own Android app's metadata traffic. In browser developer tools → Network → Fetch/XHR, identify the real HTTPS GraphQL URL and request headers. Do **not** post HAR files, account cookies, bearer tokens, device serials, or API response bodies to GitHub.
-2. Identify the authentication flow. Do not assume an Okta/Entra/API URL from a string name. Save an authorized short-lived access token in a local file, never in this repository.
-3. Once identified, run a **read-only** query; `getUserWithDevices` may require the account's `userName` variable. User data and serials are redacted from displayed results by the probe.
+### C. Enhanced Matter/mDNS discovery (optional)
 
-```bash
-python tools/probe_cloud.py --endpoint 'https://YOUR-VERIFIED-HOST/graphql' \
-  --query queries/getUserWithDevices.graphql \
-  --variables /private/path/variables.json --prompt-token
+```powershell
+py -3 .\tools\probe_local.py
 ```
 
-The example host is intentionally not real. The tool uses normal TLS certificate verification, blocks redirects, rejects GraphQL mutation/subscription operations, and prints **response field names/types only**. The cloud probe requires an observed endpoint and an account-authorized Bearer token. It does **not** perform login, token refreshing, or guessed API traffic.
+Pass no arguments to query Matter-related local multicast advertisements and your OS neighbor table. This does not commission, pair, or change any device. Home Assistant's **official Matter integration** is the preferred baseline local-control path. Proprietary Carrier LAN commands are a distinct research track.
 
-## Documentation
+## Cloud research, then the actual Home Assistant integration
 
-- [APK technical findings](research/APK_FINDINGS.md)
-- [Local and cloud test plan](research/TEST_PLAN.md)
-- [Security and data sharing](research/SECURITY.md)
-- [Project status and checkpoints](research/STATUS.md)
-- `queries/`: verbatim read-only GraphQL documents extracted from SmartHome v1.2.42.
+1. Confirm the live active SmartHome GraphQL host using publicly recoverable app/web config or an authorized, redacted network observation. **Do not use guessed hostnames or routes for authenticated API calls.**
+2. Implement and validate a user-authorized sign-in/refresh flow without saving credentials in diagnostic reports or in Git.
+3. Run read-only `getUserWithDevices` and `getEntryLevelSystemData` to prove TSTATCCEWF-01 device classification and field responses.
+4. Test a reversible setpoint operation on the owner's thermostat only after confirming the API input schema.
+5. Add proper Home Assistant config flow, climate entity, capability-backed sensors, rate-limited coordinator, reauth and diagnostics.
+6. Validate Matter/local discovery independently and see whether any **additional**, device-specific proprietary LAN API is available. Keep local and cloud experiments separate so that one cannot interfere with the other.
 
-## Development gates
+Existing `tools/probe_cloud.py` is an explicit authorized **read-only GraphQL** tool. It requires an actual observed endpoint and session token because the login process is not yet established. It is **not** the recommended first step; `discover_cloud.py` now handles initial endpoint research automatically.
 
-1. Confirm the device's local IP from the router; correlate mDNS and neighbor information.
-2. Check the thermostat's Matter availability in Home Assistant (do not disturb an existing pairing).
-3. Confirm whether any non-Matter LAN protocol exists; APK symbols alone are insufficient.
-4. Verify real production cloud hostname, authorized authentication and device classification.
-5. Implement cloud read operations and mocked tests; only then test reversible owner-approved thermostat writes.
-6. Deliver Home Assistant config flow, climate entity, diagnostics and robust recovery after those APIs are validated.
+## Repository structure
 
-**Privacy:** Do not commit APK binaries, private API data, access tokens, IP/MAC inventories, or device serial numbers. This is an independent community research project and not affiliated with Carrier.
+- `research/graphql/` — all extracted GraphQL documents (partial fragments clearly marked)
+- `research/graphql-catalog.json`, `research/GRAPHQL_CATALOG.md` — stable catalog and input types
+- `research/analyze_xapk.py`, `research/analyze_native_apk.py`, `research/build_graphql_catalog.py` — offline reproducible APK evidence processing
+- `research/native-dex-findings.json` — native URL candidates and classified feature evidence
+- `tools/discover_cloud.py` — public website configuration discovery without authentication
+- `tools/Probe-CarrierSmartHome.ps1` — automatic zero-input Windows LAN neighbor and TCP discovery
+- `tools/probe_local.py` — separate, low-impact mDNS and neighbor utility
+- `tools/probe_cloud.py` — opt-in read-only GraphQL query driver after endpoint/auth confirmation
+- `tests/` — stdlib-only offline unit tests
+
+Run tests:
+
+```powershell
+py -3 -m unittest discover -s tests -v
+```
+
+## Security and reproducibility
+
+Do not commit APK/XAPK binaries, bearer tokens, credential files, private account responses, device serial numbers, or raw LAN reports. Public source **strings and GraphQL operation definitions** are separated from actual credentials. Reverse engineering does not imply API compatibility or Carrier endorsement. This repository is independent of Carrier.

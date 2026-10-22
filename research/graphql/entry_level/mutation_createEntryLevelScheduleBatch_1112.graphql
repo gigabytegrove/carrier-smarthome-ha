@@ -1,0 +1,6 @@
+mutation createEntryLevelScheduleBatch($input: CreateEntryLevelScheduleBatchInput!) {
+  createEntryLevelScheduleBatch(input: $input) {
+    success
+    payload
+  }
+}

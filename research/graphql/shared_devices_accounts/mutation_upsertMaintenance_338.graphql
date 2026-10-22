@@ -1,0 +1,8 @@
+mutation upsertMaintenance($input: UpsertMaintenanceInput!) {
+  upsertMaintenance(input: $input) {
+    success
+    data {
+      ...MaintenanceFields
+    }
+  }
+}

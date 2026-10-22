@@ -1,0 +1,14 @@
+query getGooglePlace($address: String!, $countries: [String!]) {
+  googlePlace(address: $address, countries: $countries) {
+    predictions {
+      description
+      structured_formatting {
+        main_text
+        secondary_text
+      }
+      place_id
+      types
+    }
+    status
+  }
+}

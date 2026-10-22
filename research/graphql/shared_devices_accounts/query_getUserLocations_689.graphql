@@ -1,0 +1,44 @@
+query getUserLocations($username: String!) {
+  userLocations(username: $username) {
+    locationId
+    name
+    street1
+    street2
+    city
+    state
+    country
+    postal
+    systems {
+      profile {
+        serial
+      }
+    }
+    entryLevels {
+      name
+      connection {
+        isConnected
+      }
+      zones {
+        mode
+        clsp {
+          current
+          min
+        }
+        htsp {
+          current
+          max
+        }
+        rt
+      }
+      serial
+    }
+    devices {
+      deviceId
+      type
+      thingName
+      tempUnit
+      name
+      connectionStatus
+    }
+  }
+}

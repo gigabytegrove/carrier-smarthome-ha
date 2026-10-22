@@ -1,0 +1,15 @@
+query inviteLocationDetailsByToken($input: InviteLocationDetailsByTokenInput!) {
+  inviteLocationDetailsByToken(input: $input) {
+    success
+    data {
+      locationId
+      username
+      name
+      ownerName
+    }
+    error {
+      code
+      message
+    }
+  }
+}

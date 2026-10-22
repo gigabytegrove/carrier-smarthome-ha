@@ -1,0 +1,5 @@
+mutation transferOwnership($input: TransferOwnershipInput!) {
+  transferOwnership(input: $input) {
+    success
+  }
+}

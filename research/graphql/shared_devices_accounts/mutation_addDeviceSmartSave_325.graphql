@@ -1,0 +1,21 @@
+mutation addDeviceSmartSave($locationId: String!, $serial: String!) {
+  addDeviceSmartSave(locationId: $locationId, serial: $serial) {
+    success
+    message
+    errors {
+      field
+      message
+      code
+    }
+    enrollment {
+      createdAt
+      locationId
+      isTechnicianAssisted
+      utilityName
+      devices {
+        serial
+        enrollmentStatus
+      }
+    }
+  }
+}

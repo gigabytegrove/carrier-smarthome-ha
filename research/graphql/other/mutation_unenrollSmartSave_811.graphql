@@ -1,0 +1,12 @@
+mutation unenrollSmartSave($input: UnenrollSmartSaveInput!) {
+  unenrollSmartSave(input: $input) {
+    success
+    message
+    errors {
+      field
+      message
+      code
+    }
+    enrollmentStatus
+  }
+}

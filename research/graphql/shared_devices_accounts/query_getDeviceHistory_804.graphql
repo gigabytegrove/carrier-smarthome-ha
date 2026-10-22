@@ -1,0 +1,21 @@
+query getDeviceHistory($username: String!, $locationId: String!, $deviceId: String!, $point: String!, $periodValue: Int!, $periodUnit: String!, $intervalValue: Int!, $intervalUnit: String!, $labelInterval: Int!, $labelFormat: String!, $tooltipLabelFormat: String!) {
+  deviceHistory(
+    input: {username: $username, locationId: $locationId, deviceId: $deviceId, point: $point, periodValue: $periodValue, periodUnit: $periodUnit, intervalValue: $intervalValue, intervalUnit: $intervalUnit, labelInterval: $labelInterval, labelFormat: $labelFormat, tooltipLabelFormat: $tooltipLabelFormat}
+  ) {
+    point
+    startDateTime
+    periodValue
+    periodUnit
+    intervalValue
+    intervalUnit
+    labelInterval
+    labelFormat
+    tooltipLabelFormat
+    dataPoints {
+      dateTime
+      label
+      value
+      tooltipLabel
+    }
+  }
+}

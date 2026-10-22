@@ -1,0 +1,15 @@
+query smartSaveEnergyEvents($locationId: String) {
+  smartSaveEnergyEvents(locationId: $locationId) {
+    eventId
+    requestId
+    startTime
+    endTime
+    offset
+    setpointLimit
+    isPrecondition
+    deviceSerial
+    deviceType
+    status
+    preconditionEventId
+  }
+}

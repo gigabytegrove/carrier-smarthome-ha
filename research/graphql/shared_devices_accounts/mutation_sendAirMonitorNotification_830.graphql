@@ -1,0 +1,5 @@
+mutation sendAirMonitorNotification($input: SendNotificationInput!) {
+  sendNotification(input: $input) {
+    success
+  }
+}

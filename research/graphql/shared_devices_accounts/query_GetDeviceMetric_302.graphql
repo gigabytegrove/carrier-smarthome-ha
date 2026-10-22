@@ -1,0 +1,9 @@
+query GetDeviceMetric($device_id: String!, $metricName: String!, $time: timestamptz_comparison_exp = {}) {
+  deviceMetrics: elt_ndata_metrics(
+    where: {device_id: {_eq: $device_id}, metric_name: {_eq: $metricName}, time: $time}
+    order_by: {time: desc}
+  ) {
+    value: metric_value
+    time
+  }
+}

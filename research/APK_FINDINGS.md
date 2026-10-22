@@ -11,3 +11,7 @@ Provenance: user-provided `SmartHome_1.2.42_APKPure.xapk` (`com.carrier.home`, v
 - Matter is a separate standardized local method, not proof of a local Carrier HTTP API.
 
 Next evidence needed: router-confirmed IP/MAC; mDNS/port observations; verified authenticated cloud API host, nonsecret request shape and redacted response type structure. Store sanitized findings in STATUS.md and never upload secrets.
+
+Additional login URL strings found in APK: `https://prod.consumerportal.carrier.com/login` and `https://pprod.consumerportal.carrier.com/login`. They appear to be consumer portal login pages, **not verified GraphQL API addresses**.
+
+Full operation index, extracted GraphQL documents and reproducible Hermes extraction script are under `research/`. The original proprietary APK is intentionally excluded.

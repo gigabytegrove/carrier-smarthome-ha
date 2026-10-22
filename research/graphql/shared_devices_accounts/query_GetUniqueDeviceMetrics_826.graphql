@@ -1,0 +1,9 @@
+query GetUniqueDeviceMetrics($device_id: String!) {
+  uniqueMetrics: elt_ndata_metrics(
+    where: {device_id: {_eq: $device_id}}
+    order_by: {time: desc, metric_name: desc}
+    distinct_on: metric_name
+  ) {
+    name: metric_name
+  }
+}

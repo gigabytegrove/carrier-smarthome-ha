@@ -1,0 +1,5 @@
+mutation updateInfinityProgramDay($input: InfinityProgramDayInput!) {
+  updateInfinityProgramDay(input: $input) {
+    etag
+  }
+}

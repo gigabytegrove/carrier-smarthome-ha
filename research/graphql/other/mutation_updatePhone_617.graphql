@@ -1,0 +1,9 @@
+mutation updatePhone($input: PutPhoneInput) {
+  updatePhone(input: $input) {
+    uuid
+    name
+    isEnabled
+    hasLocationPermissions
+    lastSeen
+  }
+}

@@ -1,0 +1,116 @@
+query getUser($userName: String!, $appVersion: String, $brand: String, $os: String, $osVersion: String) {
+  user(
+    userName: $userName
+    appVersion: $appVersion
+    brand: $brand
+    os: $os
+    osVersion: $osVersion
+  ) {
+    username
+    identityId
+    first
+    last
+    email
+    emailVerified
+    secondaryEmail
+    secondaryEmailVerified
+    phone1
+    promoEmail
+    acceptedTermsOfServiceDateTime
+    creationSource
+    postal
+    languagePref
+    createdDateTime
+    smartPhones {
+      uuid
+      name
+      isEnabled
+      hasLocationPermissions
+      lastSeen
+    }
+    consents {
+      version
+      value
+      timestamp
+      type
+    }
+    locations {
+      tempUnitFormat
+      validated
+      locationId
+      name
+      street1
+      street2
+      city
+      state
+      country
+      postal
+      systems {
+        config {
+          zones {
+            id
+            enabled
+          }
+        }
+        profile {
+          serial
+          name
+          model
+        }
+        status {
+          isDisconnected
+          zones {
+            id
+            enabled
+            present
+          }
+        }
+      }
+      devices {
+        deviceId
+        type
+        thingName
+        name
+        connectionStatus
+      }
+      entryLevels {
+        name
+        serial
+        model
+        thingType
+        connection {
+          isConnected
+        }
+      }
+      edragon {
+        id
+        scu_sn
+        bess_sn
+      }
+      edragon {
+        id
+        scu_sn
+        bess_sn
+      }
+      dealerIds
+      dealers {
+        name
+        city
+        state
+        phone
+        phoneExt
+        url
+        pid
+        features {
+          name
+        }
+      }
+      members {
+        first
+        last
+        username
+        isOwner
+      }
+    }
+  }
+}

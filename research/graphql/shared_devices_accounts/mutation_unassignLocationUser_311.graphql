@@ -1,0 +1,6 @@
+mutation unassignLocationUser($input: UnassignLocationUserInput!) {
+  unassignLocationUser(input: $input) {
+    success
+    message
+  }
+}

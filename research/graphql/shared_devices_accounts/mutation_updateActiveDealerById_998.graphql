@@ -1,0 +1,5 @@
+mutation updateActiveDealerById($input: UpdateActiveDealerById!) {
+  updateActiveDealerById(input: $input) {
+    success
+  }
+}

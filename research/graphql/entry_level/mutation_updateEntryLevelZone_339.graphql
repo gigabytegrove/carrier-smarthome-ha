@@ -1,0 +1,5 @@
+mutation updateEntryLevelZone($input: EntryLevelZoneInput!) {
+  updateEntryLevelZone(input: $input) {
+    success
+  }
+}

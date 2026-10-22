@@ -1,0 +1,33 @@
+fragment FilterFields on Filter {
+  serial
+  deviceType
+  type
+  trackingMethod
+  size {
+    width
+    height
+    depth
+    unit
+  }
+  mervRating
+  padType
+  padSize
+  uvWattage
+  uvStyle
+  uvVoltage
+  homeConditions {
+    occupancy
+    pets
+    smoking
+    frequentCooking
+    candlesOrFireplace
+    dustyClimate
+    wildfireOrHighPollen
+    highHumidity
+    leakyDuctsOrConstructionDust
+  }
+  lastResetAt
+  createdAt
+  updatedAt
+  score
+}

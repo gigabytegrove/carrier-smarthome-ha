@@ -1,0 +1,11 @@
+query getEntryLevelSchedules($serial: String!) {
+  entryLevelSchedules(serial: $serial) {
+    index
+    zone_index
+    scene_name
+    htsp
+    clsp
+    start_time
+    day
+  }
+}

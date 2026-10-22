@@ -1,0 +1,5 @@
+mutation deleteFirebaseToken($input: DeleteFirebaseTokenInput!) {
+  deleteFirebaseToken(input: $input) {
+    success
+  }
+}

@@ -1,0 +1,59 @@
+query getInfinityEnergy($serial: String!) {
+  infinityEnergy(serial: $serial) {
+    energyConfig {
+      cooling {
+        display
+        enabled
+      }
+      eheat {
+        display
+        enabled
+      }
+      fan {
+        display
+        enabled
+      }
+      fangas {
+        display
+        enabled
+      }
+      gas {
+        display
+        enabled
+      }
+      hpheat {
+        display
+        enabled
+      }
+      looppump {
+        display
+        enabled
+      }
+      reheat {
+        display
+        enabled
+      }
+      hspf
+      seer
+    }
+    energyPeriods {
+      energyPeriodType
+      eHeatDollars
+      eHeatKwh
+      coolingDollars
+      coolingKwh
+      fanDollars
+      fanGasDollars
+      fanGasKwh
+      fanKwh
+      hPHeatDollars
+      hPHeatKwh
+      loopPumpDollars
+      loopPumpKwh
+      gasDollars
+      gasKwh
+      reheatDollars
+      reheatKwh
+    }
+  }
+}

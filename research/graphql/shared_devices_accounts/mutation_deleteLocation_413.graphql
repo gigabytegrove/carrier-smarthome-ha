@@ -1,0 +1,7 @@
+mutation deleteLocation($input: DeleteLocationInput!) {
+  deleteLocation(input: $input) {
+    locationId
+    success
+    message
+  }
+}

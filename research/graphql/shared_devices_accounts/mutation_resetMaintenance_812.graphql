@@ -1,0 +1,8 @@
+mutation resetMaintenance($input: ResetMaintenanceInput!) {
+  resetMaintenance(input: $input) {
+    success
+    data {
+      ...MaintenanceFields
+    }
+  }
+}

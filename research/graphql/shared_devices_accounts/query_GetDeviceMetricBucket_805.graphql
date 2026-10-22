@@ -1,0 +1,6 @@
+query GetDeviceMetricBucket($device: String!, $name: String!) {
+  get_device_metric_bucket(args: {device: $device, name: $name}) {
+    value: metric_value
+    time: bucket_time
+  }
+}

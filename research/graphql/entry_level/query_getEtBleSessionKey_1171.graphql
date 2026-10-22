@@ -1,0 +1,6 @@
+query getEtBleSessionKey($input: EntryLevelSessionInput) {
+  entryLevelSession(input: $input) {
+    sessionKey
+    signature
+  }
+}

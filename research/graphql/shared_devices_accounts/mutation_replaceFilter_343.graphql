@@ -1,0 +1,8 @@
+mutation replaceFilter($input: ReplaceFilterInput!) {
+  replaceFilter(input: $input) {
+    success
+    data {
+      ...FilterFields
+    }
+  }
+}

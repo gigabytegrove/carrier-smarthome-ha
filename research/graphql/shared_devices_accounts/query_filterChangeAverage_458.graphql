@@ -1,0 +1,8 @@
+query filterChangeAverage($serialNumber: String!, $filterType: String!) {
+  filterChangeAverage(
+    input: {serialNumber: $serialNumber, filterType: $filterType}
+  ) {
+    average
+    lastFilterChangeDate
+  }
+}
