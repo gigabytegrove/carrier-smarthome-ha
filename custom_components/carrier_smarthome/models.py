@@ -37,6 +37,21 @@ def zone_indices(system: dict[str, Any]) -> list[int]:
                    if isinstance(zone, dict) and type(zone.get("index")) is int and zone["index"] >= 0})
 
 
+def _slug(value: Any) -> str | None:
+    """Constrain untrusted free-form GraphQL fields before exposing in HA."""
+    if not isinstance(value, str) or not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_-]{0,39}", value):
+        return None
+    return value.lower()
+
+
+def _scene(value: Any) -> str | None:
+    """Avoid leaking custom user-named profiles into exported diagnostics."""
+    name = _slug(value)
+    if name in {"home", "away", "sleep", "wake", "manual", "vacation"}:
+        return name
+    return "custom" if isinstance(value, str) and bool(value.strip()) else None
+
+
 def zone_values(zone: dict[str, Any]) -> dict[str, Any]:
     return {
         "temperature": _number(zone.get("rt")),
@@ -46,10 +61,12 @@ def zone_values(zone: dict[str, Any]) -> dict[str, Any]:
         "cool_setpoint": _number(_object(zone.get("clsp")).get("current")),
         "heat_max": _number(_object(zone.get("htsp")).get("max")),
         "cool_min": _number(_object(zone.get("clsp")).get("min")),
-        "mode": zone.get("mode") if isinstance(zone.get("mode"), str) else None,
-        "fan_mode": zone.get("fan_mode") if isinstance(zone.get("fan_mode"), str) else None,
-        "schedule_enabled": zone.get("schedule_enabled"),
-        "stage_status": zone.get("stage_status"),
+        "mode": _slug(zone.get("mode")),
+        "fan_mode": _slug(zone.get("fan_mode")),
+        "schedule_enabled": zone.get("schedule_enabled") if type(zone.get("schedule_enabled")) is bool else None,
+        "hold_countdown_raw": _number(zone.get("hold_countdown")),
+        "current_scene": _scene(zone.get("current_scene_name")),
+        "stage_status": _slug(zone.get("stage_status")),
     }
 
 
@@ -114,6 +131,13 @@ def sanitize_telemetry(systems: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "cool_setpoint": values["cool_setpoint"],
                 "humidity_percent": values["humidity"],
                 "outside_temperature": values["outside_temperature"],
+                "fan_mode": values["fan_mode"],
+                "stage_status": values["stage_status"],
+                "schedule_enabled": values["schedule_enabled"],
+                "current_scene": values["current_scene"],
+                "heat_max": values["heat_max"],
+                "cool_min": values["cool_min"],
+                "hold_countdown_raw": values["hold_countdown_raw"],
             })
         devices.append({"model": model, "cloud_connection": connectivity_state(system),
                         "temperature_unit": unit, "zones": zones})

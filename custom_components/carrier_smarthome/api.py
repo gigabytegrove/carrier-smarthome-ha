@@ -86,6 +86,22 @@ NOTIFICATION_PREFS_QUERY = """query getEntryLevelNotificationPrefs($serial: Stri
   }
 }"""
 
+# APK v1.2.42 explicitly defines these fields in getEntryLevelSystemData.
+# The owner verified a smaller detail query on 2026-10-22; this wider read
+# remains unverified until it is exercised by the owner in PowerShell.
+# No identifiers other than the serial variable are echoed in diagnostic output.
+EXTENDED_DETAIL_QUERY = """query getEntryLevelSystemData($serial: String!) {
+  entryLevelSystem(serial: $serial) {
+    serial model firmware temp_unit_format
+    connection { isConnected rssi }
+    zones {
+      index mode rt rh outside_temp stage_status fan_mode
+      schedule_enabled hold_end_time hold_countdown current_scene_name
+      clsp { current min } htsp { current max }
+    }
+  }
+}"""
+
 ZONE_UPDATE = """mutation updateEntryLevelZone($input: EntryLevelZoneInput!) {
   updateEntryLevelZone(input: $input) { success }
 }"""
@@ -157,7 +173,7 @@ class CarrierSmartHomeClient:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a3"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a4"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
@@ -359,6 +375,19 @@ class CarrierSmartHomeClient:
         system = result.get("entryLevelSystem")
         if not isinstance(system, dict):
             raise CarrierQueryError("Carrier detail query did not return a device")
+        return system
+
+    async def async_get_extended_detail(self, serial: str) -> dict[str, Any]:
+        """APK-derived optional detailed read. Rejection must not disable the
+        independently verified baseline entry-level system polling route.
+        """
+        if not isinstance(serial, str) or not serial or len(serial) > 128:
+            raise ValueError("Invalid Carrier device identity")
+        result = await self._graphql("getEntryLevelSystemData", EXTENDED_DETAIL_QUERY,
+                                     {"serial": serial})
+        system = result.get("entryLevelSystem")
+        if not isinstance(system, dict) or system.get("serial") != serial:
+            raise CarrierQueryError("Carrier extended detail did not match the device")
         return system
 
     async def async_update_zone(self, serial: str, index: int, *,

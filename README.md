@@ -1,6 +1,6 @@
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a3` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a4` available for HACS installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
@@ -18,6 +18,16 @@ The public repository is ready to add directly to HACS **as a custom Integration
 **What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA may therefore mark its climate entity **unavailable** until Carrier reports it online; this is intentional and avoids presenting cached measurements as live. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
 
 **Updates:** While the repository has no GitHub Releases, HACS tracks `main` and uses the Git commit as the available version. Download an update in HACS and restart/reload Home Assistant. See [HACS installation and testing](docs/HACS_INSTALLATION.md).
+
+## Alpha 4: live owner-side field collection and Home Assistant diagnostics
+
+Alpha 4 adds a read-only, privacy-minimized PowerShell field inventory that follows the same verified Carrier cloud login as the earlier tests:
+
+```powershell
+.\tools\Get-CarrierValues.ps1
+```
+
+It reports baseline values plus the result of an **optional** richer APK-derived detailed query. Carrier may return stale readings while reporting `offline`. Home Assistant now includes additional **last cloud-reported diagnostic** entities for HVAC mode, fan setting, equipment stage, schedule state, and target limits. These do not enable HVAC writes or treat cached temperatures as fresh. See [Alpha 4 field notes](research/ALPHA4_FIELD_INVENTORY.md). This integration does **not** use Matter.
 
 ## Alpha 3: installation and owner-side verification
 

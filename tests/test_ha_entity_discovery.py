@@ -75,7 +75,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         for name in ['homeassistant', 'homeassistant.components', 'homeassistant.components.climate',
                      'homeassistant.components.sensor', 'homeassistant.components.binary_sensor',
                      'homeassistant.const', 'homeassistant.exceptions', 'homeassistant.helpers',
-                     'homeassistant.helpers.update_coordinator', PKG]:
+                     'homeassistant.helpers.update_coordinator', 'homeassistant.helpers.entity', PKG]:
             stubs[name] = module(name)
         stubs[PKG].__path__ = [str(ROOT)]
         climate = stubs['homeassistant.components.climate']
@@ -92,6 +92,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         stubs['homeassistant.const'].PERCENTAGE = '%'
         stubs['homeassistant.exceptions'].HomeAssistantError = type('HomeAssistantError', (Exception,), {})
         stubs['homeassistant.helpers.update_coordinator'].CoordinatorEntity = DummyCoordinatorEntity
+        stubs['homeassistant.helpers.entity'].EntityCategory = types.SimpleNamespace(DIAGNOSTIC='diagnostic')
         self.patch = patch.dict(sys.modules, stubs)
         self.patch.start()
         for m in ('const', 'models', 'api', 'entity'):
@@ -106,7 +107,7 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
             sys.modules.pop(f'{PKG}.{suffix}', None)
 
     async def test_entities_added_for_new_device_only_once(self):
-        for name, count_per_zone in [('climate', 1), ('sensor', 2), ('binary_sensor', 1)]:
+        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 1)]:
             with self.subTest(platform=name):
                 platform = load(name)
                 self.coordinator = DummyCoordinator()
@@ -124,6 +125,29 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
                 for unload in self.entry.unloads:
                     unload()
                 self.assertEqual(len(self.coordinator.callbacks), 0)
+
+    async def test_offline_last_reported_diagnostics_do_not_get_temperature_units(self):
+        sensor = load('sensor')
+        self.hass.config = types.SimpleNamespace(units=types.SimpleNamespace(temperature_unit='°F'))
+        self.coordinator.data['serial-test']['temp_unit_format'] = 'F'
+        self.coordinator.data['serial-test']['connection']['isConnected'] = False
+        zone = self.coordinator.data['serial-test']['zones'][0]
+        zone.update({'mode': 'off', 'stage_status': 'idle', 'fan_mode': 'auto',
+                     'schedule_enabled': False, 'rt': 73, 'rh': 47,
+                     'htsp': {'current': 70, 'max': 90}, 'clsp': {'current': 76, 'min': 62}})
+        entities = []
+        await sensor.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
+        by_key = {obj.key: obj for obj in entities if isinstance(obj, sensor.CarrierLastReportedSensor)}
+        self.assertEqual(by_key['mode'].native_value, 'off')
+        self.assertEqual(by_key['mode'].native_unit_of_measurement, None)
+        self.assertEqual(by_key['fan_mode'].native_unit_of_measurement, None)
+        self.assertEqual(by_key['stage_status'].native_unit_of_measurement, None)
+        self.assertEqual(by_key['schedule_enabled'].native_value, 'disabled')
+        self.assertIsNone(by_key['schedule_enabled'].native_unit_of_measurement)
+        self.assertEqual(by_key['temperature'].native_value, 73)
+        self.assertEqual(by_key['temperature'].native_unit_of_measurement, '°F')
+        self.assertTrue(by_key['temperature'].available)
+        self.assertFalse(entities[0].available)  # live humidity remains unavailable
 
     async def test_offline_climate_unavailable(self):
         cl = load('climate')
