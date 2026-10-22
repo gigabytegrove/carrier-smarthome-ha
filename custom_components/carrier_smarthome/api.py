@@ -221,7 +221,11 @@ class CarrierSmartHomeClient:
                     raise CarrierQueryError("Carrier did not return an entry-level systems list")
                 if any(not isinstance(system, dict) for system in systems):
                     raise CarrierTransportError("Carrier returned an invalid system")
-                return systems
+                if systems:
+                    return systems
+                # A successful empty response can mean this model appears only
+                # in the app's per-location entryLevels list.
+                self._discovery_method = "user_devices"
             except CarrierQueryError:
                 # Only try an alternate schema after a query-level rejection,
                 # not for DNS/HTTP errors or expired authentication.

@@ -4,7 +4,7 @@ Use **Carrier SmartHome**, not the legacy Infinity app, and **do not pair Matter
 
 ## First, read-only proof of API
 
-From any machine with Python 3.11+ and `aiohttp` installed:
+On Windows, launch `tools/Test-Cloud.ps1` (it creates an isolated Python environment and installs aiohttp automatically). On any other machine with Python 3.11+ and `aiohttp` installed:
 
 ```
 python tools/Smoke-TestSmartHomeCloud.py
