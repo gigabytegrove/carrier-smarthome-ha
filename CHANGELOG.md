@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.1 — Carrier delayed cloud confirmation (no duplicate HVAC writes)
+
+- Confirmed against the owner's thermostat: Carrier acknowledged HA's mode mutation; the physical setting changed after the old short verification window, which caused a misleading HA service error.
+- Use `DataUpdateCoordinator.async_refresh()` for fresh preflight and confirmation instead of debounced `async_request_refresh()` (which can return without another network read during its 10-second cooldown).
+- Extend read-only confirmation to nine polls across about 64 seconds; use the verified detailed GraphQL path as a bounded independent cross-check. **Exactly one mutation per requested command** remains the invariant.
+- Respect cloud rate limits rather than repeatedly probing after a rate-limit response. Report uncertainty accurately when no confirmation arrives, without claiming the HVAC command failed.
+- Add regression coverage for delayed state propagation, transient polling faults and rate limiting; preserve no-Matter, no-defaults and online-only command rules.
+- Avoid stale-summary no-op errors: when the summary already appears to match an explicitly requested HVAC mode, cross-check the detailed GraphQL view before deciding not to send any mutation. If detail disagrees, execute the user-requested command only once.
+- LAN research still requires a fresh Omada client export; a stale 08:14 archive cannot be used to identify a current IP.
+
+
 ## v0.5.0 — Home Assistant controls baseline + comprehensive proprietary LAN reconnaissance
 
 - Version baseline explicitly set to `0.5.0`, replacing the alpha numbering. UI branding simplified to Carrier SmartHome; domain and entity IDs unchanged.

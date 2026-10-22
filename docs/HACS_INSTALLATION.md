@@ -9,4 +9,8 @@
 
 **Known limits:** Authenticated cloud reads and official-app → cloud synchronization have been proved. The alpha's outgoing `updateEntryLevelZone` writes have not yet been owner-verified. Fan On is an experimental Carrier GraphQL value; Circulation is not exposed. `turn_on` cannot invent an initial mode. If no prior non-Off Carrier mode has been observed since startup, select Heat, Cool or Auto manually. No Matter and no verified proprietary LAN API.
 
-For update troubleshooting, check manifest `0.5.0` and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
+For update troubleshooting, check manifest `0.5.1` and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
+
+## v0.5.1: Cloud state confirmation after a write
+
+The owner observed Carrier accept an HA mode command but apply the physical mode only after HA's earlier six-second verification window. The old `async_request_refresh()` was debounced and could return without a fresh network fetch; v0.5.1 uses forced reads for command preflight and confirmation with one mutation only. A click to Off that does not change the device must not be declared successful without an actual later cloud observation. Do not repeatedly click Off on error; first check the official Carrier app, then use the read-only `tools/Read-CarrierMode.ps1` script to compare account and detail read paths. No Matter.
