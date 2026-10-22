@@ -10,7 +10,9 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
-from .const import CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, DOMAIN
+from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, CONF_ENABLE_SETPOINT_CONTROL,
+                    DEFAULT_ENABLE_SETPOINT_CONTROL, CONF_POWER_ON_MODE,
+                    DEFAULT_POWER_ON_MODE, POWER_ON_MODES, DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +52,8 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         return self.async_create_entry(
                             title="Carrier SmartHome",
                             data={CONF_USERNAME: username, CONF_PASSWORD: password},
-                            options={CONF_ENABLE_CONTROL: DEFAULT_ENABLE_CONTROL})
+                            options={CONF_ENABLE_CONTROL: DEFAULT_ENABLE_CONTROL,
+                                     CONF_POWER_ON_MODE: DEFAULT_POWER_ON_MODE})
         return self.async_show_form(step_id="user", data_schema=_credentials_schema(user_input), errors=errors)
 
     async def async_step_reauth(self, entry_data):
@@ -82,9 +85,20 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class CarrierOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(data={CONF_ENABLE_CONTROL: bool(user_input[CONF_ENABLE_CONTROL])})
+            return self.async_create_entry(data={
+                CONF_ENABLE_CONTROL: bool(user_input[CONF_ENABLE_CONTROL]),
+                CONF_ENABLE_SETPOINT_CONTROL: bool(user_input[CONF_ENABLE_SETPOINT_CONTROL]),
+                CONF_POWER_ON_MODE: user_input[CONF_POWER_ON_MODE],
+            })
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({vol.Required(CONF_ENABLE_CONTROL,
-                default=self.config_entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool}),
+            data_schema=vol.Schema({
+                vol.Required(CONF_ENABLE_CONTROL,
+                    default=self.config_entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool,
+                vol.Required(CONF_ENABLE_SETPOINT_CONTROL,
+                    default=self.config_entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL)): bool,
+                vol.Required(CONF_POWER_ON_MODE,
+                    default=self.config_entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)):
+                    vol.In(POWER_ON_MODES),
+            }),
         )

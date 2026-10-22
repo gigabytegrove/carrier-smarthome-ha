@@ -1,5 +1,8 @@
 # HACS installation and safe alpha verification
 
+**Alpha 8 controls:** after HACS redownload and Home Assistant restart, go to **Settings → Devices & services → Carrier SmartHome → Configure/Options**. Select **Enable experimental HVAC mode and power control**, then choose **Power On mode** (Heat, Cool or Auto) for the on/off switch. Leave **experimental setpoint control disabled** for the initial on/off test. The device page should expose **HVAC power** and climate HVAC modes. Only test while Carrier shows Connected. Code changes need a HA restart; cloud mutations are not yet live-verified. Proprietary LAN probing requires a fresh Omada export, and no Matter code is used.
+
+
 This is an unofficial, experimental integration for Carrier SmartHome entry-tier devices, including the cloud-reported `TSTATCCEEF-01` class. The target physical housing is `TSTATCCEWF-01`; do not assume the cloud model string is the same hardware part number. The repository is public, but it is **not** part of the default HACS catalog.
 
 ## HACS installation

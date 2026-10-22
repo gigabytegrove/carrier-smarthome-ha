@@ -5,7 +5,9 @@ from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.exceptions import HomeAssistantError
 
 from .api import CarrierError
-from .const import CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, DOMAIN
+from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL,
+                    CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL, DOMAIN)
+from .control import async_set_mode_verified
 from .entity import CarrierEntity
 from .models import connectivity_state, temperature_unit, zone_indices, zone_values
 
@@ -54,10 +56,12 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def available(self):
-        """Only expose live thermostat climate data when Carrier reports online.
+        """Don't surface possibly cached readings as live while device offline.
 
-        The owner reported a real Wi-Fi disconnect before the successful cloud
-        comparison; cached data are preserved in separate diagnostic sensors.
+        Carrier reported this thermostat offline while its Wi-Fi link was down,
+        then online after the owner restarted it and live app edits propagated.
+        API reachability alone is not proof of an active thermostat connection.
+        Separately labeled last-cloud-reported diagnostics remain readable.
         """
         return super().available and connectivity_state(self.system) == "online"
 
@@ -95,14 +99,22 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)
                 or connectivity_state(self.system) != "online"):
             return ClimateEntityFeature(0)
+        # Home Assistant exposes an explicit Off action. Turn-on is deliberately
+        # not automatic unless the user selects a preferred power-on mode.
+        from .const import CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE
+        features = ClimateEntityFeature.TURN_OFF
+        if self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE) != "unset":
+            features |= ClimateEntityFeature.TURN_ON
+        if not self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
+            return features
         state = self._state
         if state["heat_setpoint"] is None or state["cool_setpoint"] is None:
-            return ClimateEntityFeature(0)
+            return features
         if self.hvac_mode == HVACMode.HEAT_COOL:
-            return ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
+            return features | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
         if self.hvac_mode in (HVACMode.HEAT, HVACMode.COOL):
-            return ClimateEntityFeature.TARGET_TEMPERATURE
-        return ClimateEntityFeature(0)
+            return features | ClimateEntityFeature.TARGET_TEMPERATURE
+        return features
 
     @property
     def target_temperature(self):
@@ -148,15 +160,23 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         self._require_control()
         if hvac_mode not in _FROM_HA or hvac_mode not in self.hvac_modes:
             raise HomeAssistantError("Unsupported thermostat mode")
-        try:
-            await self.coordinator.client.async_update_zone(self.serial, self.zone,
-                                                             mode=_FROM_HA[hvac_mode])
-            await self.coordinator.async_request_refresh()
-        except CarrierError as exc:
-            raise HomeAssistantError("Carrier rejected the HVAC mode change") from exc
+        await async_set_mode_verified(self.coordinator, self.entry.options, self.serial,
+                                      self.zone, _FROM_HA[hvac_mode])
+
+    async def async_turn_off(self):
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
+    async def async_turn_on(self):
+        from .const import CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE
+        configured = self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)
+        if configured == "unset":
+            raise HomeAssistantError("Choose a Turn On mode under Carrier SmartHome options")
+        await self.async_set_hvac_mode(_TO_HA[configured])
 
     async def async_set_temperature(self, **kwargs):
         self._require_control()
+        if not self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
+            raise HomeAssistantError("Enable experimental setpoint writes separately in Carrier SmartHome options")
         state = self._state
         heat, cool = state["heat_setpoint"], state["cool_setpoint"]
         if heat is None or cool is None:

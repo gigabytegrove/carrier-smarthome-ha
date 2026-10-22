@@ -1,3 +1,11 @@
+## Alpha 8 — HVAC Power and cloud mode control (October 22, 2026)
+
+**HACS-ready native Carrier cloud alpha `0.1.0a8`.** The Home Assistant device page now has an **HVAC power** switch and an explicit Off / Heat / Cool / Auto climate mode selector. These control *real equipment*, not a simulation, and are **disabled by default**. In the integration Options, enable **experimental HVAC mode and power control** and choose the **Power On mode** (Heat, Cool or Auto). Leaving Power On mode at Unset blocks switch-based turn-on; selecting the climate HVAC mode directly is still possible. Temperature/setpoint writes require a **separate opt-in**, disabled by default.
+
+The code requires a fresh successful Carrier connection check before writing, sends a single `updateEntryLevelZone` mutation, and checks cloud readback up to three times. It does **not** repeat uncertain writes. A GraphQL acknowledgement is not proof of physical HVAC operation; **the first live mode mutation remains unverified**. Test while able to observe the thermostat and restore the desired settings in the official app if necessary.
+
+**Local control research:** A read-only Omada script now rejects an old client export (default 20-minute freshness), matches the currently connected thermostat by MAC suffix, and checks only six TCP ports. Optional `-HttpFingerprint` sends a single unauthenticated `HEAD /` on any open HTTP port. No Matter, no MQTT commands, no full VLAN scan. See [Alpha 8 details](research/ALPHA8_CLOUD_CONTROLS_AND_LAN.md).
+
 **Alpha 7 correction (October 22, 2026):** The thermostat experienced an actual Wi-Fi dropout before the successful Alpha 6 app/cloud test. It reconnected after a restart with no Wi-Fi reconfiguration; Carrier then reported online and both GraphQL read paths tracked official-app changes. That makes a real connectivity loss the leading explanation for earlier offline readings; previous suspicion of a broken online flag is superseded. Alpha 7 marks live climate entities unavailable when Carrier reports offline while preserving clearly labeled last-reported diagnostics. No Matter. See research/ALPHA7_WIFI_RECONNECT.md.
 
 # Carrier SmartHome for Home Assistant — research foundation
