@@ -43,9 +43,9 @@ def compare(before: dict | None, after: dict) -> list[str]:
         if old.get('cloud_connection') != new.get('cloud_connection'):
             changes.append(f'Device {index} cloud state: {old.get("cloud_connection")} -> {new.get("cloud_connection")}')
         for zidx, (oz, nz) in enumerate(zip(old.get('zones', []), new.get('zones', []))):
-            for field in ('mode', 'room_temperature', 'heat_setpoint', 'cool_setpoint', 'humidity_percent', 'outside_temperature'):
+            for field in ('mode', 'room_temperature', 'heat_setpoint', 'cool_setpoint', 'humidity_percent', 'outside_temperature', 'fan_mode', 'stage_status', 'schedule_enabled', 'heat_max', 'cool_min'):
                 if oz.get(field) != nz.get(field):
-                    changes.append(f'Device {index} zone {zidx} {field} changed')
+                    changes.append(f'Device {index} zone {nz.get("index", zidx)} {field} changed')
     return changes or ['No changed telemetry fields since the prior sample; this alone does not prove data are stale']
 
 
@@ -78,7 +78,9 @@ async def run(args) -> int:
                     print(f'Device {device_number}: model={item["model"]} cloud={item["cloud_connection"]} unit={item["temperature_unit"]}')
                     for zone in item['zones']:
                         print(f'  Zone {zone["index"]}: mode={zone["mode"]} room={zone["room_temperature"]} '
-                              f'heat={zone["heat_setpoint"]} cool={zone["cool_setpoint"]} RH={zone["humidity_percent"]}')
+                              f'heat={zone["heat_setpoint"]} cool={zone["cool_setpoint"]} RH={zone["humidity_percent"]} '
+                              f'outside={zone["outside_temperature"]} fan={zone["fan_mode"]} '
+                              f'stage={zone["stage_status"]} schedule={zone["schedule_enabled"]}')
                 print('CHANGES:', '; '.join(compare(previous, result)))
                 if result['summary']['offline_count']:
                     print('WARNING: Carrier marked a device OFFLINE; temperatures may be cached.')
