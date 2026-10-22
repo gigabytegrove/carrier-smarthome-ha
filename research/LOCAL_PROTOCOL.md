@@ -2,6 +2,10 @@
 
 The TSTATCCEWF-01 connects via Wi-Fi and has Matter support. Neither fact proves that the Carrier SmartHome app directly controls it using a proprietary TCP or HTTP listener. The actual device IP is assigned by the router's DHCP server and cannot be extracted from a generic APK.
 
+## Cloud versus LAN boundary
+
+The Android production BuildConfig maps `ENTRY_TIER_ENV_URL` to `a2pznvrwmtzhom-ats.iot.us-east-1.amazonaws.com`, an AWS IoT Core ATS-style endpoint. This is a **public cloud hostname**, not a thermostat-local endpoint. MQTT-related app symbols therefore cannot be taken as evidence of local MQTT. `BUILD_CONFIG_EVIDENCE.md` has source mapping.
+
 ## Verified source-code hints
 
 Hermes and native identifiers include `LocalControl`, `LocalControlReqPacket`, `LocalControlReqCommand`, `SendLocalControlCommandRead`, `SendLocalControlCommandWrite`, `MqttProxy` and `MqttProxyControl`. These show local/MQTT code in the **multi-device** SmartHome app, not that this specific thermostat uses that code path.

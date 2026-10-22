@@ -1,0 +1,156 @@
+{
+  "source": "DEX bytecode instruction references, not runtime proof",
+  "dex_files": [
+    {
+      "file": "classes.dex",
+      "strings": 72528,
+      "code_methods_examined": 55262,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    },
+    {
+      "file": "classes2.dex",
+      "strings": 63470,
+      "code_methods_examined": 53365,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    },
+    {
+      "file": "classes3.dex",
+      "strings": 71645,
+      "code_methods_examined": 53536,
+      "target_literals": 12,
+      "cross_references": 0,
+      "static_value_matches": 5
+    },
+    {
+      "file": "classes4.dex",
+      "strings": 60032,
+      "code_methods_examined": 51160,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    },
+    {
+      "file": "classes5.dex",
+      "strings": 62110,
+      "code_methods_examined": 51240,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    },
+    {
+      "file": "classes6.dex",
+      "strings": 59958,
+      "code_methods_examined": 55512,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    },
+    {
+      "file": "classes7.dex",
+      "strings": 47511,
+      "code_methods_examined": 44398,
+      "target_literals": 0,
+      "cross_references": 0,
+      "static_value_matches": 0
+    }
+  ],
+  "references": [],
+  "static_fields": [
+    {
+      "dex": "classes3.dex",
+      "class_descriptor": "Lcom/carrier/home/BuildConfig;",
+      "field": "API_URL",
+      "literal": "https://dataservice.infinity.iot.carrier.com"
+    },
+    {
+      "dex": "classes3.dex",
+      "class_descriptor": "Lcom/carrier/home/BuildConfig;",
+      "field": "OKTA_TOKEN_URL",
+      "literal": "https://sso.carrier.com/oauth2/default/v1/token"
+    },
+    {
+      "dex": "classes3.dex",
+      "class_descriptor": "Lcom/carrier/home/BuildConfig;",
+      "field": "REST_API_URL",
+      "literal": "https://platform.iot.carrier.com"
+    },
+    {
+      "dex": "classes3.dex",
+      "class_descriptor": "Lcom/carrier/home/BuildConfig;",
+      "field": "SOCIAL_LOGIN_ISSUER",
+      "literal": "https://sso.carrier.com/oauth2/default/v1/authorize"
+    },
+    {
+      "dex": "classes3.dex",
+      "class_descriptor": "Lcom/carrier/home/BuildConfig;",
+      "field": "WEBSOCKET_API_URL",
+      "literal": "wss://realtime.infinity.iot.carrier.com"
+    }
+  ],
+  "build_config": {
+    "API_URL": {
+      "value": "https://dataservice.infinity.iot.carrier.com",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "APPLICATION_ID": {
+      "value": "com.carrier.home",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "ENTRY_TIER_ENV_URL": {
+      "value": "a2pznvrwmtzhom-ats.iot.us-east-1.amazonaws.com",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "ENV": {
+      "value": "prod",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "FLAVOR": {
+      "value": "carrier",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "MOBILE_APP_BRAND": {
+      "value": "Carrier",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "OKTA_TOKEN_URL": {
+      "value": "https://sso.carrier.com/oauth2/default/v1/token",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "REDIRECT_URI": {
+      "value": "com.carrier.home:/smarthome/callback",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "REST_API_URL": {
+      "value": "https://platform.iot.carrier.com",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "SOCIAL_LOGIN_ISSUER": {
+      "value": "https://sso.carrier.com/oauth2/default/v1/authorize",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "VERSION_NAME": {
+      "value": "1.2.42",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    },
+    "WEBSOCKET_API_URL": {
+      "value": "wss://realtime.infinity.iot.carrier.com",
+      "source": "classes3.dex:com.carrier.home.BuildConfig static field",
+      "interpretation": "compiled config value, runtime usage not proven"
+    }
+  }
+}

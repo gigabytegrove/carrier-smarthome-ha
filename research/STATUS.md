@@ -5,6 +5,7 @@
 | Android XAPK unpack / Hermes v96 string extraction | COMPLETE | `analyze_xapk.py`, `summary.json` |
 | Extract 140 GraphQL operation/fragment definitions | COMPLETE | `graphql/`, `graphql-index.json`, `graphql-catalog.json` |
 | Parse 7 native DEX string sets | COMPLETE | `analyze_native_apk.py`, `native-dex-findings.json` |
+| Resolve compiled BuildConfig field values and AWS IoT entry-tier hostname | COMPLETE (static) | `trace_native_constants.py`, `native-constant-xrefs.json`, `BUILD_CONFIG_EVIDENCE.md` |
 | Attribute 60 Hermes / 5 DEX Carrier URL literals | COMPLETE | `map_transport_evidence.py`, `transport-evidence.json` |
 | Document cloud auth/token and entry-level operations | STATIC EVIDENCE | `CLOUD_PROTOCOL.md` |
 | Implement sanitized Carrier HAR inspection | TESTED OFFLINE | `tools/analyze_har.py`, `tests/test_discovery.py` |
