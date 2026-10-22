@@ -1,6 +1,6 @@
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a3` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** HACS-installable native Carrier cloud alpha `0.1.0a6`; authenticated discovery and cloud telemetry verified against the owner account on 2026-10-22, but firmware connectivity fields and device write control are not validated.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
@@ -47,6 +47,15 @@ Run the three-source read-only cloud cross-check on Windows:
 ```
 
 No Matter. See [connection discrepancy research](research/ALPHA5_CONNECTION_DISCREPANCY.md).
+
+
+## Alpha 6: compare official app changes with native cloud telemetry (read-only)
+
+The physical thermostat was **matched by Wi-Fi MAC** to the authenticated entry-level device; however, the three Carrier GraphQL connection flags all say `offline` despite the owner's official phone app still controlling the thermostat. This does not establish that the device is truly offline. A field that remains static across repeat polls is not necessarily live or stale.
+
+From a Windows PowerShell clone, run `./tools/Compare-AppChange.ps1`. It logs in once, reads both `getEntryLevelSystems` and `getEntryLevelSystemData`, asks the owner to change a single setpoint **in the official app**, and compares six bounded reads after the change. The owner then **manually restores the original setpoint in the app** and the tool verifies whether the cloud values returned to baseline. No HVAC writes, Matter protocol, raw serials, MACs, passwords or tokens are **printed or saved**. Authentication and device identifiers are transmitted only to Carrier for the expected authenticated read requests. The script cannot restore settings automatically.
+
+If a setpoint change appears in one or both GraphQL queries while the status flag remains false, we have evidence that the corresponding query tracks app changes despite its disconnected flag; this is **not yet validation of Home Assistant mutations**. If neither query changes, the phone app may use a different source, or these reads could be a stale cache. Do not enable HA writes until control/feedback are proven separately.
 
 ## Alpha 3: installation and owner-side verification
 
