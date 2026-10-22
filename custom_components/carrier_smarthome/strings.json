@@ -32,11 +32,12 @@
     "step": {
       "init": {
         "title": "Carrier SmartHome options",
-        "description": "Mode (Off/Heat/Cool/Auto) and temperature changes are real HVAC commands. Enable mode control first, choose a Turn On mode, and test physically. Setpoint writes have an independent switch and are OFF by default. Writes require a fresh Carrier online read and verified readback.",
+        "description": "Native Carrier cloud: Enable mode/power, fan Auto/On and setpoint controls independently. These are real HVAC commands and require online Carrier status. Each command is sent once and read back. Fan circulation API spelling is unverified, so it is not exposed. No Matter.",
         "data": {
           "enable_control": "Enable experimental HVAC mode and power control",
-          "power_on_mode": "Mode used by the HVAC Power switch when turning ON (Unset = no automatic mode selection)",
-          "enable_setpoint_control": "Separately enable experimental temperature setpoint changes"
+          "power_on_mode": "HVAC Power ON mode (Heat / Cool / Auto / Fan Only; Unset blocks turn-on)",
+          "enable_setpoint_control": "Separately enable experimental temperature setpoint changes",
+          "enable_fan_control": "Enable experimental fan Auto / On control (real equipment command)"
         }
       }
     }

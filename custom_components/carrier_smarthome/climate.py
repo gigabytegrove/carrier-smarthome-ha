@@ -6,8 +6,9 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .api import CarrierError
 from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL,
-                    CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL, DOMAIN)
-from .control import async_set_mode_verified
+                    CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL,
+                    CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL, DOMAIN)
+from .control import async_set_mode_verified, async_set_fan_verified, async_set_setpoints_verified
 from .entity import CarrierEntity
 from .models import connectivity_state, temperature_unit, zone_indices, zone_values
 
@@ -71,7 +72,7 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)
                 or connectivity_state(self.system) != "online"):
             return [self.hvac_mode] if self.hvac_mode else [HVACMode.OFF]
-        return [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.HEAT_COOL]
+        return [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.HEAT_COOL, HVACMode.FAN_ONLY]
 
     @property
     def _state(self):
@@ -95,14 +96,37 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         return _TO_HA.get(raw.lower()) if isinstance(raw, str) else None
 
     @property
+    def fan_mode(self):
+        # The actual fan mode is a read-only property unless explicitly enabled.
+        return self._state.get("fan_mode")
+
+    @property
+    def fan_modes(self):
+        # Carrier supports Auto, On and Circulation on this hardware. The cloud
+        # enum for Circulation is not established, so don't advertise writes.
+        if not self.entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL):
+            return []
+        return ["auto", "on"]
+
+    async def async_set_fan_mode(self, fan_mode):
+        if not self.available:
+            raise HomeAssistantError("Carrier thermostat disconnected: fan change blocked")
+        await async_set_fan_verified(self.coordinator, self.entry.options,
+                                      self.serial, self.zone, fan_mode)
+
+    @property
     def supported_features(self):
-        if (not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)
-                or connectivity_state(self.system) != "online"):
+        if connectivity_state(self.system) != "online":
             return ClimateEntityFeature(0)
+        fan_feature = (ClimateEntityFeature.FAN_MODE
+                       if self.entry.options.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)
+                       else ClimateEntityFeature(0))
+        if not self.entry.options.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL):
+            return fan_feature
         # Home Assistant exposes an explicit Off action. Turn-on is deliberately
         # not automatic unless the user selects a preferred power-on mode.
         from .const import CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE
-        features = ClimateEntityFeature.TURN_OFF
+        features = fan_feature | ClimateEntityFeature.TURN_OFF
         if self.entry.options.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE) != "unset":
             features |= ClimateEntityFeature.TURN_ON
         if not self.entry.options.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL):
@@ -199,9 +223,5 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
             raise HomeAssistantError("Heating target exceeds Carrier's reported maximum")
         if state["cool_min"] is not None and cool < state["cool_min"]:
             raise HomeAssistantError("Cooling target is below Carrier's reported minimum")
-        try:
-            await self.coordinator.client.async_update_zone(self.serial, self.zone,
-                                                             heat=heat, cool=cool)
-            await self.coordinator.async_request_refresh()
-        except (CarrierError, ValueError) as exc:
-            raise HomeAssistantError("Carrier rejected the temperature change") from exc
+        await async_set_setpoints_verified(self.coordinator, self.entry.options,
+                                           self.serial, self.zone, heat, cool)

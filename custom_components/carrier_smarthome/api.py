@@ -449,8 +449,12 @@ class CarrierSmartHomeClient:
             inp["htsp"] = {"current": heat}
             inp["clsp"] = {"current": cool}
         if fan is not None:
-            # Unknown fan enums remain disabled until a physical device is tested.
-            raise ValueError("Fan-mode writes are not yet validated")
+            # Two experimentally supported values only: the actual cloud has
+            # reported auto, and Carrier documents an On option. The API's
+            # exact enum for Circulation is unknown; never invent it.
+            if fan not in ("auto", "on"):
+                raise ValueError("Unverified Carrier fan mode (only auto/on allowed)")
+            inp["fan_mode"] = fan
         if len(inp) == 2:
             raise ValueError("No Carrier zone change requested")
         result = await self._graphql("updateEntryLevelZone", ZONE_UPDATE, {"input": inp})

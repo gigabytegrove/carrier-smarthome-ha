@@ -144,6 +144,16 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         await self.client.async_update_zone('a', 0, mode='heat')
         self.assertEqual(self.client._graphql.call_args.args[2]['input']['mode'], 'heat')
 
+    async def test_fan_mode_auto_on_mutation_and_refusal(self):
+        self.client._graphql = AsyncMock(return_value={'updateEntryLevelZone': {'success': True}})
+        await self.client.async_update_zone('a', 0, fan='on')
+        self.assertEqual(self.client._graphql.call_args.args[2]['input']['fan_mode'], 'on')
+        await self.client.async_update_zone('a', 0, fan='auto')
+        self.assertEqual(self.client._graphql.call_args.args[2]['input']['fan_mode'], 'auto')
+        with self.assertRaisesRegex(ValueError, 'Unverified'):
+            await self.client.async_update_zone('a', 0, fan='circulate')
+        self.assertEqual(self.client._graphql.await_count, 2)
+
     async def test_mutation_failed(self):
         self.client._graphql = AsyncMock(return_value={'updateEntryLevelZone': {'success': False}})
         with self.assertRaises(api.CarrierTransportError):
