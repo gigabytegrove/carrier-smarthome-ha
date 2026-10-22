@@ -1,23 +1,78 @@
-**v0.5.2 — faster, consistent Home Assistant updates:** The official Carrier app and both GraphQL queries reflected multiple manual Off/Cool mode changes initiated through HA. Carrier mode writes are now confirmed on real equipment. When the detail query confirms a change before the account listing, the integration immediately publishes that *observed* state to HA rather than waiting for the next scheduled poll. New mode/fan/temperature commands are rejected while another command is pending (no delayed queue), and normal background polling is 30 seconds. No Matter.
+<div align="center">
+  <img src="custom_components/carrier_smarthome/brand/icon.png" width="144" alt="Carrier SmartHome icon" />
 
-# Carrier SmartHome for Home Assistant
+  # Carrier SmartHome
 
-Unofficial native Carrier SmartHome Cloud integration targeting the Carrier Smart Thermostat (`TSTATCCEWF-01` on the physical label; `TSTATCCEEF-01` in Carrier cloud). The GraphQL read path has been confirmed against an owner device. **Version 0.5.2.** Native HA mode changes have been observed in Carrier cloud; independent fan writes and every HVAC mode are not yet fully proven on the physical unit. Matter is not implemented or used.
+  **Home Assistant control for the Carrier Smart Thermostat TSTATCCEWF-01.**
 
-## Install / update with HACS
+  [![Install with HACS](https://img.shields.io/badge/HACS-Install%20Integration-41BDF5?logo=homeassistant&logoColor=white)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gigabytegrove&repository=carrier-smarthome-ha&category=integration)
+  [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-FFDD00?logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/gigabytegrove)
+  [![PayPal Donate](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white)](https://paypal.me/gigabytegrove)
+  [![Latest release](https://img.shields.io/github/v/release/gigabytegrove/carrier-smarthome-ha?label=Release)](https://github.com/gigabytegrove/carrier-smarthome-ha/releases)
 
-In **HACS → ⋮ → Custom repositories**, add `https://github.com/gigabytegrove/carrier-smarthome-ha` as an **Integration**. Download from `main`, restart Home Assistant, and add Carrier SmartHome through **Settings → Devices & services**. If already installed, redownload the current `main` revision and restart.
+  Unofficial Home Assistant integration · Carrier's native SmartHome cloud API · **No Matter**
+</div>
 
-## Normal thermostat controls (v0.5.2)
+## What it does
 
-Open the single **Home** climate device. It advertises **Off, Heat, Cool, Auto (Heat/Cool), Fan Only**, fan **Auto/On**, and temperature targets in the appropriate active mode. These are ordinary Home Assistant climate controls, with **no setup options to unlock the interface**. The previous redundant HVAC Power switch, preset Power On mode, and experimental-control options were removed. Your existing climate entity unique ID is preserved.
+**Carrier SmartHome** brings a supported Carrier thermostat into Home Assistant as a **single, standard climate device**. Change heating/cooling modes, view indoor temperature and humidity, manage thermostat targets, and use the familiar Home Assistant interface—without separate power switches, duplicate controls, or artificial configuration gates.
 
-Off is a selectable HVAC mode. To turn the system on when Off, choose Heat, Cool or Auto directly. If the climate `turn_on` service is used, it restores the last non-Off mode **observed from Carrier during the current integration session**. If none is known, choose the mode from the selector first rather than silently defaulting to an unsafe mode.
+The integration authenticates with the same Carrier SmartHome account used in the Android app (`com.carrier.home`). It communicates with Carrier's native cloud GraphQL service; **local-only HVAC control has not yet been established**.
 
-All native writes: require Carrier-reported online status, refresh device state, send at most one mutation, and require a matching cloud readback. Confirmed detail values are pushed to HA immediately. Further clicks during an in-progress write are **rejected, not queued**. Unconfirmed writes are **not automatically retried**. The cloud API does not provide a device sample timestamp. Fan Circulation is not exposed because the enum is not verified. No proprietary LAN command is implemented; local research remains read-only.
+### Compatibility: one verified thermostat
 
-For a read-only two-query mode/status audit after an HA command use `tools/Read-CarrierMode.ps1 -Samples 5 -IntervalSeconds 15`. Do **not** submit another Off request while a prior mode change may still be pending.
+| Physical thermostat | Carrier cloud model | Status |
+|---|---|---|
+| **Carrier Smart Thermostat `TSTATCCEWF-01`** | `TSTATCCEEF-01` | **Verified with actual hardware** |
 
-For a comprehensive single-thermostat native LAN reconnaissance (without Matter), see [Local probe guide](docs/LOCAL_PROBE_GUIDE.md).
+**This is the only thermostat model we currently claim is supported.** Carrier reports a slightly different cloud model identifier for the same verified device. Support for other Carrier SmartHome models, Carrier Infinity controls, and legacy Carrier integrations has **not** been established; don't assume compatibility based on branding alone.
 
-See [HACS installation and verification](docs/HACS_INSTALLATION.md), [Changelog](CHANGELOG.md), and [Alpha 10 control architecture](research/ALPHA10_NATIVE_CLIMATE_CLEANUP.md). Avoid publishing raw logs, tokens, Omada exports, private IPs or device identifiers in GitHub issues. Old git history can still contain earlier research records.
+### Features
+
+- **Native Home Assistant climate entity:** Off, Heat, Cool, Heat/Cool (Auto), and Fan Only choices, with setpoint controls where the mode permits them. **Off/Cool switching has been verified on the physical thermostat**; other mode commands still require individual hardware validation.
+- **Thermostat telemetry:** current indoor temperature, indoor humidity, outdoor temperature, targets, reported HVAC mode and fan setting.
+- **Fan control:** Auto/On choices are exposed by the integration; independent HA-originated fan commands have **not yet been fully verified** on this model.
+- **Connectivity-aware display:** live entities are unavailable when Carrier reports the thermostat disconnected; clearly labeled last-cloud-reported diagnostics may contain cached values.
+- **Safe command handling:** a single native cloud mutation per command, a current connection check, no hidden command queue, and read-only post-command confirmation. Home Assistant only publishes states observed from Carrier, never invented optimistic states.
+- **Simple configuration:** sign in with your Carrier SmartHome credentials and use the normal climate card; no separate options are required to unlock mode controls.
+
+## Installation via HACS
+
+[![Open repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gigabytegrove&repository=carrier-smarthome-ha&category=integration)
+
+1. In Home Assistant open **HACS → ⋮ → Custom repositories**. Paste `https://github.com/gigabytegrove/carrier-smarthome-ha`, choose **Integration**, and add it. This integration is **not currently listed in the default HACS catalog**.
+2. Open **Carrier SmartHome** in HACS and download the latest published release. If the screen still offers a commit hash, refresh HACS metadata or explicitly choose the available version; HACS download does **not** restart Home Assistant.
+3. **Restart Home Assistant.** Go to **Settings → Devices & services → Add integration → Carrier SmartHome** and sign into your Carrier SmartHome account.
+4. Open the discovered thermostat's **climate card**. Mode and supported temperature controls are available directly on that card.
+
+**Updating:** download the new release in HACS, **restart Home Assistant**, and check **Carrier SmartHome → Download diagnostics → `integration_manifest.version`** to verify the installed version. Cloning the repository on a different computer does not update the running Home Assistant container. Existing `carrier_smarthome` entities and account configuration remain compatible with upgrades.
+
+Alternative manual installation: copy `custom_components/carrier_smarthome/` into your Home Assistant `config/custom_components/` directory and restart. [Detailed setup and troubleshooting](docs/HACS_INSTALLATION.md).
+
+## Cloud-control performance
+
+**v0.5.3** checks Carrier's detailed native GraphQL view at the **first** post-command readback instead of waiting for a later attempt. When Carrier confirms the changed mode, fan setting, or target, the integration pushes that **verified response** into Home Assistant immediately. Confirmation remains bounded to roughly 64 seconds for unusually slow cloud propagation; it **never** sends the command again automatically. Routine polling is 30 seconds to reduce unnecessary requests.
+
+Because this is a cloud service, the physical thermostat and the cloud can still take time to reconcile. Faster readbacks improve *Home Assistant display latency*, not the thermostat's physical actuation speed. Readback behavior on real hardware should continue to be validated after updates.
+
+## Proprietary local control: ongoing investigation
+
+**Local HVAC commands are not implemented or advertised as working.** The Android application contains hints of local command and MQTT code, but we haven't proved an authenticated, non-Matter LAN control protocol is active on the `TSTATCCEWF-01` firmware.
+
+The repository includes an owner-side, **single verified thermostat** reconnaissance tool for TCP/UDP discovery. It refuses stale Omada exports, does not scan unrelated devices, and never issues an HVAC write. A closed TCP port scan alone cannot rule out local control using UDP, BLE, or outbound connections.
+
+See the [local discovery guide](docs/LOCAL_PROBE_GUIDE.md) and [protocol research](research/LOCAL_PROTOCOL_050.md). The next evidence needed is a fresh connected-client export and/or a sanitized passive traffic capture from the IoT gateway while operating the official Carrier SmartHome app. No Matter pairing, DNS hijacking, or firmware changes are required.
+
+## Support this integration
+
+If Carrier SmartHome makes your Home Assistant setup easier, support the ongoing maintenance and protocol research:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-FFDD00?logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/gigabytegrove) [![PayPal](https://img.shields.io/badge/PayPal-Donate%20%40gigabytegrove-00457C?logo=paypal&logoColor=white)](https://paypal.me/gigabytegrove)
+
+You can also [report an issue](https://github.com/gigabytegrove/carrier-smarthome-ha/issues) or review the [changelog](CHANGELOG.md).
+
+## Privacy and attribution
+
+Your account credentials are stored by Home Assistant for Carrier authentication; this project does not require Matter pairing or a separate cloud account. **Never post** credentials, raw diagnostics, MACs, IP addresses, serials, unredacted packet captures, or authentication tokens in public GitHub issues.
+
+Carrier SmartHome is an **independent community integration**, not affiliated with, endorsed by, or supported by Carrier. Carrier names, logos, and product marks belong to their respective owners. The project icon identifies the supported Carrier equipment; its inclusion does not imply an official relationship.

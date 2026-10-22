@@ -182,7 +182,7 @@ class CarrierSmartHomeClient:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.5.2"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.5.3"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
