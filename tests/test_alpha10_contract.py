@@ -40,8 +40,8 @@ class Alpha10ContractTests(unittest.TestCase):
         self.assertIn("Carrier thermostat disconnected", src)
         self.assertIn("math.isfinite", src)
         self.assertNotIn("Enable experimental Carrier", src)
-        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.2")
-        self.assertIn('carrier-smarthome-ha/0.5.2', (PKG / "api.py").read_text())
+        self.assertEqual(json.loads((PKG / "manifest.json").read_text())["version"], "0.5.3")
+        self.assertIn('carrier-smarthome-ha/0.5.3', (PKG / "api.py").read_text())
 
 
 if __name__ == "__main__":

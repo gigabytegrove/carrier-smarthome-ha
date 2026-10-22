@@ -16,12 +16,14 @@ from .models import connectivity_state, get_zone, zone_values
 
 MODES = frozenset({"off", "heat", "cool", "auto", "fanonly"})
 FANS = frozenset({"auto", "on"})  # 'on' unverified on physical hardware.
-READBACK_ATTEMPTS = 9
-READBACK_INTERVAL = 8
-# Carrier app-to-cloud changes previously took up to the second 20-second
-# observation; HA's normal async_request_refresh() is DEBOUNCED (10s cooldown).
-# Always use async_refresh() for *actual* fresh reads in the write path.
-# After one mutation, check for up to 64 seconds; NEVER repeat the mutation.
+# Backoff for read-only checks AFTER one acknowledged mutation. Earlier checks
+# improve perceived UI latency without multiplying writes to the thermostat.
+# Total 64 seconds. Carrier may rate-limit; see CarrierRateLimitError handling.
+READBACK_DELAYS = (0, 2, 4, 6, 8, 8, 10, 12, 14)
+READBACK_ATTEMPTS = len(READBACK_DELAYS)
+# Detail is a second native read path, not an independent physical reading.
+# Query it promptly, because it may lead the account listing after a write.
+DETAIL_CHECK_ATTEMPTS = frozenset((0, 2, 4, 6, 8))
 
 
 
@@ -103,9 +105,9 @@ async def _write_verified(coordinator, serial: str, index: int,
         # independent cross-check of the *same serial and zone*.
         detail_confirmed = False
         last_read_error = False
-        for attempt in range(READBACK_ATTEMPTS):
-            if attempt:
-                await asyncio.sleep(READBACK_INTERVAL)
+        for attempt, delay in enumerate(READBACK_DELAYS):
+            if delay:
+                await asyncio.sleep(delay)
             try:
                 await coordinator.async_refresh()
                 latest = _state(coordinator, serial, index)
@@ -124,7 +126,7 @@ async def _write_verified(coordinator, serial: str, index: int,
                     ) from (failure if isinstance(failure, BaseException) else None)
             # Consult the independent APK-derived detail view after the
             # initial short wait. Never accept a mismatched serial or zone.
-            if attempt in (1, 3, 5, 7, 8) and hasattr(coordinator.client, "async_get_system_detail"):
+            if attempt in DETAIL_CHECK_ATTEMPTS and hasattr(coordinator.client, "async_get_system_detail"):
                 try:
                     detail = await coordinator.client.async_get_system_detail(serial)
                     if (detail.get("serial") == serial

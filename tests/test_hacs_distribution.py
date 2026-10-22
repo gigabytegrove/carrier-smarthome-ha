@@ -20,6 +20,21 @@ class HacsDistributionTests(unittest.TestCase):
         self.assertIn('github.com/gigabytegrove/carrier-smarthome-ha', docs)
         self.assertIn('experimental', docs.lower())
 
+    def test_published_readme_is_product_focused_and_has_support_badges(self):
+        readme = (ROOT/'README.md').read_text(encoding='utf-8')
+        self.assertTrue(readme.lstrip().startswith('<div align="center">'))
+        self.assertIn('Carrier SmartHome', readme)
+        self.assertIn('TSTATCCEWF-01', readme)
+        self.assertIn('TSTATCCEEF-01', readme)
+        self.assertIn('only thermostat model', readme)
+        self.assertIn('my.home-assistant.io/redirect/hacs_repository/', readme)
+        self.assertIn('buymeacoffee.com/gigabytegrove', readme)
+        self.assertIn('paypal.me/gigabytegrove', readme)
+        self.assertIn('No Matter', readme)
+        self.assertIn('local-only HVAC control has not yet been established', readme)
+        self.assertTrue((ROOT/'.github'/'FUNDING.yml').is_file())
+        self.assertTrue((ROOT/'custom_components'/'carrier_smarthome'/'brand'/'icon.png').is_file())
+
     def test_no_real_thermostat_mac_in_current_test_source(self):
         import re
         files = (ROOT/'tests'/'test_omada_identity.py').read_text(encoding='utf-8')

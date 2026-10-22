@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.3 — Carrier SmartHome naming, artwork, faster confirmed cloud feedback
+
+- Rename HACS display name to **Carrier SmartHome**, matching the integration title; preserve the existing `carrier_smarthome` internal domain, config entry and entity identifiers.
+- Bundle the owner-provided Carrier SmartHome app artwork under `custom_components/carrier_smarthome/brand/icon.png`, the native brand location supported by Home Assistant 2026.3+.
+- Document the **only verified physical thermostat**: `TSTATCCEWF-01` (cloud-reported as `TSTATCCEEF-01`). Do not claim universal Carrier compatibility or an established proprietary LAN control API.
+- For a single acknowledged Carrier cloud mutation, start native detailed-query verification on the **first** readback rather than after eight seconds. Subsequent readbacks back off over a bounded 64-second window; no automatic retries of the mutation.
+- Retain verified-state-only HA coordinator updates, non-queued HVAC writes and 30-second background polling.
+- GitHub Releases are required for HACS version labels; HACS `main` commit hash on its download dialog is not itself evidence of an installed HA version. Fix the PowerShell release command to avoid terminating on `gh release view` 404 in Windows PowerShell 5.1.
+- Put HACS, Buy Me a Coffee and PayPal badges at the top of a product-oriented README; add GitHub funding metadata and explicit single-model compatibility.
+- Proprietary LAN control remains research; no Matter or unverified HVAC control packets.
+
 ## v0.5.2 — Home Assistant cloud synchronization and stale-command prevention
 
 - Owner confirmed native HA Off/Cool toggles appear in both independent Carrier GraphQL views, while HA presentation lagged. Manual temperature adjustments during tests were intentional.
@@ -30,8 +41,6 @@
 - Sanitize local reports to omit MAC, private IP, SSID, thermostat serial, names, TLS certificate fingerprints, passwords and authentication material.
 - Add offline identity/freshness/protocol payload, mocked TCP/MQTT tests and documentation on why negative results cannot prove local control is impossible.
 - No DNS redirection, firmware modification, Matter pairing, API writes or HVAC commands. Local protocol support remains research until proven with the actual device.
-
-# Changelog
 
 ## 0.1.0a10 — Standard climate controls, no configuration gates
 
