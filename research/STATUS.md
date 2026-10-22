@@ -20,4 +20,8 @@ No live Carrier account or TSTATCCEWF-01 was accessed during this research pass.
 
 ## Multi-VLAN discovery update (2026-10-22)
 
-The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `192.168.0.0/24` discovery; the IoT VLAN subnet is still unknown. See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
+The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `192.168.0.0/24` discovery; **at the time of this earlier scan**, the IoT VLAN subnet was unknown (subsequently confirmed as `172.20.0.0/16` below). See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
+
+## 2026-10-22: IoT network scope corrected
+
+The device's IoT network is user-confirmed as `172.20.0.0/16`. A dedicated Windows scanner now covers that exact range by default; its default ICMP pass is all 65,534 usable addresses, but full silent-host TCP scanning is opt-in. The unrelated `192.168.0.x` network is excluded unless the operator deliberately chooses `-IncludeOtherNetworks`. No thermostat IP or proprietary local API has been verified; Windows execution and VLAN reachability remain untested until run on the owner's PC.

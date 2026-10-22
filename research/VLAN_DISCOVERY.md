@@ -1,5 +1,7 @@
 # Local discovery across LANs and IoT VLANs
 
+**Current confirmed IoT CIDR: `172.20.0.0/16`.** The historical background and sample `/24` commands below predate that discovery. The project's current default scanner uses `172.20.0.0/16`; see [`IOT_VLAN_172_20.md`](IOT_VLAN_172_20.md).
+
 ## Background
 
 The 2026-10-22 user scan ran from Windows `192.168.0.133` and selected **only** `192.168.0.0/24`. It found 78 neighbor-cache entries and many TCP listeners, but **did not identify the Carrier thermostat**. There is no evidence the IoT VLAN was scanned. The provided log does not include the IoT VLAN prefix; none is assumed here.
@@ -73,3 +75,7 @@ For a faster, less complete check:
 - It performs ICMP, OS neighbor reads, and TCP connects only; no MQTT publishes, no HTTP requests to devices, no Matter pairing changes.
 - Cloud configuration discovery is separate from VLAN discovery.
 - Do not commit or publicly share raw scans, MAC addresses, tokens, serial numbers, or private LAN diagrams.
+
+## Confirmed target update
+
+The user subsequently identified the relevant IoT network as `172.20.0.0/16`. The previous example-only `/24` instructions above remain relevant for the generic multi-VLAN tool but **are no longer the correct default for the Carrier project**. Use `tools/Run-Discovery.ps1` to scan only the IoT `/16` by default, or see `research/IOT_VLAN_172_20.md`. No further subnet entry is needed.
