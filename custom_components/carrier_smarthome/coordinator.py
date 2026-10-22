@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import CarrierAuthError, CarrierError, CarrierRateLimitError, CarrierSmartHomeClient
 from .const import DOMAIN, POLL_INTERVAL
+from .models import connectivity_state, zone_indices, get_zone, zone_values
 
 
 class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
@@ -18,6 +19,11 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.client = client
         # Serialize explicit HVAC writes so overlapping HA controls cannot race.
         self.write_lock = asyncio.Lock()
+        # Remember only a mode Carrier actually reported, never guess a default.
+        self._last_non_off_modes: dict[tuple[str, int], str] = {}
+
+    def last_non_off_mode(self, serial: str, index: int) -> str | None:
+        return self._last_non_off_modes.get((serial, index))
 
     async def _async_update_data(self) -> dict[str, dict]:
         try:
@@ -33,4 +39,10 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             serial = system.get("serial")
             if isinstance(serial, str) and serial and serial not in result:
                 result[serial] = system
+                if connectivity_state(system) == "online":
+                    for index in zone_indices(system):
+                        zone = get_zone(system, index)
+                        mode = zone_values(zone)["mode"] if zone else None
+                        if mode in {"heat", "cool", "auto", "fanonly"}:
+                            self._last_non_off_modes[(serial, index)] = mode
         return result

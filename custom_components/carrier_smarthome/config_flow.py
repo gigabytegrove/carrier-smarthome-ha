@@ -10,10 +10,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
-from .const import (CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL, CONF_ENABLE_SETPOINT_CONTROL,
-                    DEFAULT_ENABLE_SETPOINT_CONTROL, CONF_POWER_ON_MODE,
-                    DEFAULT_POWER_ON_MODE, POWER_ON_MODES, DOMAIN,
-                    CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +24,7 @@ def _credentials_schema(defaults: dict | None = None):
 
 
 class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -52,11 +49,7 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         self._abort_if_unique_id_configured()
                         return self.async_create_entry(
                             title="Carrier SmartHome",
-                            data={CONF_USERNAME: username, CONF_PASSWORD: password},
-                            options={CONF_ENABLE_CONTROL: DEFAULT_ENABLE_CONTROL,
-                                     CONF_ENABLE_SETPOINT_CONTROL: DEFAULT_ENABLE_SETPOINT_CONTROL,
-                                     CONF_ENABLE_FAN_CONTROL: DEFAULT_ENABLE_FAN_CONTROL,
-                                     CONF_POWER_ON_MODE: DEFAULT_POWER_ON_MODE})
+                            data={CONF_USERNAME: username, CONF_PASSWORD: password})
         return self.async_show_form(step_id="user", data_schema=_credentials_schema(user_input), errors=errors)
 
     async def async_step_reauth(self, entry_data):
@@ -80,38 +73,3 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="reauth_confirm",
                                     data_schema=vol.Schema({vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}), errors=errors)
 
-    @staticmethod
-    def async_get_options_flow(config_entry):
-        return CarrierOptionsFlow()
-
-
-class CarrierOptionsFlow(config_entries.OptionsFlow):
-    async def async_step_init(self, user_input=None):
-        if user_input is not None:
-            # Setpoint writes depend on mode/power control being enabled.
-            # Fail at setup instead of silently showing an inert thermostat UI.
-            if user_input[CONF_ENABLE_SETPOINT_CONTROL] and not user_input[CONF_ENABLE_CONTROL]:
-                return self.async_show_form(
-                    step_id="init", data_schema=self._schema(user_input),
-                    errors={"base": "setpoints_require_mode_control"})
-            return self.async_create_entry(data={
-                CONF_ENABLE_CONTROL: bool(user_input[CONF_ENABLE_CONTROL]),
-                CONF_ENABLE_SETPOINT_CONTROL: bool(user_input[CONF_ENABLE_SETPOINT_CONTROL]),
-                CONF_ENABLE_FAN_CONTROL: bool(user_input[CONF_ENABLE_FAN_CONTROL]),
-                CONF_POWER_ON_MODE: user_input[CONF_POWER_ON_MODE],
-            })
-        return self.async_show_form(step_id="init", data_schema=self._schema())
-
-    def _schema(self, overrides=None):
-        opts = overrides if overrides is not None else self.config_entry.options
-        return vol.Schema({
-            vol.Required(CONF_ENABLE_CONTROL,
-                default=opts.get(CONF_ENABLE_CONTROL, DEFAULT_ENABLE_CONTROL)): bool,
-            vol.Required(CONF_ENABLE_SETPOINT_CONTROL,
-                default=opts.get(CONF_ENABLE_SETPOINT_CONTROL, DEFAULT_ENABLE_SETPOINT_CONTROL)): bool,
-            vol.Required(CONF_ENABLE_FAN_CONTROL,
-                default=opts.get(CONF_ENABLE_FAN_CONTROL, DEFAULT_ENABLE_FAN_CONTROL)): bool,
-            vol.Required(CONF_POWER_ON_MODE,
-                default=opts.get(CONF_POWER_ON_MODE, DEFAULT_POWER_ON_MODE)):
-                vol.In(POWER_ON_MODES),
-        })

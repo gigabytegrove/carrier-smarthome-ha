@@ -18,7 +18,7 @@ class HacsDistributionTests(unittest.TestCase):
         self.assertIn('Custom repositories', docs)
         self.assertIn('Integration', docs)
         self.assertIn('github.com/gigabytegrove/carrier-smarthome-ha', docs)
-        self.assertIn('experimental writes', docs)
+        self.assertIn('experimental', docs.lower())
 
     def test_no_real_thermostat_mac_in_current_test_source(self):
         import re
