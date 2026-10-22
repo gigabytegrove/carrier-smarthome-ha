@@ -1,11 +1,21 @@
+# Changelog
+
+## v0.5.5 — Availability recovery and Carrier cloud backoff
+
+- Prevent a single cloud/API read failure from causing immediate whole-device flicker: retain only previously verified **online** readings for at most 90 seconds, mark them potentially stale, and still block any HVAC writes without a fresh successful Carrier read.
+- Keep the cloud API health binary sensor readable during an outage, report `Off`, and include last successful poll, sanitized failure category, retry wait and failed-poll count in Home Assistant diagnostics.
+- Respect HTTP 429 `Retry-After` across Carrier GraphQL reads and writes; use bounded backoff on transport errors and return automatically to the normal update interval on recovery.
+- Remove an unsupported `retry_after=` keyword from `UpdateFailed` (which could otherwise raise an additional error while handling rate limiting).
+- Avoid replacing a known thermostat with an empty coordinator listing during a transient cloud response. Preserve last cloud-reported diagnostics after an API error, without falsely labeling them live.
+- Set regular cloud polling to 60 seconds to reduce repeated requests; verified cloud mode/fan/target readback still updates HA immediately, without waiting for the background poll.
+- No changes to native cloud mutation payloads, thermostat identity, Home Assistant climate entity IDs, local control research, or Matter exclusion. Physical device recovery remains to be owner-tested.
+
 ## 0.5.4 — Direct local-IP investigation and release-readiness cleanup
 
 - Permit explicitly authorized single-host probes at the already identified thermostat IP, without repeating the Omada export process. Explicitly disclose that a previous IP is not an independently verified current MAC/IP binding.
 - Keep bounded, read-only TCP/UDP and protocol fingerprinting; no Matter, no local HVAC writes, no firmware/DNS modifications.
 - Update documentation, release metadata, privacy checks and regression coverage. Preserves cloud HVAC mode support and current entity IDs.
 - This is **not** a claim of functional local HVAC control; 1.0 remains dependent on real device tests.
-
-# Changelog
 
 ## v0.5.3 — Carrier SmartHome naming, artwork, faster confirmed cloud feedback
 

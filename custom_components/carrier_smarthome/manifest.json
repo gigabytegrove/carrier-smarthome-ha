@@ -1,7 +1,7 @@
 {
   "domain": "carrier_smarthome",
   "name": "Carrier SmartHome",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "documentation": "https://github.com/gigabytegrove/carrier-smarthome-ha",
   "issue_tracker": "https://github.com/gigabytegrove/carrier-smarthome-ha/issues",
   "codeowners": [],

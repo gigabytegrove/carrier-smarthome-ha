@@ -94,6 +94,14 @@ class CarrierSensor(CarrierEntity, SensorEntity):
     def native_value(self):
         return zone_values(self.zone_data)[self.key]
 
+    @property
+    def extra_state_attributes(self):
+        return {
+            "last_successful_poll_utc": getattr(self.coordinator, "last_poll_utc", None),
+            "cloud_poll_succeeded": self.coordinator.last_update_success,
+            "brief_grace_period_data": getattr(self.coordinator, "telemetry_in_grace", False),
+        }
+
 
 class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
     """Last value returned by Carrier's cloud; freshness cannot be asserted.
@@ -125,8 +133,9 @@ class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
         # Require a successful, CURRENT API poll and a numeric value in its
         # response, but NOT cloud-reported online status. The value itself may
         # have been cached by Carrier for an unknown length of time.
-        return bool(self.coordinator.last_update_success and
-                    self.serial in self.coordinator.data and
+        # Last-known readings are intentionally still readable when the cloud
+        # is unavailable, and explicitly marked as potentially stale.
+        return bool(self.serial in self.coordinator.data and
                     self.zone_data and self.native_value is not None)
 
     @property
@@ -152,4 +161,6 @@ class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
             "value_freshness": "unverified_may_be_stale",
             "device_sample_timestamp": "not_provided_by_api",
             "not_for_hvac_automations": True,
+            "last_successful_poll_utc": getattr(self.coordinator, "last_poll_utc", None),
+            "cloud_poll_succeeded": self.coordinator.last_update_success,
         }

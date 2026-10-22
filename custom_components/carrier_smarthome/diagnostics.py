@@ -16,9 +16,16 @@ def build_diagnostics(coordinator) -> dict:
         "transport": "carrier_native_cloud_graphql",
         "matter_enabled": False,
         "last_poll_succeeded": bool(coordinator.last_update_success),
-        "telemetry_may_be_stale": any(
+        "last_successful_poll_utc": getattr(coordinator, "last_poll_utc", None),
+        "last_error_category": getattr(coordinator, "last_error_kind", None),
+        "last_error_utc": getattr(coordinator, "last_error_utc", None),
+        "consecutive_poll_failures": getattr(coordinator, "consecutive_errors", 0),
+        "seconds_since_success": getattr(coordinator, "seconds_since_success", None),
+        "retry_wait_seconds": getattr(coordinator, "next_poll_wait_seconds", 0),
+        "telemetry_in_grace_period": getattr(coordinator, "telemetry_in_grace", False),
+        "telemetry_may_be_stale": (not coordinator.last_update_success or any(
             item.get("cloud_connection") != "online" for item in sanitize_telemetry(systems)
-        ),
+        )),
         "summary": sanitize_device_summary(systems),
         "devices": sanitize_telemetry(systems),
     }

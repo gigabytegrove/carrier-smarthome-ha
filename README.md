@@ -32,7 +32,7 @@ The integration authenticates with the same Carrier SmartHome account used in th
 - **Native Home Assistant climate entity:** Off, Heat, Cool, Heat/Cool (Auto), and Fan Only choices, with setpoint controls where the mode permits them. **Off/Cool switching has been verified on the physical thermostat**; other mode commands still require individual hardware validation.
 - **Thermostat telemetry:** current indoor temperature, indoor humidity, outdoor temperature, targets, reported HVAC mode and fan setting.
 - **Fan control:** Auto/On choices are exposed by the integration; independent HA-originated fan commands have **not yet been fully verified** on this model.
-- **Connectivity-aware display:** live entities are unavailable when Carrier reports the thermostat disconnected; clearly labeled last-cloud-reported diagnostics may contain cached values.
+- **Connectivity-aware display:** a Carrier-reported Wi-Fi disconnect immediately disables live entities. A brief cloud/API interruption retains the most recent verified online readings for at most **90 seconds**, visibly flagged as potentially stale, while *all HVAC writes remain blocked* until a successful fresh cloud poll. Separately labeled last-reported diagnostics remain readable.
 - **Safe command handling:** a single native cloud mutation per command, a current connection check, no hidden command queue, and read-only post-command confirmation. Home Assistant only publishes states observed from Carrier, never invented optimistic states.
 - **Simple configuration:** sign in with your Carrier SmartHome credentials and use the normal climate card; no separate options are required to unlock mode controls.
 
@@ -49,9 +49,15 @@ The integration authenticates with the same Carrier SmartHome account used in th
 
 Alternative manual installation: copy `custom_components/carrier_smarthome/` into your Home Assistant `config/custom_components/` directory and restart. [Detailed setup and troubleshooting](docs/HACS_INSTALLATION.md).
 
+## Cloud connection resilience (v0.5.5)
+
+If Carrier cloud polling fails momentarily, live readings no longer disappear instantly. The last *successfully confirmed online* values can remain visible for up to 90 seconds with `telemetry_freshness: brief_cloud_recovery_grace_may_be_stale`, **but controls are blocked** until Carrier successfully responds again. On a genuine Carrier-reported thermostat disconnection, live entities become unavailable immediately. After the grace period, live entities become unavailable; last-reported diagnostics remain separately labeled.
+
+The `Native cloud API readable` binary sensor now shows **Off** (rather than `Unavailable`) on a failed poll, and its attributes expose the last successful poll, failure category and recovery delay. The privacy-sanitized Home Assistant diagnostics expose the same information, helping identify a temporary outage versus rate limiting, authentication failure or an empty listing. The integration respects HTTP 429 `Retry-After`, uses bounded reconnect backoff, and no longer erases devices on a transient empty query. These changes improve recovery; they are **not a claim that Carrier caused the screenshot incident**. Actual HA logs are needed to establish that.
+
 ## Cloud-control performance
 
-**v0.5.4** retains rapid confirmation from v0.5.3 and checks Carrier's detailed native GraphQL view at the **first** post-command readback instead of waiting for a later attempt. When Carrier confirms the changed mode, fan setting, or target, the integration pushes that **verified response** into Home Assistant immediately. Confirmation remains bounded to roughly 64 seconds for unusually slow cloud propagation; it **never** sends the command again automatically. Routine polling is 30 seconds to reduce unnecessary requests.
+**v0.5.5** retains rapid confirmation from v0.5.3 and checks Carrier's detailed native GraphQL view at the **first** post-command readback instead of waiting for a later attempt. When Carrier confirms the changed mode, fan setting, or target, the integration pushes that **verified response** into Home Assistant immediately. Confirmation remains bounded to roughly 64 seconds for unusually slow cloud propagation; it **never** sends the command again automatically. Routine polling is **60 seconds** to reduce unnecessary Carrier API requests; a confirmed user-initiated command updates the Home Assistant coordinator immediately without waiting for that poll.
 
 Because this is a cloud service, the physical thermostat and the cloud can still take time to reconcile. Faster readbacks improve *Home Assistant display latency*, not the thermostat's physical actuation speed. Readback behavior on real hardware should continue to be validated after updates.
 

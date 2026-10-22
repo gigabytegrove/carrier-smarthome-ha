@@ -105,8 +105,69 @@ class CoordinatorPushTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.coordinator.publish_verified_detail('serial-test',0,self.detail(),{'schedule_enabled':True}))
         self.assertEqual(self.coordinator.notifications,0)
 
+    async def test_transient_failure_short_grace_blocks_writes(self):
+        # First a successful online account read, followed by one failed poll.
+        from unittest.mock import AsyncMock
+        valid = list(self.coordinator.data.values())
+        self.coordinator.client = types.SimpleNamespace(async_get_systems=AsyncMock(return_value=valid))
+        self.coordinator.data = await self.coordinator._async_update_data()
+        self.assertTrue(self.coordinator.telemetry_usable)
+        self.assertFalse(self.coordinator.telemetry_in_grace)
+        self.coordinator.client.async_get_systems = AsyncMock(side_effect=self.mod.CarrierError('network'))
+        with self.assertRaises(self.mod.UpdateFailed):
+            await self.coordinator._async_update_data()
+        self.coordinator.last_update_success = False  # HA response after failure
+        self.assertEqual(self.coordinator.last_error_kind, 'transport_or_graphql')
+        self.assertTrue(self.coordinator.telemetry_usable)
+        self.assertTrue(self.coordinator.telemetry_in_grace)
+        self.assertIsNotNone(self.coordinator.last_poll_utc)
+        self.coordinator._last_success_monotonic -= 200
+        self.assertFalse(self.coordinator.telemetry_usable)
+        self.assertFalse(self.coordinator.telemetry_in_grace)
+
+    async def test_empty_listing_preserves_known_device(self):
+        from unittest.mock import AsyncMock
+        self.coordinator.client = types.SimpleNamespace(async_get_systems=AsyncMock(return_value=[]))
+        with self.assertRaises(self.mod.UpdateFailed):
+            await self.coordinator._async_update_data()
+        self.assertEqual(self.coordinator.last_error_kind, "empty_listing")
+        self.assertIn("serial-test", self.coordinator.data)
+
+    async def test_rate_limit_suppresses_repeat_and_recovers(self):
+        from unittest.mock import AsyncMock
+        self.coordinator.client = types.SimpleNamespace(async_get_systems=AsyncMock(
+            side_effect=self.mod.CarrierRateLimitError(120)))
+        with self.assertRaises(self.mod.UpdateFailed) as cm:
+            await self.coordinator._async_update_data()
+        self.assertIn('Retry-After', str(cm.exception))
+        self.assertEqual(self.coordinator.last_error_kind, 'rate_limited')
+        self.assertGreater(self.coordinator.next_poll_wait_seconds, 0)
+        self.assertGreaterEqual(self.coordinator.update_interval.total_seconds(), 120)
+        with self.assertRaises(self.mod.UpdateFailed):
+            await self.coordinator._async_update_data()
+        self.coordinator.client.async_get_systems.assert_awaited_once()
+        self.coordinator._next_poll_not_before = 0
+        self.coordinator.client.async_get_systems = AsyncMock(return_value=list(self.coordinator.data.values()))
+        recovered = await self.coordinator._async_update_data()
+        self.assertIn('serial-test', recovered)
+        self.assertEqual(self.coordinator.consecutive_errors, 0)
+        self.assertIsNone(self.coordinator.last_error_kind)
+        self.assertEqual(self.coordinator.update_interval.total_seconds(), 60)
+
+    async def test_cloud_grace_is_not_device_online_override(self):
+        from unittest.mock import AsyncMock
+        self.coordinator.client = types.SimpleNamespace(async_get_systems=AsyncMock(
+            return_value=list(self.coordinator.data.values())))
+        await self.coordinator._async_update_data()
+        self.coordinator.last_update_success = False
+        self.assertTrue(self.coordinator.telemetry_usable)
+        # The online flag itself must still govern the live climate entity.
+        self.coordinator.data['serial-test']['connection']['isConnected'] = False
+        self.assertEqual(self.mod.connectivity_state(
+            self.coordinator.data['serial-test']), 'offline')
+
     def test_fast_but_bounded_background_poll(self):
-        self.assertEqual(int(self.coordinator.interval.total_seconds()),30)
+        self.assertEqual(int(self.coordinator.interval.total_seconds()),60)
 
 
 if __name__=='__main__':

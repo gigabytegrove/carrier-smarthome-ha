@@ -132,7 +132,9 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
             "stage_status": state["stage_status"],
             "carrier_reported_connection": connectivity_state(self.system),
             "control_transport": "Carrier native cloud GraphQL (experimental writes)",
-            "telemetry_freshness": "carrier_online_without_device_sample_timestamp",
+            "telemetry_freshness": ("brief_cloud_recovery_grace_may_be_stale"
+                                        if getattr(self.coordinator, "telemetry_in_grace", False)
+                                        else "carrier_online_without_device_sample_timestamp"),
         }
 
     def _require_online(self):

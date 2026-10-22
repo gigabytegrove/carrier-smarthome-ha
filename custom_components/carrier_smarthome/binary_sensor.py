@@ -62,7 +62,7 @@ class CarrierCloudConnectivity(CoordinatorEntity, BinarySensorEntity):
             ),
             "local_network_reachability": "not_checked",
             "status_reliability": "reconnect_correlated_in_owner_test",
-            "interpretation": "Wi-Fi outage reported before test; online after restart",
+            "interpretation": "Previously offline during Wi-Fi loss; online after restart and cloud sync",
         }
 
 
@@ -87,7 +87,8 @@ class CarrierApiReadable(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def available(self):
-        return self.coordinator.last_update_success
+        # A cloud health sensor must remain available to report a failed poll.
+        return self.serial in self.coordinator.data
 
     @property
     def is_on(self):
@@ -95,5 +96,8 @@ class CarrierApiReadable(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def extra_state_attributes(self):
-        return {"meaning": "Carrier API returned a device record; physical connectivity unverified",
-                "physical_device_online": "not_established"}
+        return {"meaning": "Last Carrier cloud polling status, not physical device reachability",
+                "physical_device_online": "not_established",
+                "last_successful_poll_utc": getattr(self.coordinator, "last_poll_utc", None),
+                "failure_category": getattr(self.coordinator, "last_error_kind", None),
+                "recovery_wait_seconds": getattr(self.coordinator, "next_poll_wait_seconds", 0)}

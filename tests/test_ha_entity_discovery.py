@@ -133,6 +133,31 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
                     unload()
                 self.assertEqual(len(self.coordinator.callbacks), 0)
 
+    async def test_api_health_reports_failed_poll_instead_of_unavailable(self):
+        binary = load('binary_sensor')
+        items = []
+        await binary.async_setup_entry(self.hass, self.entry, lambda entities: items.extend(entities))
+        api = next(e for e in items if isinstance(e, binary.CarrierApiReadable))
+        self.assertTrue(api.available)
+        self.assertTrue(api.is_on)
+        self.coordinator.last_update_success = False
+        self.assertTrue(api.available)
+        self.assertFalse(api.is_on)
+        self.assertTrue(items[0].available is False)  # device status is unknown during failed poll
+
+    async def test_last_cloud_reported_survives_poll_failure_but_live_does_not(self):
+        sensors = load('sensor')
+        self.hass.config = types.SimpleNamespace(units=types.SimpleNamespace(temperature_unit='°F'))
+        self.coordinator.data['serial-test']['zones'][0].update({'rt':74,'rh':46})
+        items = []
+        await sensors.async_setup_entry(self.hass, self.entry, lambda entities: items.extend(entities))
+        cached = next(e for e in items if isinstance(e, sensors.CarrierLastReportedSensor) and e.key == 'temperature')
+        live = next(e for e in items if isinstance(e, sensors.CarrierSensor) and e.key == 'humidity')
+        self.coordinator.last_update_success = False
+        self.assertTrue(cached.available)
+        self.assertFalse(live.available)
+        self.assertFalse(cached.extra_state_attributes['cloud_poll_succeeded'])
+
     async def test_offline_last_reported_diagnostics_do_not_get_temperature_units(self):
         sensor = load('sensor')
         self.hass.config = types.SimpleNamespace(units=types.SimpleNamespace(temperature_unit='°F'))
