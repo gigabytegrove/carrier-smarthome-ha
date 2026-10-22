@@ -16,8 +16,15 @@ Enter your normal Carrier SmartHome account email and password when prompted. Th
 Authentication: PASS
 Entry-level devices: <count>
 Connected devices: <count>
+Offline devices: <count>
+Unknown connection state: <count>
 Thermostat zones: <count>
 Reported models: <models>
+READ-ONLY THERMOSTAT DATA (may be stale if offline)
+Device 1: model=<reported model> connection=<online/offline/unknown> unit=<unit>
+  Zone 0: mode=<mode> room=<temperature> heat=<target> cool=<target> humidity=<value> outside=<value>
+APK DETAIL QUERY CROSS-CHECK
+Device 1: <PASS/NOT AVAILABLE>
 ```
 
 If login fails, report *only the status lines* (no email/password, tokens, or serial). This is the earliest possible verification of the native cloud API. This is a research tool and does not authenticate against Matter.
@@ -38,4 +45,8 @@ If login fails, report *only the status lines* (no email/password, tokens, or se
 - `Entry-level devices: 0`: login works, but the account's device is not in the discovered entry-level GraphQL family.
 - HA error `no_devices`: no entry-level systems were returned; the integration will not create fake entities.
 
-The alpha has **not yet** been tested with your Carrier account or running HA instance. The direct app controls and local network control remain separate verification goals.
+Native cloud login and one entry-level device listing were **owner-tested successfully** on 2026-10-22. The alpha has **not yet** been tested inside Home Assistant and no native-cloud writes have been confirmed. Proprietary local control remains a separate verification goal.
+
+
+### Verified first read (2026-10-22)
+Owner already ran version 0.1.0a1: authentication PASSED, one entry-level device and one zone found. Cloud reported device offline and model `TSTATCCEEF-01`, differing from the physical sticker `TSTATCCEWF-01`. Rerun the 0.1.0a2 smoke test when the thermostat is installed and online; the expanded output includes **real API-returned** temperature and setpoints (which may be stale when offline) and attempts a second APK-derived detail query. Do not enable experimental writes while offline or until units and setpoints are verified.

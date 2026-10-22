@@ -103,7 +103,7 @@ class CarrierSmartHomeClient:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a1"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a2"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
@@ -252,6 +252,21 @@ class CarrierSmartHomeClient:
             if isinstance(system, dict):
                 systems.append(system)
         return systems
+
+    async def async_get_system_detail(self, serial: str) -> dict[str, Any]:
+        """Cross-check a single entry-level device using the APK-derived query.
+
+        Read-only: intended for diagnostics. Some Carrier accounts may expose
+        the summary query without the detailed query; callers handle rejection.
+        """
+        if not isinstance(serial, str) or not serial or len(serial) > 128:
+            raise ValueError("Invalid Carrier device identity")
+        result = await self._graphql("getEntryLevelSystemData", DETAIL_QUERY,
+                                     {"serial": serial})
+        system = result.get("entryLevelSystem")
+        if not isinstance(system, dict):
+            raise CarrierQueryError("Carrier detail query did not return a device")
+        return system
 
     async def async_update_zone(self, serial: str, index: int, *,
                                 mode: str | None = None,
