@@ -1,0 +1,163 @@
+query getEntryLevelSystemData($serial: String!) {
+  entryLevelSystem(serial: $serial) {
+    serial
+    dealer_id
+    dealer {
+      name
+      email
+      phone
+      phoneExt
+      street1
+      street2
+      city
+      state
+      country
+      postal
+    }
+    dealer_prefs {
+      status
+      schedule
+      modify_config
+    }
+    location_id
+    name
+    thingType
+    mute
+    model
+    firmware
+    hw_version
+    temp_unit_format
+    display_lock
+    timezone
+    connection {
+      isConnected
+      rssi
+      macaddress
+      ssid
+      bssid
+    }
+    perimeter_led_behavior
+    brightness {
+      day
+      night
+    }
+    systemInfo {
+      inactive
+      screen
+      wakeOn
+      sleepMode
+      brightness {
+        day
+        night
+      }
+    }
+    factory_reset
+    network_reset
+    day_cool_equip_run_time
+    day_heat_equip_run_time
+    hour_aux_heat_run_time
+    hour_emg_heat_run_time
+    created_at
+    updated_at
+    connection {
+      deviceId
+      type
+      ssid
+      bssid
+      channel
+      rssi
+      macaddress
+      isConnected
+    }
+    open_adr {
+      state
+      start_time
+      duration
+    }
+    zones {
+      index
+      rt
+      rh
+      current_scene_name
+      change_over_type
+      clsp {
+        current
+        min
+      }
+      htsp {
+        current
+        max
+      }
+      current_schedule_id
+      schedule_enabled
+      system_type
+      subsystem_type
+      stage_status
+      fan_type
+      mode
+      change_over_type
+      heating_cycles
+      cooling_cycles
+      set_point_delta
+      fan_mode
+      fan_purge_heat
+      fan_purge_cool
+      accessory_output
+      ventilation_percent_on_time
+      ventilation_max_idu_odu_temp_delta
+      rh_humidification {
+        value
+        heat_dependent
+      }
+      rh_dehumidification {
+        value
+        fan_dependent
+      }
+      dry_mode
+      drymode_set_point
+      overcool_set_point
+      hvac_test_mode
+      outside_temp
+      hour_avg_temp {
+        heat
+        cond
+        cool
+      }
+      hold_end_time
+      hold_countdown
+      mot_indication_enabled
+      schedule {
+        scene_name
+        day
+        index
+        zone_index
+        scene_name
+        start_time
+        htsp
+        clsp
+      }
+      comfort_profile {
+        wake {
+          htsp
+          clsp
+        }
+        home {
+          htsp
+          clsp
+        }
+        away {
+          htsp
+          clsp
+        }
+        sleep {
+          htsp
+          clsp
+        }
+      }
+    }
+    intelisense {
+      mode
+      mute
+    }
+  }
+}
