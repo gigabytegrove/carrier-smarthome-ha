@@ -14,6 +14,18 @@ Unofficial, experimental research project for **Carrier Smart Thermostat TSTATCC
 
 See [full GraphQL inventory](research/GRAPHQL_CATALOG.md), [native DEX findings](research/native-dex-findings.json), [auth findings](research/AUTHENTICATION_FINDINGS.md), [APK report](research/ANALYSIS_REPORT.md), and [evidence ledger](research/STATUS.md).
 
+## One-command first pass (Windows, no technical values needed)
+
+From a checked-out copy of the repository, run **one PowerShell command**:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Run-Discovery.ps1
+```
+
+This orchestrates LAN neighbor/TCP discovery, displays native APK cloud candidates and, when Python is installed, inspects the publicly accessible SmartHome web assets for active API settings. It saves private reports under your local app-data folder and changes **nothing** on the thermostat. It does not require a URL, IP, username, or bearer token. A candidate IP remains unconfirmed until correlated with thermostat identity; a public API config remains unauthenticated.
+
+`tools/analyze_har.py` also supports **offline sanitized analysis** of an owner-exported web-browser network HAR *if* static/public assets do not expose the live config. HAR files can contain tokens and must remain local; only share the redacted analysis, never the raw HAR.
+
 ## Zero-knowledge discovery: you do NOT supply a thermostat IP or API host
 
 ### A. Windows: discover local network devices automatically
@@ -65,7 +77,12 @@ Existing `tools/probe_cloud.py` is an explicit authorized **read-only GraphQL** 
 - `research/graphql-catalog.json`, `research/GRAPHQL_CATALOG.md` — stable catalog and input types
 - `research/analyze_xapk.py`, `research/analyze_native_apk.py`, `research/build_graphql_catalog.py` — offline reproducible APK evidence processing
 - `research/native-dex-findings.json` — native URL candidates and classified feature evidence
+- `tools/Run-Discovery.ps1` — single-command Windows orchestration (no IP or URLs)
 - `tools/discover_cloud.py` — public website configuration discovery without authentication
+- `tools/auto_discover.py` — zero-input Linux/Windows bounded subnet and mDNS discovery
+- `tools/analyze_har.py` — sanitize owner-exported browser HAR without exposing tokens or response bodies
+- `tools/cloud_protocol.py` — strict read-only GraphQL transport for future authorized sessions
+- `research/map_transport_evidence.py` — reproduce Carrier native/Hermes transport symbol inventory
 - `tools/Probe-CarrierSmartHome.ps1` — automatic zero-input Windows LAN neighbor and TCP discovery
 - `tools/probe_local.py` — separate, low-impact mDNS and neighbor utility
 - `tools/probe_cloud.py` — opt-in read-only GraphQL query driver after endpoint/auth confirmation
