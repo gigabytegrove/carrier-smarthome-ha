@@ -51,17 +51,28 @@ Alternative manual installation: copy `custom_components/carrier_smarthome/` int
 
 ## Cloud-control performance
 
-**v0.5.3** checks Carrier's detailed native GraphQL view at the **first** post-command readback instead of waiting for a later attempt. When Carrier confirms the changed mode, fan setting, or target, the integration pushes that **verified response** into Home Assistant immediately. Confirmation remains bounded to roughly 64 seconds for unusually slow cloud propagation; it **never** sends the command again automatically. Routine polling is 30 seconds to reduce unnecessary requests.
+**v0.5.4** retains rapid confirmation from v0.5.3 and checks Carrier's detailed native GraphQL view at the **first** post-command readback instead of waiting for a later attempt. When Carrier confirms the changed mode, fan setting, or target, the integration pushes that **verified response** into Home Assistant immediately. Confirmation remains bounded to roughly 64 seconds for unusually slow cloud propagation; it **never** sends the command again automatically. Routine polling is 30 seconds to reduce unnecessary requests.
 
 Because this is a cloud service, the physical thermostat and the cloud can still take time to reconcile. Faster readbacks improve *Home Assistant display latency*, not the thermostat's physical actuation speed. Readback behavior on real hardware should continue to be validated after updates.
 
-## Proprietary local control: ongoing investigation
+## Proprietary local control: targeted device investigation
+
+**v0.5.4 lets the owner investigate the already identified thermostat IP directly—no repeated Omada ZIP export.** Run the source-provided PowerShell probe with `-DirectIP` and `-AcknowledgeIpRisk`, starting in `-PlanOnly` mode. Only a single explicitly selected host is contacted. The address was previously verified but might have been reassigned by DHCP; owner authorization does **not** establish current device identity. The recommended full-mode scan is bounded to 12 concurrent connections for this embedded device.
+
+```powershell
+.\tools\Probe-CarrierLocalDeep.ps1 -DirectIP '<thermostat-ip>' -AcknowledgeIpRisk -PlanOnly
+.\tools\Probe-CarrierLocalDeep.ps1 -DirectIP '<thermostat-ip>' -AcknowledgeIpRisk -FullTCP -Concurrency 12
+```
+
+For completeness, the older export-based and live-Omada selection methods remain supported, but are no longer mandatory. An all-closed port scan is **not evidence** that Carrier has no local protocol: the thermostat may connect outbound to its cloud service, use an untested UDP protocol, or be blocked across VLANs. See [LAN probe guide](docs/LOCAL_PROBE_GUIDE.md).
+
+
 
 **Local HVAC commands are not implemented or advertised as working.** The Android application contains hints of local command and MQTT code, but we haven't proved an authenticated, non-Matter LAN control protocol is active on the `TSTATCCEWF-01` firmware.
 
-The repository includes an owner-side, **single verified thermostat** reconnaissance tool for TCP/UDP discovery. It refuses stale Omada exports, does not scan unrelated devices, and never issues an HVAC write. A closed TCP port scan alone cannot rule out local control using UDP, BLE, or outbound connections.
+The repository includes an owner-side, **single verified thermostat** reconnaissance tool for TCP/UDP discovery. It can target an owner-authorized **known thermostat IP directly** without an Omada export, or independently verify a fresh Omada MAC/IP association. Known-IP mode explicitly warns that DHCP ownership has not been reverified. It scans only the selected host and never issues an HVAC write. A closed TCP port scan alone cannot rule out local control using UDP, BLE, or outbound connections.
 
-See the [local discovery guide](docs/LOCAL_PROBE_GUIDE.md) and [protocol research](research/LOCAL_PROTOCOL_050.md). The next evidence needed is a fresh connected-client export and/or a sanitized passive traffic capture from the IoT gateway while operating the official Carrier SmartHome app. No Matter pairing, DNS hijacking, or firmware changes are required.
+See the [local discovery guide](docs/LOCAL_PROBE_GUIDE.md) and [protocol research](research/LOCAL_PROTOCOL_050.md). For the known device, start with the [direct-IP LAN probe](docs/LOCAL_PROBE_GUIDE.md), then inspect its sanitized results. If no inbound ports respond, the next evidence is a passive traffic capture at the IoT gateway during official-app control. Do not claim local control until a real command is verified. No Matter pairing, DNS hijacking, or firmware changes are required.
 
 ## Support this integration
 
@@ -76,7 +87,3 @@ You can also [report an issue](https://github.com/gigabytegrove/carrier-smarthom
 Your account credentials are stored by Home Assistant for Carrier authentication; this project does not require Matter pairing or a separate cloud account. **Never post** credentials, raw diagnostics, MACs, IP addresses, serials, unredacted packet captures, or authentication tokens in public GitHub issues.
 
 Carrier SmartHome is an **independent community integration**, not affiliated with, endorsed by, or supported by Carrier. Carrier names, logos, and product marks belong to their respective owners. The project icon identifies the supported Carrier equipment; its inclusion does not imply an official relationship.
-
-## Local-control research — current state
-
-Local proprietary control is **not yet demonstrated** on TSTATCCEWF-01. The Wi-Fi/cloud integration works; the APK contains local-command names but no verified LAN HVAC protocol has been identified. For live single-device discovery **without an Omada ZIP**, see [Live Connected Clients procedure](docs/LOCAL_PROBE_GUIDE.md). It requires the actual current IP and full MAC from the Omada Connected Clients screen and never reuses the historical lease. Manual selection is owner-attested, not independently authenticated. No Matter implementation is included.
