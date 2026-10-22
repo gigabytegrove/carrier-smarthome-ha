@@ -56,6 +56,9 @@ class DummyCoordinator:
         self.callbacks = []
         self.client = None
         self.write_lock = asyncio.Lock()
+        self.previous = {}
+    def last_non_off_mode(self, serial, index):
+        return self.previous.get((serial, index))
     def async_add_listener(self, callback):
         self.callbacks.append(callback)
         return lambda: self.callbacks.remove(callback)
@@ -78,7 +81,6 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         stubs = {}
         for name in ['homeassistant', 'homeassistant.components', 'homeassistant.components.climate',
                      'homeassistant.components.sensor', 'homeassistant.components.binary_sensor',
-                     'homeassistant.components.switch',
                      'homeassistant.const', 'homeassistant.exceptions', 'homeassistant.helpers',
                      'homeassistant.helpers.update_coordinator', 'homeassistant.helpers.entity', PKG]:
             stubs[name] = module(name)
@@ -87,7 +89,6 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         climate.ClimateEntity = type('ClimateEntity', (), {})
         climate.ClimateEntityFeature = ClimateEntityFeature
         climate.HVACMode = HVACMode
-        stubs['homeassistant.components.switch'].SwitchEntity = type('SwitchEntity', (), {})
         sensor = stubs['homeassistant.components.sensor']
         sensor.SensorEntity = type('SensorEntity', (), {})
         sensor.SensorStateClass = types.SimpleNamespace(MEASUREMENT='measurement')
@@ -109,11 +110,11 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self):
         self.patch.stop()
-        for suffix in ('const', 'models', 'api', 'entity', 'climate', 'sensor', 'binary_sensor', 'switch', 'control'):
+        for suffix in ('const', 'models', 'api', 'entity', 'climate', 'sensor', 'binary_sensor', 'control'):
             sys.modules.pop(f'{PKG}.{suffix}', None)
 
     async def test_entities_added_for_new_device_only_once(self):
-        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 2), ('switch', 1)]:
+        for name, count_per_zone in [('climate', 1), ('sensor', 14), ('binary_sensor', 2)]:
             with self.subTest(platform=name):
                 platform = load(name)
                 self.coordinator = DummyCoordinator()
@@ -168,132 +169,113 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
         self.coordinator.last_update_success = False
         self.assertFalse(entities[0].available)
 
-    async def test_mode_control_off_on_and_feedback(self):
+    async def test_all_modes_visible_even_when_legacy_options_disabled(self):
         climate = load('climate')
-        switch = load('switch')
-        entities = []
-        power = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
-        await switch.async_setup_entry(self.hass, self.entry, lambda es: power.extend(es))
-        self.entry.options = {'enable_control': True, 'power_on_mode': 'cool'}
-        state = self.coordinator.data['serial-test']['zones'][0]
-        state.update({'mode':'off', 'htsp':{'current':70}, 'clsp':{'current':76}})
-        self.coordinator.last_update_success = True
-        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
-        async def refresh():
-            if self.coordinator.client.async_update_zone.await_count:
-                new_mode = self.coordinator.client.async_update_zone.await_args.kwargs['mode']
-                state['mode'] = new_mode
-        self.coordinator.async_request_refresh = refresh
-        self.assertFalse(power[0].is_on)
-        self.assertEqual(power[0].extra_state_attributes['power_on_mode'], 'cool')
-        self.assertTrue(entities[0].supported_features & ClimateEntityFeature.TURN_OFF)
-        self.assertTrue(entities[0].supported_features & ClimateEntityFeature.TURN_ON)
-        self.assertFalse(entities[0].supported_features & ClimateEntityFeature.TARGET_TEMPERATURE)
-        await power[0].async_turn_on()
-        self.assertEqual(state['mode'],'cool')
-        self.assertTrue(power[0].is_on)
-        self.assertEqual(self.coordinator.client.async_update_zone.await_count,1)
-        await entities[0].async_turn_off()
-        self.assertEqual(state['mode'],'off')
-        self.assertFalse(power[0].is_on)
-        self.assertEqual(self.coordinator.client.async_update_zone.await_count,2)
-        await entities[0].async_turn_off()
-        self.assertEqual(self.coordinator.client.async_update_zone.await_count,2) # idempotent
-
-    async def test_power_on_requires_explicit_mode_and_online(self):
-        switch = load('switch')
-        power=[]
-        await switch.async_setup_entry(self.hass,self.entry,lambda es: power.extend(es))
-        self.entry.options={'enable_control':True, 'power_on_mode':'unset'}
-        with self.assertRaisesRegex(Exception, 'Choose Heat'):
-            await power[0].async_turn_on()
-        self.entry.options={'enable_control':True, 'power_on_mode':'cool'}
-        self.coordinator.data['serial-test']['connection']['isConnected']=False
-        self.assertFalse(power[0].available)
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        with self.assertRaisesRegex(Exception, 'disconnected'):
-            await power[0].async_turn_on()
-        self.coordinator.client.async_update_zone.assert_not_awaited()
-
-    async def test_preflight_fails_closed_and_never_writes(self):
-        switch = load('switch')
-        power=[]
-        await switch.async_setup_entry(self.hass,self.entry,lambda es: power.extend(es))
-        self.entry.options={'enable_control':True,'power_on_mode':'heat'}
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        async def refresh():
-            self.coordinator.data['serial-test']['connection']['isConnected']=False
-        self.coordinator.async_request_refresh=refresh
-        with self.assertRaisesRegex(Exception, 'disconnected'):
-            await power[0].async_turn_on()
-        self.coordinator.client.async_update_zone.assert_not_awaited()
-
-    async def test_mutation_ack_without_readback_reports_uncertain_and_never_resends(self):
-        switch = load('switch')
-        control = load('control')
-        power=[]
-        await switch.async_setup_entry(self.hass,self.entry,lambda es: power.extend(es))
-        self.entry.options={'enable_control':True,'power_on_mode':'cool'}
-        self.coordinator.data['serial-test']['zones'][0]['mode']='off'
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        self.coordinator.async_request_refresh=AsyncMock()  # Carrier keeps reporting Off.
-        with patch.object(control.asyncio,'sleep',new_callable=AsyncMock):
-            with self.assertRaisesRegex(Exception,'not confirmed'):
-                await power[0].async_turn_on()
-        self.coordinator.client.async_update_zone.assert_awaited_once()
-        self.assertEqual(self.coordinator.async_request_refresh.await_count,4)
-
-    async def test_mode_optin_does_not_automatically_enable_setpoints(self):
-        climate=load('climate')
-        all_entities=[]
-        await climate.async_setup_entry(self.hass,self.entry,lambda es: all_entities.extend(es))
-        self.entry.options={'enable_control':True,'enable_setpoint_control':False,
-                            'power_on_mode':'cool'}
-        self.coordinator.data['serial-test']['zones'][0].update({
-            'mode':'cool','htsp':{'current':70},'clsp':{'current':76}})
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        self.assertFalse(all_entities[0].supported_features & ClimateEntityFeature.TARGET_TEMPERATURE)
-        with self.assertRaisesRegex(Exception,'setpoint writes'):
-            await all_entities[0].async_set_temperature(temperature=75)
-        self.coordinator.client.async_update_zone.assert_not_awaited()
-
-    async def test_one_climate_entity_exposes_mode_and_fan_without_duplicate_select(self):
-        climate = load('climate')
-        entities = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
-        self.assertEqual(len(entities), 1)
-        unit = entities[0]
-        self.assertFalse(unit.supported_features & ClimateEntityFeature.FAN_MODE)
-        self.entry.options = {'enable_control': True, 'enable_fan_control': True, 'power_on_mode': 'cool'}
-        self.coordinator.data['serial-test']['zones'][0].update({'mode': 'off', 'fan_mode': 'auto'})
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        self.assertEqual(len(units), 1)
+        self.entry.options = {'enable_control': False, 'enable_fan_control': False,
+                              'enable_setpoint_control': False, 'power_on_mode': 'unset'}
+        unit = units[0]
         self.assertEqual(unit.hvac_modes, [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL,
                                           HVACMode.HEAT_COOL, HVACMode.FAN_ONLY])
         self.assertEqual(unit.fan_modes, ['auto', 'on'])
         self.assertTrue(unit.supported_features & ClimateEntityFeature.FAN_MODE)
+        self.assertTrue(unit.supported_features & ClimateEntityFeature.TURN_OFF)
+        self.assertFalse(unit.supported_features & ClimateEntityFeature.TURN_ON)
+        self.assertEqual(unit._attr_unique_id, 'serial-test_zone_0_climate')
 
-    async def test_mode_via_climate_mutates_once(self):
+    async def test_select_cool_off_without_options_one_mutation_each(self):
         climate = load('climate')
-        entities = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
-        self.entry.options = {'enable_control': True}
+        controls = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: controls.extend(es))
+        unit = controls[0]
         state = self.coordinator.data['serial-test']['zones'][0]
-        state['mode'] = 'off'
+        state.update({'mode': 'off', 'htsp': {'current': 70}, 'clsp': {'current': 76}})
         self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
         async def refresh():
             if self.coordinator.client.async_update_zone.await_count:
                 state['mode'] = self.coordinator.client.async_update_zone.await_args.kwargs['mode']
         self.coordinator.async_request_refresh = refresh
-        await entities[0].async_set_hvac_mode(HVACMode.COOL)
-        self.assertEqual(state['mode'], 'cool')
+        await unit.async_set_hvac_mode(HVACMode.COOL)
+        self.assertEqual(unit.hvac_mode, HVACMode.COOL)
         self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, mode='cool')
-        await entities[0].async_set_hvac_mode(HVACMode.COOL)
+        await unit.async_set_hvac_mode(HVACMode.COOL)
         self.assertEqual(self.coordinator.client.async_update_zone.await_count, 1)
+        await unit.async_turn_off()
+        self.assertEqual(unit.hvac_mode, HVACMode.OFF)
+        self.assertEqual(self.coordinator.client.async_update_zone.await_count, 2)
 
-    async def test_fan_via_climate_separate_optin_and_confirmation(self):
+    async def test_on_restores_only_observed_mode_not_guessed(self):
         climate = load('climate')
-        entities = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
+        controls = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: controls.extend(es))
+        unit = controls[0]
+        state = self.coordinator.data['serial-test']['zones'][0]
+        state['mode'] = 'off'
+        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
+        with self.assertRaisesRegex(Exception, 'Choose Heat'):
+            await unit.async_turn_on()
+        self.coordinator.client.async_update_zone.assert_not_awaited()
+        self.coordinator.previous[('serial-test', 0)] = 'heat'
+        self.assertTrue(unit.supported_features & ClimateEntityFeature.TURN_ON)
+        async def refresh():
+            if self.coordinator.client.async_update_zone.await_count:
+                state['mode'] = 'heat'
+        self.coordinator.async_request_refresh = refresh
+        await unit.async_turn_on()
+        self.assertEqual(unit.hvac_mode, HVACMode.HEAT)
+        self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, mode='heat')
+
+    async def test_offline_and_failed_poll_block_all_commands(self):
+        climate = load('climate')
+        controls = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: controls.extend(es))
+        unit = controls[0]
+        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
+        self.coordinator.data['serial-test']['connection']['isConnected'] = False
+        self.assertFalse(unit.available)
+        with self.assertRaisesRegex(Exception, 'disconnected'):
+            await unit.async_set_hvac_mode(HVACMode.COOL)
+        with self.assertRaisesRegex(Exception, 'disconnected'):
+            await unit.async_set_fan_mode('on')
+        self.coordinator.data['serial-test']['connection']['isConnected'] = True
+        self.coordinator.last_update_success = False
+        self.assertFalse(unit.available)
+        with self.assertRaisesRegex(Exception, 'unavailable'):
+            await unit.async_set_hvac_mode(HVACMode.HEAT)
+        self.coordinator.client.async_update_zone.assert_not_awaited()
+
+    async def test_fresh_poll_offline_preflight_fails_closed(self):
+        climate = load('climate')
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
+        async def refresh():
+            self.coordinator.data['serial-test']['connection']['isConnected'] = False
+        self.coordinator.async_request_refresh = refresh
+        with self.assertRaisesRegex(Exception, 'disconnected'):
+            await units[0].async_set_hvac_mode(HVACMode.COOL)
+        self.coordinator.client.async_update_zone.assert_not_awaited()
+
+    async def test_mutation_not_repeated_when_cloud_does_not_confirm(self):
+        climate = load('climate')
+        control = load('control')
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        self.coordinator.data['serial-test']['zones'][0]['mode'] = 'off'
+        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
+        self.coordinator.async_request_refresh = AsyncMock()
+        with patch.object(control.asyncio, 'sleep', new_callable=AsyncMock):
+            with self.assertRaisesRegex(Exception, 'not confirmed'):
+                await units[0].async_set_hvac_mode(HVACMode.COOL)
+        self.coordinator.client.async_update_zone.assert_awaited_once()
+        self.assertEqual(self.coordinator.async_request_refresh.await_count, 4)
+
+    async def test_fan_auto_on_in_climate_no_extra_select(self):
+        climate = load('climate')
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
         state = self.coordinator.data['serial-test']['zones'][0]
         state.update({'mode': 'cool', 'fan_mode': 'auto'})
         self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
@@ -301,102 +283,70 @@ class EntityDiscoveryTest(unittest.IsolatedAsyncioTestCase):
             if self.coordinator.client.async_update_zone.await_count:
                 state['fan_mode'] = self.coordinator.client.async_update_zone.await_args.kwargs['fan']
         self.coordinator.async_request_refresh = refresh
-        self.entry.options = {'enable_control': False, 'enable_fan_control': True}
-        self.assertTrue(entities[0].supported_features & ClimateEntityFeature.FAN_MODE)
-        await entities[0].async_set_fan_mode('on')
+        await units[0].async_set_fan_mode('on')
+        self.assertEqual(units[0].fan_mode, 'on')
         self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test', 0, fan='on')
-        self.assertEqual(entities[0].fan_mode, 'on')
-        with self.assertRaisesRegex(Exception, 'Unverified'):
-            await entities[0].async_set_fan_mode('circulate')
+        with self.assertRaisesRegex(Exception, 'Circulate'):
+            await units[0].async_set_fan_mode('circulate')
 
-    async def test_fan_offline_blocks_and_no_mutation(self):
+    async def test_cool_target_without_options_and_fresh_limit(self):
         climate = load('climate')
-        entities = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: entities.extend(es))
-        self.entry.options = {'enable_fan_control': True}
-        self.coordinator.data['serial-test']['connection']['isConnected'] = False
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        state = self.coordinator.data['serial-test']['zones'][0]
+        state.update({'mode': 'cool', 'htsp': {'current': 70, 'max': 85},
+                      'clsp': {'current': 76, 'min': 60}})
+        self.assertTrue(units[0].supported_features & ClimateEntityFeature.TARGET_TEMPERATURE)
         self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
-        with self.assertRaisesRegex(Exception, 'disconnected'):
-            await entities[0].async_set_fan_mode('on')
+        async def refresh():
+            if self.coordinator.client.async_update_zone.await_count:
+                state['clsp']['current'] = self.coordinator.client.async_update_zone.await_args.kwargs['cool']
+        self.coordinator.async_request_refresh = refresh
+        await units[0].async_set_temperature(temperature=75)
+        self.coordinator.client.async_update_zone.assert_awaited_once_with(
+            'serial-test', 0, heat=70, cool=75)
+        state['clsp']['min'] = 74
+        with self.assertRaisesRegex(Exception, 'current Carrier limit'):
+            await units[0].async_set_temperature(temperature=73)
+        self.assertEqual(self.coordinator.client.async_update_zone.await_count, 1)
+
+    async def test_nan_setpoint_blocked_at_preflight(self):
+        climate = load('climate')
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
+        self.coordinator.data['serial-test']['zones'][0].update({
+            'mode': 'heat', 'htsp': {'current': 70}, 'clsp': {'current': 76}})
+        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
+        self.coordinator.async_request_refresh = AsyncMock()
+        with self.assertRaisesRegex(Exception, 'Invalid'):
+            await units[0].async_set_temperature(temperature=float('nan'))
         self.coordinator.client.async_update_zone.assert_not_awaited()
 
-    async def test_simultaneous_mode_commands_are_serialized(self):
+    async def test_parallel_mode_writes_serialized(self):
         climate = load('climate')
-        controls = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: controls.extend(es))
-        self.entry.options = {'enable_control': True}
+        units = []
+        await climate.async_setup_entry(self.hass, self.entry, lambda es: units.extend(es))
         state = self.coordinator.data['serial-test']['zones'][0]
         state['mode'] = 'off'
         first_started = asyncio.Event()
         release_first = asyncio.Event()
-        modes_written = []
-
+        writes = []
         async def mutate(serial, index, *, mode):
-            modes_written.append(mode)
-            if len(modes_written) == 1:
+            writes.append(mode)
+            if len(writes) == 1:
                 first_started.set()
                 await release_first.wait()
             state['mode'] = mode
-
         self.coordinator.client = types.SimpleNamespace(async_update_zone=mutate)
         self.coordinator.async_request_refresh = AsyncMock()
-        one = asyncio.create_task(controls[0].async_set_hvac_mode(HVACMode.COOL))
+        one = asyncio.create_task(units[0].async_set_hvac_mode(HVACMode.COOL))
         await asyncio.wait_for(first_started.wait(), timeout=2)
-        two = asyncio.create_task(controls[0].async_set_hvac_mode(HVACMode.HEAT))
+        two = asyncio.create_task(units[0].async_set_hvac_mode(HVACMode.HEAT))
         await asyncio.sleep(0)
-        self.assertEqual(modes_written, ['cool'])
+        self.assertEqual(writes, ['cool'])
         release_first.set()
         await asyncio.gather(one, two)
-        self.assertEqual(modes_written, ['cool', 'heat'])
-        self.assertEqual(state['mode'], 'heat')
-
-    async def test_live_setpoint_limit_rechecked_after_preflight(self):
-        climate = load('climate')
-        controls = []
-        await climate.async_setup_entry(self.hass, self.entry, lambda es: controls.extend(es))
-        self.entry.options = {'enable_control': True, 'enable_setpoint_control': True}
-        zone = self.coordinator.data['serial-test']['zones'][0]
-        zone.update({'mode': 'cool', 'htsp': {'current': 70, 'max': 90},
-                     'clsp': {'current': 76, 'min': 60}})
-        self.coordinator.client = types.SimpleNamespace(async_update_zone=AsyncMock())
-        async def refreshed():
-            zone['clsp']['min'] = 75.5  # Carrier limit changed after initial HA view.
-        self.coordinator.async_request_refresh = refreshed
-        with self.assertRaisesRegex(Exception, 'below current Carrier limit'):
-            await controls[0].async_set_temperature(temperature=75)
-        self.coordinator.client.async_update_zone.assert_not_awaited()
-
-    async def test_target_change_requires_separate_optin_and_confirms_both(self):
-        climate = load('climate')
-        c=[]
-        await climate.async_setup_entry(self.hass,self.entry,lambda es: c.extend(es))
-        self.entry.options={'enable_control':True,'enable_setpoint_control':True}
-        state=self.coordinator.data['serial-test']['zones'][0]
-        state.update({'mode':'cool','htsp':{'current':70,'max':85},'clsp':{'current':76,'min':60}})
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        async def refresh():
-            if self.coordinator.client.async_update_zone.await_count:
-                args=self.coordinator.client.async_update_zone.await_args.kwargs
-                state['htsp']['current']=args['heat']
-                state['clsp']['current']=args['cool']
-        self.coordinator.async_request_refresh=refresh
-        self.assertTrue(c[0].supported_features & ClimateEntityFeature.TARGET_TEMPERATURE)
-        await c[0].async_set_temperature(temperature=75)
-        self.coordinator.client.async_update_zone.assert_awaited_once_with('serial-test',0,heat=70,cool=75)
-        self.assertEqual(state['clsp']['current'],75)
-
-    async def test_target_mutation_not_repeated_if_readback_stale(self):
-        cl=load('climate');control=load('control')
-        c=[];await cl.async_setup_entry(self.hass,self.entry,lambda es:c.extend(es))
-        self.entry.options={'enable_control':True,'enable_setpoint_control':True}
-        self.coordinator.data['serial-test']['zones'][0].update({
-            'mode':'cool','htsp':{'current':70,'max':85},'clsp':{'current':76,'min':60}})
-        self.coordinator.client=types.SimpleNamespace(async_update_zone=AsyncMock())
-        self.coordinator.async_request_refresh=AsyncMock()
-        with patch.object(control.asyncio,'sleep',new_callable=AsyncMock):
-            with self.assertRaisesRegex(Exception,'not confirmed'):
-                await c[0].async_set_temperature(temperature=75)
-        self.coordinator.client.async_update_zone.assert_awaited_once()
+        self.assertEqual(writes, ['cool', 'heat'])
 
 
 if __name__ == '__main__':

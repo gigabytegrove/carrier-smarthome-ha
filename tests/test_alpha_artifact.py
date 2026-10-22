@@ -31,8 +31,9 @@ class ArtifactTests(unittest.TestCase):
 
     def test_operation_source_has_guarded_write(self):
         body = (PACKAGE/'climate.py').read_text()
-        self.assertIn('self._require_control()', body)
-        self.assertIn('CONF_ENABLE_CONTROL', body)
+        self.assertIn('self._require_online()', body)
+        self.assertIn('async_set_mode_verified', body)
+        self.assertNotIn('CONF_ENABLE_CONTROL', body)
 
     def test_research_covers_setup(self):
         self.assertIn('Carrier SmartHome', (ROOT/'research/TEST_TODAY.md').read_text())

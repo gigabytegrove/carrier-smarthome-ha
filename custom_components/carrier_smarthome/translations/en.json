@@ -27,22 +27,5 @@
       "already_configured": "This Carrier account is already configured.",
       "reauth_successful": "Carrier account reconnected."
     }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Carrier SmartHome options",
-        "description": "Carrier native cloud controls: choose mode/power, fan Auto/On, and temperature target capabilities independently. Commands require Carrier online status, send one mutation, and verify readback. No duplicate mode/fan entities. Fan Circulation and other unverified values are not exposed. No Matter.",
-        "data": {
-          "enable_control": "Enable experimental HVAC mode and power control",
-          "power_on_mode": "HVAC Power ON mode (Heat / Cool / Auto / Fan Only; Unset blocks turn-on)",
-          "enable_setpoint_control": "Separately enable experimental temperature setpoint changes",
-          "enable_fan_control": "Enable experimental fan Auto / On control (real equipment command)"
-        }
-      }
-    },
-    "error": {
-      "setpoints_require_mode_control": "Enable HVAC mode/power control before enabling temperature setpoint changes."
-    }
   }
 }
