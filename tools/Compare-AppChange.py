@@ -35,6 +35,15 @@ from models import connectivity_state, get_zone, zone_indices, zone_values  # no
 TARGET_FIELDS = ("heat_setpoint", "cool_setpoint")
 DISPLAY_FIELDS = TARGET_FIELDS + ("mode", "fan_mode", "schedule_enabled")
 
+def deviations_from_baseline(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+    """Return every known thermostat field that has not been restored."""
+    return [field for field in DISPLAY_FIELDS
+            if before.get(field) is not None and after.get(field) != before[field]]
+
+def fully_restored(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    """Check the whole observed state, not only a changed setpoint."""
+    return bool(before) and bool(after) and not deviations_from_baseline(before, after)
+
 
 def clean_values(raw_zone: dict[str, Any]) -> dict[str, Any]:
     """Whitelist normalized fields: do not emit upstream GraphQL dictionaries."""
@@ -62,7 +71,7 @@ def interpretation(before: dict[str, Any], middle: dict[str, Any] | None,
     changes = changed_targets(before, middle)
     if not changes:
         return "NO_SETPOINT_CHANGE_OBSERVED"
-    if restored is None or not matches_baseline(before, restored, changes):
+    if restored is None or not fully_restored(before, restored):
         return "SETPOINT_CHANGE_OBSERVED_RESTORE_NOT_CONFIRMED"
     return "APP_TO_GRAPHQL_CHANGE_AND_RESTORE_CONFIRMED"
 
@@ -130,9 +139,9 @@ async def read_sequence(client: CarrierSmartHomeClient, serial: str, index: int,
                 observed = last
                 break
         else:
-            if all(matches_baseline(baseline[source], last[source], fields)
-                   for source, fields in changed.items() if fields):
-                print("  Original setpoint restored in every changed GraphQL source.")
+            if all(fully_restored(baseline[source], last[source])
+                   for source in ("list", "detail") if baseline[source]):
+                print("  All observed baseline settings restored in both GraphQL sources.")
                 observed = last
                 break
     return observed, last
@@ -196,7 +205,7 @@ async def exercise(args: argparse.Namespace) -> int:
         # Do not claim restoration when there is no observed intermediate change.
         restored_read: dict[str, Any] | None = None
         if changed:
-            restored_read, _ = await read_sequence(
+            restored_read, last_restore = await read_sequence(
                 client, serial, index, baseline, attempts=args.samples, interval=args.interval,
                 label="AFTER APP RESTORE", changed=found,
             )
@@ -217,13 +226,27 @@ async def exercise(args: argparse.Namespace) -> int:
         for source, result in classifications.items():
             print(f"  {source}: {result}")
         print("  GraphQL status flag (not physical connectivity):", last_changed["connection"])
+        final_snapshot = restored_read or last_restore
+        remaining = {}
+        for source in ("list", "detail"):
+            if baseline[source] and final_snapshot[source]:
+                remaining[source] = deviations_from_baseline(baseline[source], final_snapshot[source])
+        for source, fields in remaining.items():
+            if fields:
+                print(f"  WARNING {source}: baseline mismatch in {', '.join(fields)}")
+        complete = bool(changed) and all(
+            fully_restored(baseline[source], final_snapshot[source])
+            for source in ("list", "detail") if baseline[source]
+        )
+        if changed and not complete:
+            print("FULL RESTORE NOT CONFIRMED: check heat, cool, mode, fan and schedule in Carrier's app.")
         print("  No mutation or Matter request was sent; credentials and serial were sent only to Carrier for login/reads.")
         print("  No account identifiers, passwords, tokens, hardware IDs or device names were printed or saved.")
         if changed and not restored_read:
             print("WARNING: Cloud restoration was NOT confirmed. Check the original targets in the app.")
         if not changed:
             print("The phone app may use a different backend, or these GraphQL views may cache the values.")
-        return 0
+        return 0 if not changed or complete else 7
 
 
 def main() -> int:
