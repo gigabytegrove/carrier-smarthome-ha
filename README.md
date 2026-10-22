@@ -26,6 +26,14 @@ The app includes `getUserWithDevices`, `getEntryLevelSystemData`, `getEntryLevel
 
 **Confirmed network:** the owner's Carrier thermostat is associated with **`172.20.0.0/16`**, *not* the computer's `192.168.0.x` LAN. No thermostat IP address has yet been identified. The scanner now targets **only** `172.20.0.0/16` by default, without requiring a thermostat IP, router login, or cloud URL.
 
+**Already ran the full sweep?** Use the saved results; **do not scan the `/16` again** just to obtain a device list:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Run-Discovery.ps1 -ReviewOnly
+```
+
+The review-only mode locates the newest `iot-private.json` automatically and prints all candidate IPs, the separate ICMP/neighbor evidence, and the exact open ports per host. It does not perform any network traffic or cloud requests. The first owner-side scan on 2026-10-22 found 63 candidates (all in `172.20.0.0/24`) and 10 **port results** (not necessarily 10 hosts). Thermostat identity remains unconfirmed. See `research/IOT_VLAN_172_20.md`.
+
 Run the **existing** entry point in Windows PowerShell:
 
 ```powershell

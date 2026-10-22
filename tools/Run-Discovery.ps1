@@ -11,9 +11,15 @@ param(
     [string]$IoTSubnet = '172.20.0.0/16',
     [switch]$IncludeOtherNetworks,
     [switch]$DeepIoT,
-    [switch]$PlanOnly
+    [switch]$PlanOnly,
+    [switch]$ReviewOnly
 )
 $ErrorActionPreference = 'Stop'
+if ($ReviewOnly) {
+    # Reuse existing scan; do not repeat cloud discovery or the 65,534-host sweep.
+    & (Join-Path $PSScriptRoot 'Review-IoTScan.ps1')
+    return
+}
 $repo = Split-Path -Parent $PSScriptRoot
 $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmmss')
 $destination = Join-Path $env:LOCALAPPDATA ('CarrierSmartHome-Research\' + $stamp)
