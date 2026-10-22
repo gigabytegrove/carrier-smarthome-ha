@@ -17,7 +17,7 @@ No Matter setup, pairing code, Wi-Fi address, MQTT broker, or local IP is needed
 - [ ] HA starts successfully with the custom integration installed.
 - [ ] Carrier account authentication completes in the HA UI.
 - [ ] One Carrier cloud-reported thermostat and associated sensors appear.
-- [ ] If the cloud reports offline, climate/sensor entities are unavailable; the cloud connection binary sensor reports **off**. Do not confuse this with a software failure.
+- [ ] When Carrier reports offline, the climate entity shows *last cloud-reported, unverified* values; live statistical sensors remain unavailable, and the Carrier-reported connectivity binary sensor shows **off**. This is not proof that the physical thermostat is unreachable.
 - [ ] With thermostat online, compare displayed temperature, setpoints, and mode with the Carrier SmartHome mobile app.
 - [ ] Leave experimental writes **off** until online telemetry and identity are verified.
 - [ ] Use **Settings → Devices & services → Carrier SmartHome → ⋮ → Download diagnostics** if you need to share sanitized diagnostic output. Check contents before sharing any diagnostics.
@@ -39,3 +39,11 @@ Native Carrier SmartHome cloud GraphQL first; proprietary LAN control only after
 ## Alpha 5 connection discrepancy
 
 If your Carrier mobile app can control the thermostat but the `Carrier-reported device connection` sensor says `off`, that binary sensor is faithfully displaying Carrier's GraphQL flag; it does **not** prove the physical thermostat is unreachable. The `Native cloud API readable` sensor independently represents successful API polling. The climate entity displays unverified cloud-reported readings, with an explicit freshness warning. Experimental HVAC writes remain blocked whenever the online flag is false. See `research/ALPHA5_CONNECTION_DISCREPANCY.md` and `tools/Verify-CarrierConnectivity.ps1`.
+
+## Alpha 6: official-app to cloud correlation
+
+The owner has verified that the reported cloud record matches the thermostat MAC, yet **all three native GraphQL queries still report offline** while the phone app controls the unit. Do not treat this flag as authoritative reachability.
+
+On Windows, run `tools/Compare-AppChange.ps1` from a current clone. The script first reads two cloud sources, pauses while you make a **manual, reversible one-degree change** in the official phone app, reads the cloud again, and asks you to **manually restore** the original setting. It then checks whether both queried sources return to baseline.
+
+Only the owner makes or restores thermostat changes. The script never issues thermostat commands, does not log identifiers, and must not be considered a substitute for live HA control validation. It does send credentials and a private serial to Carrier for authenticated reads, as expected.
