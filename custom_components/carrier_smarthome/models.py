@@ -142,3 +142,33 @@ def sanitize_telemetry(systems: list[dict[str, Any]]) -> list[dict[str, Any]]:
         devices.append({"model": model, "cloud_connection": connectivity_state(system),
                         "temperature_unit": unit, "zones": zones})
     return devices
+
+
+def normalize_hardware_id(value: Any) -> str | None:
+    """Canonical 48-bit Wi-Fi MAC-like value for *local-only* identity testing.
+
+    Reject random serials that aren't 12 hex digits; never log this value.
+    """
+    if not isinstance(value, str):
+        return None
+    digits = re.sub(r"[:-]", "", value).strip().upper()
+    return digits if re.fullmatch(r"[0-9A-F]{12}", digits) else None
+
+
+def hardware_identity_match(expected: Any, *observed: Any) -> str:
+    """Confirm exact match; serial mismatches alone are inconclusive.
+
+    A Carrier serial is not necessarily a WLAN MAC; only MAC evidence can
+    support an explicit mismatch, and a missing value is UNKNOWN.
+    The caller supplies MAC observations, never arbitrary record names.
+    """
+    target = normalize_hardware_id(expected)
+    if target is None:
+        return "not_checked"
+    clean = [normalize_hardware_id(item) for item in observed]
+    clean = [item for item in clean if item is not None]
+    if target in clean:
+        return "matched"
+    if clean:
+        return "different_mac"
+    return "unverified"

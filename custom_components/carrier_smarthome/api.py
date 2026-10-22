@@ -55,6 +55,15 @@ USER_DEVICES_QUERY = """query getUserWithDevices($userName: String!, $appVersion
   }
 }"""
 
+# Independent read-only connection and hardware identity view from Android 1.2.42.
+# Only used by owner-side diagnostics; it never changes the established
+# account listing or controls. No MAC or serial is logged or persisted.
+USER_CONNECTIONS_QUERY = """query getUserWithDevices($userName: String!, $appVersion: String, $brand: String, $os: String, $osVersion: String) {
+  user(userName: $userName, appVersion: $appVersion, brand: $brand, os: $os, osVersion: $osVersion) {
+    locations { entryLevels { serial connection { isConnected macaddress } } }
+  }
+}"""
+
 DETAIL_QUERY = """query getEntryLevelSystemData($serial: String!) {
   entryLevelSystem(serial: $serial) {
     serial name model firmware temp_unit_format
@@ -173,7 +182,7 @@ class CarrierSmartHomeClient:
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a4"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.1.0a5"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}
@@ -334,6 +343,34 @@ class CarrierSmartHomeClient:
             if isinstance(system, dict):
                 systems.append(system)
         return systems
+
+    async def async_get_user_connection_inventory(self) -> list[dict[str, Any]]:
+        """Read app-style connection flags and device hardware identities.
+
+        This is a *separate*, not yet owner-verified GraphQL path; do not use it
+        to declare a thermostat online or to modify device availability.
+        Results MUST be kept locally, never logged, uploaded, or written to disk.
+        """
+        data = await self._graphql("getUserWithDevices", USER_CONNECTIONS_QUERY,
+                                   {"userName": self.username, "appVersion": "1.2.42",
+                                    "brand": "Carrier", "os": "Android"})
+        user = data.get("user")
+        if not isinstance(user, dict) or not isinstance(user.get("locations"), list):
+            raise CarrierQueryError("Carrier did not return app device locations")
+        result: list[dict[str, Any]] = []
+        for location in user["locations"][:40]:
+            if not isinstance(location, dict) or not isinstance(location.get("entryLevels"), list):
+                continue
+            for device in location["entryLevels"][:40]:
+                if not isinstance(device, dict):
+                    continue
+                serial = device.get("serial")
+                if not isinstance(serial, str) or not serial:
+                    continue
+                connection = device.get("connection")
+                result.append({"serial": serial,
+                               "connection": connection if isinstance(connection, dict) else {}})
+        return result
 
     async def async_get_entry_level_feature(self, serial: str, feature: str) -> Any:
         """Optional owner-authorized read-only capability probe from APK documents.

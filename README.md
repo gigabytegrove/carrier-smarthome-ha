@@ -1,6 +1,6 @@
 # Carrier SmartHome for Home Assistant — research foundation
 
-**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a4` available for HACS installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
+**Target thermostat:** Carrier **TSTATCCEWF-01** · **App:** `com.carrier.home` v1.2.42 (Android) · **Status:** native Carrier cloud HA alpha `0.1.0a3` available for manual installation; authenticated device discovery proved against a real SmartHome account on 2026-10-22.
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
@@ -15,7 +15,7 @@ The public repository is ready to add directly to HACS **as a custom Integration
 5. Go to **Settings → Devices & services → Add integration → Carrier SmartHome (Native Cloud Alpha)** and sign in with the Carrier SmartHome account.
 6. Leave **Enable experimental thermostat writes** disabled in integration options. Test entity discovery/readings and diagnostics first.
 
-**What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA may therefore mark its climate entity **unavailable** until Carrier reports it online; this is intentional and avoids presenting cached measurements as live. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
+**What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA shows its last cloud-reported climate values with explicit unverified-freshness attributes. Live statistical sensors remain unavailable while Carrier reports the physical device disconnected, and controls are blocked. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
 
 **Updates:** While the repository has no GitHub Releases, HACS tracks `main` and uses the Git commit as the available version. Download an update in HACS and restart/reload Home Assistant. See [HACS installation and testing](docs/HACS_INSTALLATION.md).
 
@@ -28,6 +28,25 @@ Alpha 4 adds a read-only, privacy-minimized PowerShell field inventory that foll
 ```
 
 It reports baseline values plus the result of an **optional** richer APK-derived detailed query. Carrier may return stale readings while reporting `offline`. Home Assistant now includes additional **last cloud-reported diagnostic** entities for HVAC mode, fan setting, equipment stage, schedule state, and target limits. These do not enable HVAC writes or treat cached temperatures as fresh. See [Alpha 4 field notes](research/ALPHA4_FIELD_INVENTORY.md). This integration does **not** use Matter.
+
+## Alpha 5: Carrier reports offline while the owner phone app works
+
+The 2026-10-22 owner tests authenticated and read a cloud thermostat, but Carrier's
+`connection.isConnected` field remained false. The owner independently reports
+successful control from the Carrier phone app. These are **different observations**;
+we do not claim the thermostat is physically offline. Alpha 5 makes the HA
+climate entity readable on successful GraphQL polling even if the online flag
+is false, with explicit `telemetry_freshness: unverified_may_be_cached` attributes.
+Live statistical sensors remain unavailable unless Carrier reports online, and
+all experimental writes are additionally blocked while connectivity is unverified.
+
+Run the three-source read-only cloud cross-check on Windows:
+
+```powershell
+.\tools\Verify-CarrierConnectivity.ps1 -ExpectedMac '<physical thermostat Wi-Fi MAC>'
+```
+
+No Matter. See [connection discrepancy research](research/ALPHA5_CONNECTION_DISCREPANCY.md).
 
 ## Alpha 3: installation and owner-side verification
 

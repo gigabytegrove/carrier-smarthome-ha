@@ -37,7 +37,9 @@ class CarrierEntity(CoordinatorEntity):
 
     @property
     def available(self) -> bool:
-        connection = self.system.get("connection") or {}
+        # An API-readable cloud record is not the same as a physically connected
+        # thermostat. Carrier has returned a false isConnected flag while the
+        # owner's phone app successfully controls the device. Permit read-only
+        # state display, but never interpret it as proof of fresh telemetry.
         return bool(self.coordinator.last_update_success and
-                    isinstance(connection, dict) and connection.get("isConnected") is True and
-                    self.zone_data)
+                    self.serial in self.coordinator.data and self.zone_data)
