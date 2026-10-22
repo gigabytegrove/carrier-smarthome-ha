@@ -1,6 +1,7 @@
 """Shared data coordinator for Carrier SmartHome entry-tier devices."""
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntryAuthFailed
@@ -15,6 +16,8 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         super().__init__(hass, logger=logging.getLogger(__name__),
                          name=DOMAIN, update_interval=POLL_INTERVAL)
         self.client = client
+        # Serialize explicit HVAC writes so overlapping HA controls cannot race.
+        self.write_lock = asyncio.Lock()
 
     async def _async_update_data(self) -> dict[str, dict]:
         try:

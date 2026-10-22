@@ -79,9 +79,9 @@ class CarrierSensor(CarrierEntity, SensorEntity):
 
     @property
     def available(self):
-        # Unlike the explicitly stale-aware climate display, a sensor named
-        # 'Humidity' or 'Outside temperature' should not publish an unverified
-        # cached value as a live measurement into HA statistics/automations.
+        # Like the live climate entity, humidity and outside temperature stay
+        # unavailable when the physical device is Carrier-reported offline.
+        # Separate diagnostic entities retain optional cached readings.
         return super().available and connectivity_state(self.system) == "online"
 
     @property
@@ -112,6 +112,9 @@ class CarrierLastReportedSensor(CarrierEntity, SensorEntity):
         # Diagnostic entities are opt-in in the HA UI to avoid flooding dashboards.
         from homeassistant.helpers.entity import EntityCategory
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        # Keep the device page uncluttered by default; these are explicitly
+        # potentially stale readings and can be enabled by the owner.
+        self._attr_entity_registry_enabled_default = False
         self._attr_unique_id = f"{serial}_zone_{index}_last_cloud_reported_{key}"
         self._attr_device_class = device_class
         if unit:
