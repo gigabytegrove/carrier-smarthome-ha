@@ -4,19 +4,20 @@
 
 This project is **not** the older Carrier Infinity custom integration. We are building a new native Home Assistant integration around the Carrier SmartHome application, prioritizing **cloud GraphQL control** and researching **LAN/proprietary local control in parallel**. **Matter is explicitly out of scope** for this project.
 
-## Install with HACS (public repository)
+## Install through HACS (custom repository)
 
-This repository is public and includes `hacs.json` and a valid custom integration at `custom_components/carrier_smarthome/`. To install the current **0.1.0a3 experimental build**:
+The public repository is ready to add directly to HACS **as a custom Integration repository**. It is not included in HACS's default catalog, and a GitHub Release is **not** required for installs from the default `main` branch.
 
-1. In Home Assistant, open **HACS → three-dot menu → Custom repositories**.
-2. Paste `https://github.com/gigabytegrove/carrier-smarthome-ha` and select **Integration** as the category.
-3. Add the repository, find **Carrier SmartHome Native** in HACS, and select **Download**. If HACS offers a version selection, choose **main** (this repository may not yet have a tagged GitHub release).
-4. Restart Home Assistant, then open **Settings → Devices & services → Add integration**, search **Carrier SmartHome (Native Cloud Alpha)**, and sign into your own Carrier SmartHome account.
-5. Keep **experimental controls disabled** during the first test. The thermostat last reported *offline* in the Carrier cloud; cached readings are possible.
+1. In Home Assistant open **HACS → ⋮ → Custom repositories**.
+2. Enter **`https://github.com/gigabytegrove/carrier-smarthome-ha`** and select **Integration** as the category. Add the repository.
+3. Find **Carrier SmartHome Native** in HACS and select **Download**. For alpha testing select the default **`main`** branch if HACS asks for a version.
+4. **Restart Home Assistant** after installation.
+5. Go to **Settings → Devices & services → Add integration → Carrier SmartHome (Native Cloud Alpha)** and sign in with the Carrier SmartHome account.
+6. Leave **Enable experimental thermostat writes** disabled in integration options. Test entity discovery/readings and diagnostics first.
 
-This is a **custom repository**, not a listing in the HACS default catalog. Installing it does **not** require Matter. HACS download only installs code; Home Assistant setup is still required.
+**What to expect:** Carrier's cloud has returned one entry-level thermostat and zone for an owner account, but previously reported that thermostat `offline`. HA may therefore mark its climate entity **unavailable** until Carrier reports it online; this is intentional and avoids presenting cached measurements as live. The integration is **native Carrier GraphQL**, never Matter. The first HA installation has not yet been owner-verified.
 
-**Public-repository privacy notice:** Research notes and commit history may contain historical local-network details. Never commit raw Omada client exports, actual device serials, account credentials, authentication captures, or pairing information. Removing a detail from the current README does not remove it from Git history.
+**Updates:** While the repository has no GitHub Releases, HACS tracks `main` and uses the Git commit as the available version. Download an update in HACS and restart/reload Home Assistant. See [HACS installation and testing](docs/HACS_INSTALLATION.md).
 
 ## Alpha 3: installation and owner-side verification
 

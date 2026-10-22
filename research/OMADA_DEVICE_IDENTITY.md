@@ -1,26 +1,9 @@
-# Carrier TSTATCCEWF-01: identification in Omada controller
+# Thermostat identification from Omada export (private evidence summarized)
 
-## Evidence from owner-supplied export (October 22, 2026, 08:14 local time)
+The supplied private Omada archive recorded an offline Carrier-named smart thermostat, with several historical IP assignments. Matching the printed thermostat serial to the client MAC is stronger evidence than a hostname, IP address, or vendor prefix. The export also contained at least one **other** smart thermostat client, so selecting the first record by name is unsafe.
 
-- Export contains OnlineClient, OfflineClient, PastConnection files. These are *private* and are not stored here.
-- Exact matching thermostat label **serial equals exported hardware MAC**; only the final suffix `144B` is retained here.
-- Omada client name: `Smart Thermostat-144B`.
-- Last recorded IP: **`redacted.invalid`** on VLAN 30 (`GG Smart Home`), Hallway AP, 2.4 GHz.
-- The thermostat was **offline at export time**, with last online record at **08:08:40 local, October 22, 2026**. Its presence in the older ICMP scan does not prove it is presently reachable.
-- Thirteen historical connection records for the same exact MAC include **seven distinct IPs** across earlier leases. This proves IP can change; never hardcode `.51` in the integration.
-- A *different* historical client also used `.51`; IP address alone cannot identify a device.
-- The export includes a **different** named thermostat (`Smart Thermostat-702B`) in the offline table, with no last IP. The analyzer intentionally refuses to choose automatically between names unless the known label suffix `144B` is supplied.
-- `redacted.invalid` is explicitly identified as `Sainlogic-6AE8D8` in the current online export. It is **not** a viable Carrier identification by IP/vendor alone.
-- Other historical-known devices in `redacted.invalid/24` can be cross-referenced by MAC when needed, but must not be treated as permanent IP exclusions.
+**No MAC, serial, IP address, matching suffix, SSID, AP name, or full client inventory is published here.** Earlier commits contained some identifiable test fixtures; see the privacy note in `docs/HACS_INSTALLATION.md` before reusing public history. The original owner-side export remains private and is not included in this repository.
 
-## Security and architecture locks
+The correlation utility `tools/omada_identity.py` matches by validated device MAC, and refuses ambiguous matches. `tools/Review-OmadaExport.ps1` automatically finds the latest local archive and saved scan, but no longer embeds a device-specific MAC suffix. If Omada lists more than one thermostat, supply `-MacSuffix` locally (last four hex digits of its label MAC) to select the intended device; **never commit that value**. A historical IP alone never confirms a current connected lease.
 
-1. **No Matter integration, bridge, or fallback.** Use the Carrier SmartHome cloud API first; research proprietary LAN functions in parallel, if they are supported by this hardware.
-2. Do not commit the owner's full device MAC, serial, QR codes, onboarding/PIN codes, AP/client inventories, HAR tokens, or raw Omada ZIP.
-3. Read-only discovery only until the correct API/identity and auth are verified.
-4. Historical offline IPs are clues, not confirmed active local endpoints. Verify current Omada client/lease against exact MAC before any directed protocol test.
-5. Never imply an `80/443/1883/8883/8080/8443` port scan proves or disproves a proprietary LAN API.
-
-## Repeatable analysis
-
-`tools/Review-OmadaExport.ps1` finds the latest `Client_*.zip` in Downloads and reads the latest `iot-private.json` automatically, entirely offline. `tools/omada_identity.py` is the standard-library analyzer. On a ZIP containing several named thermostats it refuses to choose without `--suffix` or `--mac` supplied locally. The Windows wrapper supplies the verified suffix `144B` for this exact research unit. This identifier must never be added to source control.
+Project scope: Native Carrier SmartHome cloud access first, proprietary LAN research second. No Matter bridge, client, or fallback. No active or invasive thermostat changes during local identification.
