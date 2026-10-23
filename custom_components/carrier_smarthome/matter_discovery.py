@@ -7,6 +7,7 @@ second Matter controller from HACS custom integration code.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 from typing import Any
 
 HA_MATTER_SOURCE = "home_assistant_matter"
@@ -24,9 +25,11 @@ def find_home_assistant_matter(hass: Any) -> HomeAssistantMatterSource | None:
     A config entry may exist but not be loaded; in that case fail closed
     instead of guessing an address or using a potentially stale fabric.
     """
+    if hass is None:
+        return None
     for entry in hass.config_entries.async_loaded_entries("matter"):
         data = getattr(entry, "data", {})
-        url = data.get("url") if isinstance(data, dict) else None
+        url = data.get("url") if isinstance(data, Mapping) else None
         if isinstance(url, str) and url:
             return HomeAssistantMatterSource(entry.entry_id, url)
     return None

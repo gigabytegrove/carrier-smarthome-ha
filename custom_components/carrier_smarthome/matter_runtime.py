@@ -9,6 +9,7 @@ import asyncio
 import logging
 import time
 from typing import Any, Awaitable, Callable
+from collections.abc import Mapping
 
 from .matter_client import MatterWsClient
 from .matter_discovery import resolve_source
@@ -49,10 +50,10 @@ class MatterManager:
         self._last_non_off: dict[str, str] = {}
         raw = options.get(OPTIONS_BINDINGS, {})
         hass = getattr(coordinator, "hass", None)
-        if not isinstance(raw, dict):
+        if not isinstance(raw, Mapping):
             return
         for key, binding in raw.items():
-            if not isinstance(key, str) or not isinstance(binding, dict):
+            if not isinstance(key, str) or not isinstance(binding, Mapping):
                 continue
             policy = binding.get("policy")
             if policy not in (MATTER_ONLY, MATTER_PREFERRED):
