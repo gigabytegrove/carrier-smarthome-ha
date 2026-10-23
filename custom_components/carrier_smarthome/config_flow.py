@@ -122,7 +122,11 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
                 return self.async_create_entry(title="", data={
                     **self._entry.options, OPTIONS_BINDINGS: existing
                 })
+            if user_input.get("verified_same_device") is not True:
+                errors["base"] = "identity_not_verified"
             try:
+                if errors:
+                    raise MatterNotReady("Identity confirmation required")
                 url = user_input["url"].strip()
                 node_id = int(user_input["node_id"])
                 endpoint = int(user_input["endpoint"])
@@ -131,8 +135,16 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
                 # Read-only verification: matching certified VID/PID,
                 # commissioned/online node and thermostat endpoint.
                 await client.get_state()
+                if any(
+                    previous.get("url") == client.server_url
+                    and previous.get("node_id") == node_id
+                    and previous.get("endpoint") == endpoint
+                    for target, previous in existing.items()
+                    if target != self._target and isinstance(previous, dict)
+                ):
+                    raise ValueError("Matter node/endpoint already bound to another Carrier thermostat")
             except (MatterNotReady, ValueError, TypeError, KeyError):
-                errors["base"] = "matter_not_ready"
+                errors.setdefault("base", "matter_not_ready")
             except Exception:
                 _LOGGER.exception("Matter server check failed during configuration")
                 errors["base"] = "matter_not_ready"
@@ -155,4 +167,5 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
                 vol.All(vol.Coerce(int), vol.Range(min=1, max=2**64 - 1)),
             vol.Optional("endpoint", default=binding.get("endpoint", 1)):
                 vol.All(vol.Coerce(int), vol.Range(min=1, max=240)),
+            vol.Required("verified_same_device", default=False): bool,
         }))

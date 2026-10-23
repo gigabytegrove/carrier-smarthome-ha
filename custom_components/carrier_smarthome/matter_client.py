@@ -10,6 +10,7 @@ import asyncio
 import ipaddress
 from typing import Any
 from urllib.parse import urlsplit
+from aiohttp import ClientError
 from uuid import uuid4
 
 from .matter_protocol import (
@@ -27,15 +28,17 @@ def validate_server_url(value: str) -> str:
     try:
         url = urlsplit(value)
         ip = ipaddress.ip_address(url.hostname or "")
+        port = url.port
     except (ValueError, TypeError):
-        raise MatterNotReady("Matter Server must use an explicit private or loopback IP") from None
+        raise MatterNotReady("Matter Server must use an explicit valid private or loopback IP and port") from None
     if url.username or url.password or url.fragment or url.query:
         raise MatterNotReady("Matter Server URL cannot contain credentials or parameters")
     if url.scheme not in ("ws", "wss") or url.path not in ("", "/", "/ws"):
         raise MatterNotReady("Matter Server expects ws[s]://<private-ip>:5580/ws")
-    if not (ip.is_private or ip.is_loopback):
-        raise MatterNotReady("Matter Server address must be private or loopback")
-    if not url.port or not 1 <= url.port <= 65535:
+    if (not (ip.is_private or ip.is_loopback) or ip.is_unspecified
+            or ip.is_multicast or ip.is_link_local):
+        raise MatterNotReady("Matter Server must use a trusted private or loopback address")
+    if not port or not 1 <= port <= 65535:
         raise MatterNotReady("Matter Server port required")
     # Preserve the slash between authority and endpoint; a bare trailing slash
     # must not accidentally become `:5580ws`.
@@ -83,7 +86,7 @@ class MatterWsClient:
                 return decode(node, self.endpoint)
         except MatterNotReady:
             raise
-        except (OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
+        except (ClientError, OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
             raise MatterNotReady("Matter Server cannot be reached") from exc
 
     async def write(self, *, mode: str | None = None, setpoint_kind: str | None = None,
@@ -122,5 +125,5 @@ class MatterWsClient:
                 return {"transport": "matter", "confirmed": True}
         except (MatterNotReady, MatterWriteUncertain):
             raise
-        except (OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
+        except (ClientError, OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
             raise MatterNotReady("Matter Server unavailable before write") from exc

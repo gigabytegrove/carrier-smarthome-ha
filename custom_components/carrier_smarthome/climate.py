@@ -105,8 +105,9 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def hvac_modes(self):
-        # Advertise actual capabilities even while currently Off. HA itself
-        # handles disabling interaction when the entity is unavailable.
+        # Independent fan-only mode has not yet been verified over Matter.
+        if self._policy == MATTER_ONLY:
+            return [mode for mode in _HVAC_MODES if mode != HVACMode.FAN_ONLY]
         return _HVAC_MODES
 
     @property
@@ -116,7 +117,9 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def supported_features(self):
-        features = ClimateEntityFeature.TURN_OFF | ClimateEntityFeature.FAN_MODE
+        features = ClimateEntityFeature.TURN_OFF
+        if self._policy != MATTER_ONLY:
+            features |= ClimateEntityFeature.FAN_MODE
         # A power-on service needs an established previous mode. We never
         # silently choose Heat or Cool when one cannot be established.
         if self.coordinator.last_non_off_mode(self.serial, self.zone) is not None:
@@ -147,7 +150,7 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def fan_modes(self):
-        return _FAN_MODES
+        return [] if self._policy == MATTER_ONLY else _FAN_MODES
 
     @property
     def target_temperature(self):
@@ -177,9 +180,13 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
                 else "carrier_native_cloud_graphql"
             ),
             "transport_policy": self._policy,
-            "telemetry_freshness": ("brief_cloud_recovery_grace_may_be_stale"
-                                        if getattr(self.coordinator, "telemetry_in_grace", False)
-                                        else "carrier_online_without_device_sample_timestamp"),
+            "telemetry_freshness": (
+                "local_matter_poll_within_45_seconds"
+                if self._policy != CLOUD_ONLY and self._local is not None
+                else "brief_cloud_recovery_grace_may_be_stale"
+                if getattr(self.coordinator, "telemetry_in_grace", False)
+                else "carrier_online_without_device_sample_timestamp"
+            ),
         }
 
     def _require_online(self):
