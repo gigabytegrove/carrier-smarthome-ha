@@ -136,6 +136,7 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.change_count = 0
                 self.optimistic = optimistic.OptimisticControlTracker(self.notify)
                 self.async_refresh = AsyncMock()
+                self.confirmation_task = None
                 self.client = types.SimpleNamespace(
                     async_update_zone=AsyncMock(),
                     async_get_system_detail=AsyncMock(return_value={
@@ -148,6 +149,11 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 )
             def notify(self):
                 self.change_count += 1
+            def cancel_confirmation(self, serial, zone):
+                if self.confirmation_task is not None and not self.confirmation_task.done():
+                    self.confirmation_task.cancel()
+            def track_confirmation(self, serial, zone, task):
+                self.confirmation_task = task
             def begin_control(self, serial, zone, desired):
                 return self.optimistic.begin(serial, zone, desired,
                      self.parent.models.zone_values(self.data[serial]["zones"][zone]), 1)
@@ -175,6 +181,9 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
         finally:
             release.set()
         await task
+        # Cloud acknowledgment ends the service call. Independent readback
+        # clears the optimistic state in the background.
+        await c.confirmation_task
         self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0), {})
         self.assertEqual(c.data["SENSITIVE-SERIAL"]["zones"][0]["mode"], "cool")
         c.client.async_update_zone.assert_awaited_once()
@@ -195,8 +204,8 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_acknowledged_but_stale_cloud_is_unconfirmed(self):
         c = self.coordinator(detail_mode="off")
-        with self.assertRaises(self.HomeAssistantError):
-            await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        await c.confirmation_task
         self.assertEqual(c.data["SENSITIVE-SERIAL"]["zones"][0]["mode"], "off")
         self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0), {})
         self.assertIn("unconfirmed", [e["stage"] for e in c.optimistic.events])
@@ -211,17 +220,95 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0), {})
         self.assertIn("preflight_failed", [e["stage"] for e in c.optimistic.events])
 
-    async def test_overlap_rejected_without_replacing_active_overlay(self):
+    async def test_busy_mutation_lock_waits_instead_of_rejecting(self):
         c = self.coordinator()
         await c.write_lock.acquire()
-        try:
-            with self.assertRaises(self.HomeAssistantError):
-                await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
-            self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0), {})
-            self.assertIn("command_blocked", [e["stage"] for e in c.optimistic.events])
-            c.client.async_update_zone.assert_not_awaited()
-        finally:
-            c.write_lock.release()
+        task = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "cool"))
+        await self.asyncio.sleep(0)
+        self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0),
+                         {"mode": "cool"})
+        c.client.async_update_zone.assert_not_awaited()
+        c.write_lock.release()
+        await self.asyncio.wait_for(task, 1)
+        await c.confirmation_task
+        c.client.async_update_zone.assert_awaited_once()
+
+    async def test_fast_cool_off_reversal_sends_second_mutation(self):
+        c = self.coordinator(detail_mode="off")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        first = c.confirmation_task
+        # Listing and detail still say Off. Off must NOT become a no-op:
+        # the previously acknowledged Cool mutation may still reach hardware.
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "off")
+        await c.confirmation_task
+        await self.asyncio.gather(first, return_exceptions=True)
+        self.assertEqual(c.client.async_update_zone.await_count, 2)
+        self.assertEqual(c.client.async_update_zone.await_args_list[0].kwargs["mode"],
+                         "cool")
+        self.assertEqual(c.client.async_update_zone.await_args_list[1].kwargs["mode"],
+                         "off")
+        self.assertEqual(c.data["SENSITIVE-SERIAL"]["zones"][0]["mode"], "off")
+        self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0), {})
+        self.assertIn("superseded", [row["stage"] for row in c.optimistic.events])
+
+    async def test_inflight_mutation_not_cancelled_by_new_command(self):
+        c = self.coordinator(detail_mode="off")
+        entered, release = self.asyncio.Event(), self.asyncio.Event()
+        sent = []
+        async def delayed_mutation(*_args, **kwargs):
+            sent.append(kwargs["mode"])
+            if kwargs["mode"] == "cool":
+                entered.set()
+                await release.wait()
+        c.client.async_update_zone.side_effect = delayed_mutation
+        first = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "cool"))
+        await self.asyncio.wait_for(entered.wait(), 1)
+        second = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "off"))
+        await self.asyncio.sleep(0)
+        self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0),
+                         {"mode": "off"})
+        self.assertEqual(sent, ["cool"])
+        release.set()
+        await self.asyncio.wait_for(self.asyncio.gather(first, second), 1)
+        await c.confirmation_task
+        self.assertEqual(sent, ["cool", "off"])
+        self.assertEqual(c.data["SENSITIVE-SERIAL"]["zones"][0]["mode"], "off")
+
+    async def test_three_queued_changes_coalesce_to_latest(self):
+        c = self.coordinator(detail_mode="heat")
+        await c.write_lock.acquire()
+        first = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "cool"))
+        await self.asyncio.sleep(0)
+        second = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "off"))
+        await self.asyncio.sleep(0)
+        third = self.asyncio.create_task(self.control.async_set_mode_verified(
+            c, "SENSITIVE-SERIAL", 0, "heat"))
+        await self.asyncio.sleep(0)
+        c.write_lock.release()
+        await self.asyncio.wait_for(self.asyncio.gather(first, second, third), 1)
+        await c.confirmation_task
+        c.client.async_update_zone.assert_awaited_once()
+        self.assertEqual(c.client.async_update_zone.await_args.kwargs["mode"], "heat")
+
+    async def test_temperature_update_preserves_pending_mode(self):
+        c = self.coordinator(detail_mode="cool")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        previous_task = c.confirmation_task
+        await self.control.async_set_setpoints_verified(
+            c, "SENSITIVE-SERIAL", 0, 69, 74)
+        self.assertEqual(c.client.async_update_zone.await_count, 2)
+        self.assertEqual(c.client.async_update_zone.await_args.kwargs,
+                         {"mode": "cool", "heat": 69, "cool": 74})
+        self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0),
+                         {"mode": "cool", "heat_setpoint": 69,
+                          "cool_setpoint": 74})
+        await c.confirmation_task
+        await self.asyncio.gather(previous_task, return_exceptions=True)
 
     async def test_explicit_offline_never_displays_optimistic_mode(self):
         c = self.coordinator()

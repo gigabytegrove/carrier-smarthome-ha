@@ -49,6 +49,11 @@ async def async_migrate_entry(hass, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass, entry: ConfigEntry) -> bool:
+    # Stop background readback before removing the climate platform, so a
+    # late cloud reply cannot update entities during or after teardown.
+    coordinator = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if coordinator is not None:
+        await coordinator.async_stop_confirmations()
     ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)

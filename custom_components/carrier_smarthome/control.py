@@ -45,60 +45,84 @@ def _target_ok(current: dict, desired: dict) -> bool:
 
 async def _write_verified(coordinator, serial: str, index: int,
                           desired: dict, payload: dict) -> None:
-    """Show user intent now; remove it only on verified completion or failure."""
-    if coordinator.write_lock.locked():
-        coordinator.optimistic.record(None, "command_blocked",
-                                      reason="previous_command_pending")
-        raise HomeAssistantError(
-            "Previous Carrier command still being verified; no new HVAC command "
-            "was sent. Check the current mode before trying again"
-        )
+    """Accept the newest intent without waiting for a previous cloud readback.
+
+    Preflight and mutations are serialized. Only read-only confirmation runs
+    asynchronously. An older queued request is abandoned if superseded.
+    """
     try:
         _state(coordinator, serial, index)
     except HomeAssistantError:
         coordinator.optimistic.record(None, "command_blocked",
                                       reason="device_or_cloud_unavailable")
         raise
+
+    previous = coordinator.optimistic.active(serial, index)
+    # Preserve other still-pending controls (e.g., Cool followed immediately
+    # by a temperature change) so the new write includes all user intent.
+    if previous is not None:
+        desired = {**previous["requested"], **desired}
+        payload = _payload(desired)
     command_id = coordinator.begin_control(serial, index, desired)
+    # Cancellation is limited to read-only verification. Never cancel a
+    # mutation that Carrier might already be processing.
+    coordinator.cancel_confirmation(serial, index)
+
     try:
-        await _write_verified_command(coordinator, serial, index, desired, payload,
-                                      command_id)
+        outcome, require_detail, require_transition = await _send_cloud_change(
+            coordinator, serial, index, desired, payload, command_id,
+            force_write=previous is not None,
+        )
     except asyncio.CancelledError:
         coordinator.optimistic.finish(serial, index, command_id, "cancelled",
-                                       reason="task_cancelled")
+                                      reason="task_cancelled")
         raise
     except Exception:
-        # A successful mutation acknowledgment is NOT physical confirmation.
-        # On ambiguous readback, revert the display to last observed Carrier
-        # data and explicitly record that the cloud outcome is uncertain.
-        acknowledged = any(
-            event["command_id"] == command_id and
-            event["stage"] == "mutation_acknowledged"
-            for event in coordinator.optimistic.events
-        )
-        coordinator.optimistic.finish(
-            serial, index, command_id,
-            "unconfirmed" if acknowledged else "reverted",
-            reason="cloud_readback_uncertain" if acknowledged else "not_confirmed_by_cloud",
-        )
+        coordinator.optimistic.finish(serial, index, command_id, "reverted",
+                                      reason="preflight_or_mutation_failed")
         raise
-    else:
+
+    if outcome == "already":
         coordinator.optimistic.finish(serial, index, command_id, "verified")
-
-
-async def _write_verified_command(coordinator, serial: str, index: int,
-                                  desired: dict, payload: dict,
-                                  command_id: int) -> None:
-    # Do NOT queue HVAC commands behind a previous command's extended
-    # confirmation window. Queued Cool/Off actions can execute much later and
-    # appear to randomly override the operator's most recent selection.
-    # A single HA event loop acquires an uncontended asyncio lock atomically.
-    if coordinator.write_lock.locked():
-        raise HomeAssistantError(
-            "Previous Carrier command still being verified; no new HVAC command "
-            "was sent. Check the current mode before trying again"
+    elif outcome == "sent" and _current(coordinator, serial, index, command_id):
+        # The HA service may now complete as soon as Carrier acknowledges
+        # the write; the card remains pending while this task observes cloud.
+        task = asyncio.create_task(
+            _confirmation_worker(coordinator, serial, index, desired,
+                                 command_id, require_detail, require_transition),
+            name="carrier_smarthome_confirm",
         )
+        coordinator.track_confirmation(serial, index, task)
+
+
+def _payload(desired: dict) -> dict:
+    result = {}
+    if "mode" in desired:
+        result["mode"] = desired["mode"]
+    if "fan_mode" in desired:
+        result["fan"] = desired["fan_mode"]
+    if "heat_setpoint" in desired or "cool_setpoint" in desired:
+        if "heat_setpoint" not in desired or "cool_setpoint" not in desired:
+            raise HomeAssistantError("Carrier requires both thermostat targets")
+        result["heat"] = desired["heat_setpoint"]
+        result["cool"] = desired["cool_setpoint"]
+    return result
+
+
+def _current(coordinator, serial: str, index: int, command_id: int) -> bool:
+    return coordinator.optimistic.is_current(serial, index, command_id)
+
+
+async def _send_cloud_change(coordinator, serial: str, index: int,
+                             desired: dict, payload: dict, command_id: int,
+                             *, force_write: bool) -> tuple[str, bool, bool]:
+    # Serialize actual cloud mutations, NOT the 64-second verification window.
+    # Rapid commands wait only for an in-flight mutation, with latest-wins
+    # coalescing so obsolete queued requests never execute later.
     async with coordinator.write_lock:
+        if not _current(coordinator, serial, index, command_id):
+            coordinator.optimistic.record(command_id, "superseded_before_send")
+            return "superseded", False, False
         _state(coordinator, serial, index)
         coordinator.optimistic.record(command_id, "preflight_started")
         try:
@@ -106,10 +130,17 @@ async def _write_verified_command(coordinator, serial: str, index: int,
         except Exception as exc:
             coordinator.optimistic.record(command_id, "preflight_failed",
                                           reason="cloud_refresh_failed")
-            raise HomeAssistantError("Could not refresh Carrier status; no command sent") from exc
+            raise HomeAssistantError(
+                "Could not refresh Carrier status; no command sent"
+            ) from exc
+        if not _current(coordinator, serial, index, command_id):
+            coordinator.optimistic.record(command_id, "superseded_before_send")
+            return "superseded", False, False
         current = _state(coordinator, serial, index)
-        coordinator.optimistic.record(command_id, "preflight_observed",
-                                      observed={k: current.get(k) for k in desired})
+        coordinator.optimistic.record(
+            command_id, "preflight_observed",
+            observed={key: current.get(key) for key in desired},
+        )
         if "heat_setpoint" in desired:
             heat, cool = desired["heat_setpoint"], desired["cool_setpoint"]
             if (not all(isinstance(x, (int, float)) and not isinstance(x, bool)
@@ -120,126 +151,183 @@ async def _write_verified_command(coordinator, serial: str, index: int,
                 raise HomeAssistantError("Heat target exceeds current Carrier limit")
             if current["cool_min"] is not None and cool < current["cool_min"]:
                 raise HomeAssistantError("Cool target is below current Carrier limit")
-        require_detail_confirmation = False
-        if _target_ok(current, desired):
-            # A matching summary can be stale even after a fresh HTTP read.
-            # For mode changes, inspect the independent detail GraphQL view
-            # before claiming an already-applied command. If it disagrees,
-            # the explicit requested mode still receives exactly one write.
+        require_detail_confirmation = force_write
+        # A cloud view still at the target can be older than an earlier
+        # in-flight write. Do not accept it as proof of a rapid reversal.
+        require_transition = force_write and _target_ok(current, desired)
+        # If we supersede a previous command, NEVER treat a matching stale
+        # cloud reading as proof that the new reversal has been applied.
+        if not force_write and _target_ok(current, desired):
             if "mode" in desired and hasattr(coordinator.client, "async_get_system_detail"):
                 try:
                     detail = await coordinator.client.async_get_system_detail(serial)
-                    detail_zone = get_zone(detail, index) if detail.get("serial") == serial else None
+                    detail_zone = (get_zone(detail, index)
+                                   if detail.get("serial") == serial else None)
                 except CarrierRateLimitError as exc:
                     raise HomeAssistantError(
                         "Carrier rate-limited mode verification; no command sent"
                     ) from exc
                 except (CarrierError, ValueError, TypeError, AttributeError):
                     detail_zone = None
-                if (detail_zone is None or
-                        _target_ok(zone_values(detail_zone), desired)):
+                if not _current(coordinator, serial, index, command_id):
+                    coordinator.optimistic.record(command_id, "superseded_before_send")
+                    return "superseded", False, False
+                if detail_zone is None or _target_ok(zone_values(detail_zone), desired):
                     coordinator.optimistic.record(command_id, "already_confirmed",
                                                   source="detail_or_summary")
-                    return
-                # Summary was already at target BEFORE the write; that same
-                # unchanged value cannot independently confirm this command.
-                # Require the detail view to converge, or report uncertainty.
+                    return "already", False, False
                 require_detail_confirmation = True
             else:
                 coordinator.optimistic.record(command_id, "already_confirmed",
                                               source="listing")
-                return
+                return "already", False, False
+
+        if not _current(coordinator, serial, index, command_id):
+            coordinator.optimistic.record(command_id, "superseded_before_send")
+            return "superseded", False, False
         coordinator.optimistic.record(command_id, "mutation_sent")
+        # Shield and drain the network operation on caller cancellation: an
+        # uncertain in-flight write must finish before the lock can release.
+        mutation = asyncio.create_task(
+            coordinator.client.async_update_zone(serial, index, **payload)
+        )
         try:
-            await coordinator.client.async_update_zone(serial, index, **payload)
+            await asyncio.shield(mutation)
+        except asyncio.CancelledError:
+            try:
+                await mutation
+            finally:
+                coordinator.optimistic.record(
+                    command_id, "mutation_call_cancelled",
+                    reason="caller_cancelled_after_send",
+                )
+            raise
         except (CarrierError, ValueError) as exc:
             coordinator.optimistic.record(command_id, "mutation_not_confirmed",
                                           reason="carrier_request_error")
-            raise HomeAssistantError("Carrier mutation was not confirmed; check the official app before attempting another command") from exc
-        coordinator.optimistic.record(command_id, "mutation_acknowledged")
-        # One write only. Carrier cloud propagation may lag tens of seconds.
-        # Readbacks remain read-only; the dedicated detail query is an
-        # independent cross-check of the *same serial and zone*.
-        detail_confirmed = False
-        last_read_error = False
-        for attempt, delay in enumerate(READBACK_DELAYS):
-            if delay:
-                await asyncio.sleep(delay)
-            # Carrier's detailed native query can converge before the listing.
-            # Try it first when available. This avoids an extra blocking list
-            # request on the successful path and publishes only actual values.
-            if attempt in DETAIL_CHECK_ATTEMPTS and hasattr(coordinator.client, "async_get_system_detail"):
-                try:
-                    detail = await coordinator.client.async_get_system_detail(serial)
-                    if (detail.get("serial") == serial
-                            and connectivity_state(detail) == "online"):
-                        detail_zone = get_zone(detail, index)
-                        if detail_zone is not None:
-                            observed = zone_values(detail_zone)
-                            coordinator.optimistic.record(
-                                command_id, "verification_read", source="detail",
-                                attempt=attempt + 1,
-                                observed={k: observed.get(k) for k in desired},
-                            )
-                            if _target_ok(observed, desired):
-                                if hasattr(coordinator, "publish_verified_detail"):
-                                    if not coordinator.publish_verified_detail(serial, index, detail, desired):
-                                        coordinator.optimistic.record(
-                                            command_id, "verified_detail_not_published")
-                                        continue
-                                coordinator.optimistic.record(command_id, "verification_confirmed",
-                                                              source="detail", attempt=attempt + 1)
-                                detail_confirmed = True
-                                break
-                except CarrierRateLimitError as exc:
-                    coordinator.optimistic.record(command_id, "verification_rate_limited",
-                                                  source="detail")
-                    raise HomeAssistantError(
-                        "Carrier acknowledged the command but rate-limited confirmation; "
-                        "check the official app before sending another command"
-                    ) from exc
-                except (CarrierError, ValueError, TypeError, AttributeError):
-                    # A blocked detail API does not invalidate the listing.
-                    coordinator.optimistic.record(command_id, "verification_read_failed",
-                                                  source="detail")
-            try:
-                await coordinator.async_refresh()
-                latest = _state(coordinator, serial, index)
-                coordinator.optimistic.record(
-                    command_id, "verification_read", source="listing",
-                    attempt=attempt + 1, observed={k: latest.get(k) for k in desired})
-                if _target_ok(latest, desired) and not require_detail_confirmation:
-                    coordinator.optimistic.record(command_id, "verification_confirmed",
-                                                  source="listing", attempt=attempt + 1)
-                    return
-            except Exception:
-                coordinator.optimistic.record(command_id, "verification_read_failed",
-                                              source="listing", attempt=attempt + 1)
-                # Never repeat the write or assume failure when a read fails.
-                last_read_error = True
-                failure = getattr(coordinator, "last_exception", None)
-                if getattr(failure, "retry_after", None) is not None:
-                    raise HomeAssistantError(
-                        "Carrier acknowledged the command but rate-limited verification; "
-                        "check the official app before sending another command"
-                    ) from (failure if isinstance(failure, BaseException) else None)
-        if detail_confirmed:
-            # The verified detailed GraphQL view confirmed the command. When
-            # supported, publish its observed fields through the coordinator;
-            # routine account-list polling still reconciles independently.
-            return
-        coordinator.optimistic.record(command_id, "verification_window_ended",
-                                      reason="cloud_not_converged")
-        if last_read_error:
             raise HomeAssistantError(
-                "Carrier acknowledged the command, but cloud verification is incomplete; "
-                "check actual mode in the official app before sending another command"
+                "Carrier mutation was not confirmed; check the official app "
+                "before attempting another command"
+            ) from exc
+        coordinator.optimistic.record(command_id, "mutation_acknowledged")
+        return "sent", require_detail_confirmation, require_transition
+
+
+async def _confirmation_worker(coordinator, serial: str, index: int,
+                               desired: dict, command_id: int,
+                               require_detail: bool,
+                               require_transition: bool) -> None:
+    try:
+        confirmed = await _readback(coordinator, serial, index, desired,
+                                    command_id, require_detail, require_transition)
+    except asyncio.CancelledError:
+        coordinator.optimistic.record(command_id, "verification_cancelled",
+                                      reason="new_command_or_unload")
+        coordinator.optimistic.finish(serial, index, command_id, "cancelled",
+                                      reason="readback_cancelled")
+        raise
+    except Exception:
+        # Readback is inherently ambiguous after an acknowledged mutation.
+        # Never repeat the write, and never log Carrier's raw exception text.
+        coordinator.optimistic.record(command_id, "verification_read_failed",
+                                      reason="readback_exception")
+        coordinator.optimistic.finish(serial, index, command_id, "unconfirmed",
+                                      reason="cloud_readback_uncertain")
+    else:
+        if not _current(coordinator, serial, index, command_id):
+            return
+        if confirmed:
+            coordinator.optimistic.finish(serial, index, command_id, "verified")
+        else:
+            coordinator.optimistic.record(command_id, "verification_window_ended",
+                                          reason="cloud_not_converged")
+            coordinator.optimistic.finish(serial, index, command_id, "unconfirmed",
+                                          reason="cloud_readback_uncertain")
+
+
+async def _readback(coordinator, serial: str, index: int, desired: dict,
+                    command_id: int, require_detail: bool,
+                    require_transition: bool) -> bool:
+    seen_opposite = not require_transition
+    # The first readback is immediate; all subsequent checks are read-only,
+    # for at most the original ~64-second observation window.
+    for attempt, delay in enumerate(READBACK_DELAYS):
+        if not _current(coordinator, serial, index, command_id):
+            return False
+        if delay:
+            await asyncio.sleep(delay)
+        if not _current(coordinator, serial, index, command_id):
+            return False
+
+        if (attempt in DETAIL_CHECK_ATTEMPTS
+                and hasattr(coordinator.client, "async_get_system_detail")):
+            try:
+                detail = await coordinator.client.async_get_system_detail(serial)
+                if not _current(coordinator, serial, index, command_id):
+                    return False
+                if (detail.get("serial") == serial
+                        and connectivity_state(detail) == "online"):
+                    zone = get_zone(detail, index)
+                    if zone is not None:
+                        observed = zone_values(zone)
+                        coordinator.optimistic.record(
+                            command_id, "verification_read", source="detail",
+                            attempt=attempt + 1,
+                            observed={key: observed.get(key) for key in desired},
+                        )
+                        if not _target_ok(observed, desired):
+                            seen_opposite = True
+                        if _target_ok(observed, desired) and seen_opposite:
+                            if coordinator.publish_verified_detail(
+                                    serial, index, detail, desired):
+                                coordinator.optimistic.record(
+                                    command_id, "verification_confirmed",
+                                    source="detail", attempt=attempt + 1,
+                                )
+                                return True
+                            coordinator.optimistic.record(
+                                command_id, "verified_detail_not_published",
+                            )
+            except CarrierRateLimitError:
+                coordinator.optimistic.record(command_id, "verification_rate_limited",
+                                              source="detail")
+                return False
+            except (CarrierError, ValueError, TypeError, AttributeError):
+                coordinator.optimistic.record(command_id, "verification_read_failed",
+                                              source="detail", attempt=attempt + 1)
+
+        if not _current(coordinator, serial, index, command_id):
+            return False
+        try:
+            await coordinator.async_refresh()
+            if not _current(coordinator, serial, index, command_id):
+                return False
+            observed = _state(coordinator, serial, index)
+            coordinator.optimistic.record(
+                command_id, "verification_read", source="listing",
+                attempt=attempt + 1,
+                observed={key: observed.get(key) for key in desired},
             )
-        raise HomeAssistantError(
-            "Carrier acknowledged the command; the requested state was not confirmed "
-            "within the 64-second cloud observation window. The command may have worked. "
-            "Check the official app before sending another command"
-        )
+            if not _target_ok(observed, desired):
+                seen_opposite = True
+            if (_target_ok(observed, desired)
+                    and seen_opposite and not require_detail):
+                coordinator.optimistic.record(
+                    command_id, "verification_confirmed",
+                    source="listing", attempt=attempt + 1,
+                )
+                return True
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            coordinator.optimistic.record(command_id, "verification_read_failed",
+                                          source="listing", attempt=attempt + 1)
+            failure = getattr(coordinator, "last_exception", None)
+            if getattr(failure, "retry_after", None) is not None:
+                coordinator.optimistic.record(command_id, "verification_rate_limited",
+                                              source="listing")
+                return False
+    return False
 
 
 async def async_set_mode_verified(coordinator, serial: str, index: int, mode: str) -> None:
