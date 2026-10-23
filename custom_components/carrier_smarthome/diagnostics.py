@@ -28,6 +28,8 @@ def build_diagnostics(coordinator) -> dict:
         )),
         "summary": sanitize_device_summary(systems),
         "devices": sanitize_telemetry(systems),
+        "optimistic_control_active": coordinator.optimistic.active_diagnostics,
+        "control_event_history": coordinator.optimistic.events,
     }
 
 

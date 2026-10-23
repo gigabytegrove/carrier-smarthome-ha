@@ -60,7 +60,8 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def _state(self):
-        return zone_values(self.zone_data)
+        return {**zone_values(self.zone_data),
+                **self.coordinator.optimistic.overlay(self.serial, self.zone)}
 
     @property
     def hvac_modes(self):
@@ -127,7 +128,10 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
     @property
     def extra_state_attributes(self):
         state = self._state
+        pending = self.coordinator.optimistic.active(self.serial, self.zone)
         return {
+            "control_status": "pending_cloud_confirmation" if pending else "carrier_reported",
+            "pending_command_id": pending["command_id"] if pending else None,
             "schedule_enabled": state["schedule_enabled"],
             "stage_status": state["stage_status"],
             "carrier_reported_connection": connectivity_state(self.system),

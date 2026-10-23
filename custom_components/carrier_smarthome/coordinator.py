@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import CarrierAuthError, CarrierError, CarrierRateLimitError, CarrierSmartHomeClient
 from .const import DOMAIN, POLL_INTERVAL, TRANSIENT_GRACE_SECONDS, MAX_POLL_BACKOFF_SECONDS
 from .models import connectivity_state, zone_indices, get_zone, zone_values
+from .optimistic import OptimisticControlTracker
 
 
 class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
@@ -23,6 +24,8 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.client = client
         # Serialize explicit HVAC writes so overlapping HA controls cannot race.
         self.write_lock = asyncio.Lock()
+        # Local UI intent never changes confirmed Carrier data or diagnostic sensors.
+        self.optimistic = OptimisticControlTracker(self._notify_optimistic_change)
         # Remember only a mode Carrier actually reported, never guess a default.
         self._last_non_off_modes: dict[tuple[str, int], str] = {}
         # These fields contain only status/timing, never credentials or IDs.
@@ -32,6 +35,21 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.consecutive_errors = 0
         self._last_success_monotonic: float | None = None
         self._next_poll_not_before = 0.0
+
+    def _notify_optimistic_change(self) -> None:
+        # Notify HA climate listeners immediately, before the first network await.
+        notify = getattr(self, "async_update_listeners", None)
+        if callable(notify):
+            notify()
+
+    def begin_control(self, serial: str, index: int, desired: dict) -> int:
+        zone = get_zone(self.data.get(serial, {}), index)
+        if zone is None:
+            raise ValueError("Thermostat zone unavailable")
+        # Export only a numbered slot, never Carrier's serial or cloud IDs.
+        device_number = sorted(self.data).index(serial) + 1
+        return self.optimistic.begin(serial, index, desired, zone_values(zone),
+                                     device_number)
 
     @property
     def seconds_since_success(self) -> int | None:
