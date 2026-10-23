@@ -38,8 +38,8 @@ The integration authenticates with the same Carrier SmartHome account used in th
 
 ## Experimental local Matter control (development branch only)
 
-**Do not interpret this section as a published release feature.** The stable
-release remains **cloud-only**. Work under
+**Beta testing only.** Stable v0.5.6 remains cloud-only. The experimental
+feature branch uses manifest version **0.5.7b1** and is not a stable release. Work under
 [`feature/matter-dual-transport-foundation`](https://github.com/gigabytegrove/carrier-smarthome-ha/tree/feature/matter-dual-transport-foundation)
 adds the following opt-in control selections to the existing Carrier device's
 **Configure** screen after initial Carrier sign-in:

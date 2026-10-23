@@ -1,6 +1,6 @@
 # Carrier SmartHome — Matter hardware readiness (read-only)
 
-This is for the **experimental Matter branch** only. Stable v0.5.6 remains cloud-only.
+This is for the **experimental Matter branch** only. Stable v0.5.6 remains cloud-only. The experimental branch reports **0.5.7b1** in its manifest.
 
 The bundled `tools/check_matter_readiness.py` runs with Home Assistant's
 existing `aiohttp` dependency and never sends a Matter `write_attribute` or

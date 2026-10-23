@@ -32,7 +32,7 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(config_entry):
-        return CarrierSmartHomeOptionsFlow(config_entry)
+        return CarrierSmartHomeOptionsFlow()
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -87,12 +87,11 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
     """Bind one explicitly chosen Carrier serial/zone to a commissioned Matter node."""
 
-    def __init__(self, entry):
-        self._entry = entry
+    def __init__(self):
         self._target = None
 
     async def async_step_init(self, user_input=None):
-        coordinator = self.hass.data.get(DOMAIN, {}).get(self._entry.entry_id)
+        coordinator = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
         systems = getattr(coordinator, "data", None) or {}
         choices = {
             binding_key(serial, zone): f"{system.get('name') or 'Carrier Thermostat'} (zone {zone})"
@@ -112,7 +111,7 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
         )
 
     async def async_step_transport(self, user_input=None):
-        existing = dict(self._entry.options.get(OPTIONS_BINDINGS, {}))
+        existing = dict(self.config_entry.options.get(OPTIONS_BINDINGS, {}))
         binding = existing.get(self._target, {})
         errors = {}
         if user_input is not None:
@@ -120,7 +119,7 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
             if policy == CLOUD_ONLY:
                 existing.pop(self._target, None)
                 return self.async_create_entry(title="", data={
-                    **self._entry.options, OPTIONS_BINDINGS: existing
+                    **self.config_entry.options, OPTIONS_BINDINGS: existing
                 })
             if user_input.get("verified_same_device") is not True:
                 errors["base"] = "identity_not_verified"
@@ -154,7 +153,7 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
                     "node_id": node_id, "endpoint": endpoint,
                 }
                 return self.async_create_entry(title="", data={
-                    **self._entry.options, OPTIONS_BINDINGS: existing
+                    **self.config_entry.options, OPTIONS_BINDINGS: existing
                 })
         return self.async_show_form(step_id="transport", errors=errors,
                                     data_schema=vol.Schema({

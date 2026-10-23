@@ -1,11 +1,11 @@
-## Unreleased — experimental Matter control (feature branch, not v0.5.6)
+## 0.5.7b1 — experimental Matter test build (feature branch, not stable v0.5.6)
 
 - Add explicit per-thermostat Cloud only / Matter only / Prefer Matter control preferences; existing installations remain cloud-only by default.
 - Add Matter Server WebSocket climate reads with verified Carrier Matter product identity and 20-second local polling.
 - Add temperature unit conversions and guarded single-write local mode/setpoint commands, plus no cloud fallback following uncertain Matter writes.
 - Block unsupported independent fan mode on Matter-only and simultaneous local dual-setpoint writes. Require owner confirmation of physical-node identity.
 - Add offline protocol and routing regression suites; physical-device commissioning and Home Assistant validation remain pending.
-- **No stable release or version change.** The published v0.5.6 remains unchanged.
+- Experimental branch manifest set to **0.5.7b1** to distinguish a test installation from stable v0.5.6. The published stable release remains unchanged.
 
 # Changelog
 
