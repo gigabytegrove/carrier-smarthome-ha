@@ -96,8 +96,14 @@ class FakeWs:
             result = [{"Status": 0}]
         elif command == "read_attribute":
             self.read_count += 1
-            result = {payload["args"]["attribute_path"]:
-                      (4 if self.read_count > 1 and self.confirm else 3)}
+            request_path = payload["args"]["attribute_path"]
+            if isinstance(request_path, list):
+                observed = node()["attributes"]
+                result = {item: observed[item] for item in request_path
+                          if item in observed}
+            else:
+                result = {request_path:
+                          (4 if self.read_count > 1 and self.confirm else 3)}
         else:
             raise AssertionError(f"Unexpected RPC: {command}")
         self.reply = (RuntimeError("lost after write") if
@@ -213,3 +219,38 @@ class MatterDeadbandTests(unittest.TestCase):
         n = node(**{"1/513/18": None})
         with self.assertRaises(p.MatterNotReady):
             p.plan_setpoint(n, 1, "cool", 25)
+
+
+class MatterActualReadTests(unittest.IsolatedAsyncioTestCase):
+    async def test_local_state_uses_device_read_not_snapshot(self):
+        session = FakeSession()
+        state = await c.MatterWsClient(
+            session, "ws://127.0.0.1:5580/ws", 17, 1).get_state()
+        self.assertEqual(state.temperature_c, 22.5)
+        self.assertEqual(state.cool_target_c, 26)
+        self.assertEqual(state.mode, "cool")
+        calls = session.ws.commands
+        self.assertEqual([x["command"] for x in calls],
+                         ["get_node", "read_attribute"])
+        self.assertEqual(calls[1]["args"]["attribute_path"],
+                         ["1/513/0", "1/513/17", "1/513/18", "1/513/28"])
+
+    async def test_live_opposite_target_blocks_side_effect(self):
+        session = FakeSession()
+        async def set_fresh_opposite(payload):
+            session.ws.commands.append(payload)
+            if payload["command"] == "get_node":
+                result = node()  # Snapshot looks safe for 24C heat.
+            elif payload["command"] == "read_attribute":
+                result = {"1/513/18": 2000, "1/513/17": 2200}
+            else:
+                self.fail("Unsafe write_attribute sent!")
+            session.ws.reply = {"message_id": payload["message_id"],
+                                "result": result}
+        session.ws.send_json = set_fresh_opposite
+        with self.assertRaises(p.MatterNotReady):
+            await c.MatterWsClient(
+                session, "ws://127.0.0.1:5580/ws", 17, 1).write(
+                    setpoint_kind="heat", setpoint_c=24)
+        self.assertEqual([item["command"] for item in session.ws.commands],
+                         ["get_node", "read_attribute"])

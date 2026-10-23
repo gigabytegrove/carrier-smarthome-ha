@@ -84,17 +84,27 @@ class MatterWsClient:
                 await self._handshake(ws)
                 node = await self._rpc(ws, "get_node", {"node_id": self.node_id})
                 decode(node, self.endpoint)  # Check commissioned VID/PID first.
-                address = path(self.endpoint, THERMOSTAT_CLUSTER, 0x1C)
+                # get_node can be stale. One actual Matter Read fetches local
+                # temperature, both setpoints and the active system mode.
+                attrs = (0, 0x11, 0x12, 0x1C)
+                requests = [path(self.endpoint, THERMOSTAT_CLUSTER, a)
+                            for a in attrs]
                 current = await self._rpc(ws, "read_attribute", {
-                    "node_id": self.node_id, "attribute_path": address,
+                    "node_id": self.node_id, "attribute_path": requests,
                 })
+                mode_path = requests[-1]
                 if (not isinstance(current, dict)
-                        or type(current.get(address)) is not int
-                        or current[address] not in MATTER_TO_MODES):
+                        or type(current.get(mode_path)) is not int
+                        or current[mode_path] not in MATTER_TO_MODES):
                     raise MatterNotReady("Thermostat did not answer live Matter mode read")
-                return decode({**node, "attributes": {
-                    **node["attributes"], address: current[address],
-                }}, self.endpoint)
+                updated = dict(node["attributes"])
+                # Never quietly republish previously cached measurements if
+                # an actual device read omits an optional attribute.
+                for address in requests:
+                    updated.pop(address, None)
+                    if address in current:
+                        updated[address] = current[address]
+                return decode({**node, "attributes": updated}, self.endpoint)
         except MatterNotReady:
             raise
         except (ClientError, OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
@@ -119,12 +129,29 @@ class MatterWsClient:
                 # Verify live reachability through a real Matter Read before
                 # sending any write. get_node alone may contain cached data
                 # from a prior server subscription.
+                read_paths = [address]
+                if setpoint_kind is not None:
+                    other_attr = 0x12 if setpoint_kind == "cool" else 0x11
+                    read_paths.append(path(self.endpoint, THERMOSTAT_CLUSTER,
+                                           other_attr))
                 observed = await self._rpc(ws, "read_attribute", {
-                    "node_id": self.node_id, "attribute_path": address,
+                    "node_id": self.node_id,
+                    "attribute_path": read_paths if len(read_paths) > 1 else address,
                 })
                 if (not isinstance(observed, dict)
                         or type(observed.get(address)) is not int):
                     raise MatterNotReady("Matter did not provide a live thermostat read")
+                if setpoint_kind is not None:
+                    opposite_path = read_paths[1]
+                    raw_opposite = observed.get(opposite_path)
+                    if type(raw_opposite) is not int:
+                        raise MatterNotReady("Matter did not provide the opposite setpoint")
+                    deadband_raw = node["attributes"].get(
+                        path(self.endpoint, THERMOSTAT_CLUSTER, 0x19))
+                    deadband = deadband_raw if type(deadband_raw) is int and 0 <= deadband_raw <= 25 else 0
+                    if ((setpoint_kind == "heat" and value + deadband * 10 > raw_opposite)
+                            or (setpoint_kind == "cool" and value - deadband * 10 < raw_opposite)):
+                        raise MatterNotReady("Matter target would move the opposite setpoint")
                 if observed[address] == value:
                     return {"transport": "matter", "confirmed": True, "changed": False}
                 # Irreversible boundary: even a lost ACK may mean HVAC changed.

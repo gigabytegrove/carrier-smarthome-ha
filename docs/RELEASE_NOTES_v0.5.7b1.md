@@ -7,7 +7,7 @@
 - Explicit per-thermostat **Cloud only**, **Matter only**, and **Prefer Matter** settings under Carrier SmartHome → Configure. Existing accounts default to Cloud only without migration of existing entity IDs or credentials.
 - Commissioned OHF Matter Server WebSocket integration, with Carrier certified VID 4334 / PID 2048 and thermostat endpoint validation. Physical identity remains owner-confirmed; model identity alone is not proof that two thermostat records refer to the same physical unit.
 - A single existing Home Assistant climate entity for the thermostat; local system mode and thermostat temperature/heating/cooling setpoints, conversion between Celsius and Fahrenheit, and independently reported cloud telemetry.
-- Actual local read-before-write of the intended attribute, a maximum of one Matter write per requested change, and readback confirmation. Uncertain local writes **never** cause automatic Carrier cloud retries.
+- Actual local device reads for temperature/mode/both targets and fresh live opposite-target checks before writing; no stale-cache substitutions. Read-before-write of the intended attribute, a maximum of one Matter write per requested change, and readback confirmation. Uncertain local writes **never** cause automatic Carrier cloud retries.
 - Shared Matter/cloud HVAC write exclusion, rejection of queued commands, conditional cloud fallback only before a Matter write, and suppression of unsupported independent Matter fan control and non-atomic two-setpoint changes.
 - Thermostat deadband/limit protections to avoid moving a second target unexpectedly.
 - Privacy-limited read-only `tools/check_matter_readiness.py` probe plus isolated protocol, routing, runtime and fake-server tests. No network/host changes required to run the probe.
