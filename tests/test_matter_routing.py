@@ -1,5 +1,6 @@
 """Offline policy tests: never cause duplicate Matter/Carrier writes."""
 import importlib.util
+import asyncio
 from pathlib import Path
 import sys
 import types
@@ -107,4 +108,40 @@ class RouterTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(p.MatterWriteUncertain):
             await router.execute(p.MATTER_PREFERRED, cloud_write=cloud_write,
                                  matter_write=matter_write)
+        self.assertEqual(calls, ["matter"])
+
+
+    async def test_prewrite_unavailable_allows_cloud_fallback(self):
+        calls, result = await self.call(
+            p.MATTER_PREFERRED, matter_outcome=p.MatterNotReady(
+                "Device did not answer live read"))
+        self.assertEqual(calls, ["matter", "cloud"])
+        self.assertTrue(result.cloud_fallback)
+
+    async def test_second_command_is_rejected_during_verification(self):
+        calls = []
+        entered = asyncio.Event()
+        release = asyncio.Event()
+
+        async def cloud_write():
+            calls.append("cloud")
+
+        async def matter_write(_):
+            calls.append("matter")
+            entered.set()
+            await release.wait()
+            return {"confirmed": True}
+
+        router = r.DualTransportRouter(FakeMatter(), lambda: True)
+        first = asyncio.create_task(router.execute(
+            p.MATTER_ONLY, cloud_write=cloud_write, matter_write=matter_write))
+        await entered.wait()
+        try:
+            with self.assertRaises(p.MatterNotReady):
+                await router.execute(p.MATTER_PREFERRED,
+                                     cloud_write=cloud_write,
+                                     matter_write=matter_write)
+        finally:
+            release.set()
+            await first
         self.assertEqual(calls, ["matter"])
