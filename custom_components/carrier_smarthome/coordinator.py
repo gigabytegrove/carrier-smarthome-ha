@@ -26,6 +26,8 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.write_lock = asyncio.Lock()
         # Local UI intent never changes confirmed Carrier data or diagnostic sensors.
         self.optimistic = OptimisticControlTracker(self._notify_optimistic_change)
+        # In-process, read-only confirmation tasks: never include cloud writes.
+        self._confirmation_tasks: dict[tuple[str, int], asyncio.Task] = {}
         # Remember only a mode Carrier actually reported, never guess a default.
         self._last_non_off_modes: dict[tuple[str, int], str] = {}
         # These fields contain only status/timing, never credentials or IDs.
@@ -50,6 +52,39 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         device_number = sorted(self.data).index(serial) + 1
         return self.optimistic.begin(serial, index, desired, zone_values(zone),
                                      device_number)
+
+    def cancel_confirmation(self, serial: str, index: int) -> None:
+        task = self._confirmation_tasks.get((serial, index))
+        if task is not None and not task.done():
+            task.cancel()
+
+    def track_confirmation(self, serial: str, index: int,
+                           task: asyncio.Task) -> None:
+        key = (serial, index)
+        self._confirmation_tasks[key] = task
+
+        def completed(done: asyncio.Task) -> None:
+            if self._confirmation_tasks.get(key) is done:
+                self._confirmation_tasks.pop(key, None)
+            if not done.cancelled():
+                # Retrieve exceptions to prevent orphaned task warnings; the
+                # confirmation worker itself records sanitized failures.
+                exception = done.exception()
+                if exception is not None:
+                    logging.getLogger(__name__).error(
+                        "Carrier confirmation task terminated unexpectedly: %s",
+                        type(exception).__name__,
+                    )
+
+        task.add_done_callback(completed)
+
+    async def async_stop_confirmations(self) -> None:
+        tasks = list(self._confirmation_tasks.values())
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        self._confirmation_tasks.clear()
 
     @property
     def seconds_since_success(self) -> int | None:

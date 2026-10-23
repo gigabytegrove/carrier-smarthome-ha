@@ -50,10 +50,15 @@ class OptimisticControlTracker:
     def begin(self, serial: str, zone_index: int, desired: dict,
               previous: dict, device_number: int) -> int:
         key = (serial, zone_index)
-        if key in self._active:
-            raise RuntimeError("A thermostat command is already pending")
         if not desired or _safe_values(desired) != desired:
             raise ValueError("Invalid thermostat control request")
+        # Later user intent immediately replaces pending display. The earlier
+        # cloud mutation (if already sent) must be allowed to finish; only its
+        # read-only confirmation can be abandoned.
+        previous_command = self._active.get(key)
+        if previous_command is not None:
+            self.record(previous_command["command_id"], "superseded",
+                        reason="newer_user_command")
         self._next_id += 1
         command_id = self._next_id
         safe_previous = _safe_values({k: previous.get(k) for k in desired})
@@ -98,6 +103,11 @@ class OptimisticControlTracker:
         if type(zone_index) is int and zone_index >= 0:
             event["zone_index"] = zone_index
         self._events.append(event)
+
+    def is_current(self, serial: str, zone_index: int,
+                   command_id: int) -> bool:
+        active = self._active.get((serial, zone_index))
+        return active is not None and active["command_id"] == command_id
 
     def overlay(self, serial: str, zone_index: int) -> dict:
         record = self._active.get((serial, zone_index))

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.8 — Rapid consecutive thermostat changes
+
+- Fix the "Previous Carrier command still being verified" failure when changing HVAC mode twice quickly.
+- Hold the control lock only for a fresh cloud preflight and one Carrier mutation, not the up-to-64-second read-only observation window. Return control to Home Assistant after cloud acknowledgment while background confirmation updates the local optimistic display.
+- Allow a newer user command to supersede an earlier pending command immediately. Coalesce commands still waiting for their turn to write, so stale queued mode selections do not override the latest selection.
+- Never cancel an in-flight Carrier mutation. Serialize actual writes, stop only superseded read-only confirmation, and clean up confirmation tasks when the integration unloads.
+- Explicitly issue the latest change on rapid reversals (Cool → Off) even when preflight cloud data is still at the old Off state. Require independent evidence of a transition before declaring a reversal verified when the reported state was already at the requested target.
+- Preserve other in-progress mode, fan and target values in a combined subsequent command when controls change rapidly.
+- Keep all commands privacy-sanitized in the bounded diagnostics history, including supersessions, mutation acknowledgment, cancellations, verification and rollbacks.
+- Preserve the integration domain, entity IDs, existing configuration, supported model, single cloud mutation per transmitted command, and no Matter or unverified proprietary local control.
+
 ## v0.5.7 — Immediate thermostat feedback and command diagnostics
 
 - Show an operator's requested HVAC mode, fan setting or target temperature on the Home Assistant climate entity immediately, before cloud preflight and Carrier command readback. The new state is visibly marked `control_status: pending_cloud_confirmation`.
