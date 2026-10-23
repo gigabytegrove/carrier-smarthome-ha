@@ -1,12 +1,15 @@
 {
   "domain": "carrier_smarthome",
   "name": "Carrier SmartHome",
-  "version": "0.5.7b1",
+  "version": "0.5.7b2",
   "documentation": "https://github.com/gigabytegrove/carrier-smarthome-ha",
   "issue_tracker": "https://github.com/gigabytegrove/carrier-smarthome-ha/issues",
   "codeowners": [],
   "config_flow": true,
   "iot_class": "cloud_polling",
   "integration_type": "hub",
-  "requirements": []
+  "requirements": [],
+  "after_dependencies": [
+    "matter"
+  ]
 }

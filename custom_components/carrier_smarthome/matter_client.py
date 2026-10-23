@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import re
 from typing import Any
 from urllib.parse import urlsplit
 from aiohttp import ClientError
@@ -15,11 +16,11 @@ from uuid import uuid4
 
 from .matter_protocol import (
     MatterNotReady, MatterWriteUncertain, decode, path, plan_mode, plan_setpoint,
-    THERMOSTAT_CLUSTER, MATTER_TO_MODES,
+    THERMOSTAT_CLUSTER, MATTER_TO_MODES, validate_node,
 )
 
 
-def validate_server_url(value: str) -> str:
+def validate_server_url(value: str, *, trusted_ha_source: bool = False) -> str:
     """Accept explicit private/LAN Matter Servers; reject public destinations.
 
     Matter Servers commonly expose plain ws:// on a trusted local subnet.
@@ -27,17 +28,28 @@ def validate_server_url(value: str) -> str:
     """
     try:
         url = urlsplit(value)
-        ip = ipaddress.ip_address(url.hostname or "")
+        hostname = url.hostname or ""
         port = url.port
+        try:
+            ip = ipaddress.ip_address(hostname)
+        except ValueError:
+            ip = None
     except (ValueError, TypeError):
-        raise MatterNotReady("Matter Server must use an explicit valid private or loopback IP and port") from None
+        raise MatterNotReady("Matter Server requires a valid URL and port") from None
     if url.username or url.password or url.fragment or url.query:
         raise MatterNotReady("Matter Server URL cannot contain credentials or parameters")
     if url.scheme not in ("ws", "wss") or url.path not in ("", "/", "/ws"):
         raise MatterNotReady("Matter Server expects ws[s]://<private-ip>:5580/ws")
-    if (not (ip.is_private or ip.is_loopback) or ip.is_unspecified
-            or ip.is_multicast or ip.is_link_local):
-        raise MatterNotReady("Matter Server must use a trusted private or loopback address")
+    if ip is not None:
+        if (not (ip.is_private or ip.is_loopback) or ip.is_unspecified
+                or ip.is_multicast or ip.is_link_local):
+            raise MatterNotReady("Matter Server must use a trusted private or loopback address")
+    elif not (trusted_ha_source and hostname
+              and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}", hostname)
+              and ".." not in hostname):
+        # Hostnames are allowed only when read from the *loaded* native HA
+        # Matter integration, never from Carrier SmartHome user input.
+        raise MatterNotReady("Manual Matter Server URLs must contain a private IP")
     if not port or not 1 <= port <= 65535:
         raise MatterNotReady("Matter Server port required")
     # Preserve the slash between authority and endpoint; a bare trailing slash
@@ -46,9 +58,13 @@ def validate_server_url(value: str) -> str:
 
 
 class MatterWsClient:
-    def __init__(self, session: Any, server_url: str, node_id: int, endpoint: int) -> None:
+    def __init__(self, session: Any, server_url: str, node_id: int, endpoint: int,
+                 *, trusted_ha_source: bool = False,
+                 expected_fabric_id: int | None = None) -> None:
         self.session = session
-        self.server_url = validate_server_url(server_url)
+        self.server_url = validate_server_url(server_url,
+                                              trusted_ha_source=trusted_ha_source)
+        self.expected_fabric_id = expected_fabric_id
         if type(node_id) is not int or not 1 <= node_id < 2**64:
             raise MatterNotReady("Matter node ID must be positive")
         path(endpoint, THERMOSTAT_CLUSTER, 0x1C)
@@ -71,12 +87,46 @@ class MatterWsClient:
                 return response["result"]
         raise MatterNotReady("Matter Server sent too many unrelated messages")
 
-    async def _handshake(self, ws: Any) -> None:
+    async def _handshake(self, ws: Any) -> dict:
         info = await ws.receive_json(timeout=10)
         if not isinstance(info, dict) or type(info.get("schema_version")) is not int:
             raise MatterNotReady("Matter Server did not send valid handshake")
         if info["schema_version"] < 11 or info.get("min_supported_schema_version", 0) > 14:
             raise MatterNotReady("Incompatible Matter Server API version")
+        if (self.expected_fabric_id is not None and
+                info.get("compressed_fabric_id") != self.expected_fabric_id):
+            raise MatterNotReady("Matter fabric changed; reselect your Carrier thermostat")
+        return info
+
+    async def discover_thermostats(self) -> tuple[int, list[dict]]:
+        """Read-only list of *commissioned*, online Carrier thermostat nodes."""
+        try:
+            async with self.session.ws_connect(self.server_url, timeout=10) as ws:
+                info = await self._handshake(ws)
+                fabric = info.get("compressed_fabric_id")
+                if type(fabric) is not int:
+                    raise MatterNotReady("Matter controller did not report its fabric identity")
+                nodes = await self._rpc(ws, "get_nodes", {"only_available": True})
+                if not isinstance(nodes, list):
+                    raise MatterNotReady("Matter Server returned invalid node discovery")
+                candidates = []
+                for node in nodes:
+                    if not isinstance(node, dict) or type(node.get("node_id")) is not int:
+                        continue
+                    if not (1 <= node["node_id"] < 2**64):
+                        continue
+                    for endpoint in range(1, 241):
+                        try:
+                            validate_node(node, endpoint)
+                        except MatterNotReady:
+                            continue
+                        candidates.append({"node_id": node["node_id"],
+                                           "endpoint": endpoint})
+                return fabric, candidates
+        except MatterNotReady:
+            raise
+        except (ClientError, OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
+            raise MatterNotReady("Home Assistant Matter controller is not reachable") from exc
 
     async def get_state(self):
         try:
