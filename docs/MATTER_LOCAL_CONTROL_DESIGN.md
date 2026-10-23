@@ -87,3 +87,18 @@ is not claimed by this branch.
   fallback only before local write. Matter-only independent fan mode is hidden.
 - Never make test changes to live setpoints or HVAC modes without supervised
   reversible device-level confirmation.
+
+## Test-readiness safety hardening
+
+- A Matter write now performs an actual `read_attribute` operation before the
+  write rather than trusting an old `get_node` subscription snapshot. This
+  read must return the exact attribute and numeric value or no write starts.
+- Already-matching setpoints/modes short-circuit without an unnecessary HVAC
+  write. After a possibly transmitted write, any uncertain ACK blocks all
+  automatic cloud fallback.
+- Local writes share the legacy cloud write lock. A pending cloud confirmation
+  prevents a local command from being queued or racing the cloud control.
+- In Matter-only mode, TURN_ON is not offered from stale cloud history.
+  Only a genuinely observed previous local non-Off mode may be restored.
+- Cloud-derived humidity and fan state are explicitly marked cloud-reported.
+  These attributes must not be interpreted as local Matter telemetry.

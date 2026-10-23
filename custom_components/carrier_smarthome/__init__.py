@@ -61,7 +61,9 @@ async def async_migrate_entry(hass, entry: ConfigEntry) -> bool:
     """Delete pre-Alpha-10 control gates; never break stored credentials."""
     if entry.version > 2:
         return False
-    hass.config_entries.async_update_entry(entry, version=2, options={})
+    # Keep user-selected Matter bindings across Home Assistant migrations.
+    # Older control-gate options are no longer honored by climate controls.
+    hass.config_entries.async_update_entry(entry, version=2)
     return True
 
 

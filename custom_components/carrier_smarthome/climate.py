@@ -66,7 +66,9 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     @property
     def _local(self):
-        return self._matter.state(self.serial, self.zone) if self._matter else None
+        state = self._matter.state(self.serial, self.zone) if self._matter else None
+        # No verified system mode means the device isn't ready for control.
+        return state if state is not None and state.mode is not None else None
 
     @property
     def available(self):
@@ -122,7 +124,12 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
             features |= ClimateEntityFeature.FAN_MODE
         # A power-on service needs an established previous mode. We never
         # silently choose Heat or Cool when one cannot be established.
-        if self.coordinator.last_non_off_mode(self.serial, self.zone) is not None:
+        last_mode = (
+            self._matter.last_non_off_mode(self.serial, self.zone)
+            if self._policy == MATTER_ONLY and self._matter
+            else self.coordinator.last_non_off_mode(self.serial, self.zone)
+        )
+        if last_mode is not None:
             features |= ClimateEntityFeature.TURN_ON
         if (self._state["heat_setpoint"] is not None
                 and self._state["cool_setpoint"] is not None):
@@ -173,6 +180,8 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         state = self._state
         return {
             "schedule_enabled": state["schedule_enabled"],
+            "fan_state_source": "carrier_cloud_last_reported",
+            "humidity_source": "carrier_cloud_last_reported",
             "stage_status": state["stage_status"],
             "carrier_reported_connection": connectivity_state(self.system),
             "control_transport": (
@@ -195,8 +204,8 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         self._require_online()
-        if hvac_mode not in _FROM_HA:
-            raise HomeAssistantError("Unsupported thermostat mode")
+        if hvac_mode not in _FROM_HA or hvac_mode not in self.hvac_modes:
+            raise HomeAssistantError("Unsupported thermostat mode for selected transport")
         mode = _FROM_HA[hvac_mode]
         await self._execute(
             lambda: async_set_mode_verified(self.coordinator, self.serial, self.zone, mode),
@@ -208,7 +217,11 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
 
     async def async_turn_on(self):
         self._require_online()
-        previous = self.coordinator.last_non_off_mode(self.serial, self.zone)
+        previous = (
+            self._matter.last_non_off_mode(self.serial, self.zone)
+            if self._policy == MATTER_ONLY and self._matter
+            else self.coordinator.last_non_off_mode(self.serial, self.zone)
+        )
         if previous not in ("heat", "cool", "auto", "fanonly"):
             raise HomeAssistantError("Choose Heat, Cool, Auto or Fan Only in the mode selector first")
         await self._execute(
