@@ -102,3 +102,16 @@ is not claimed by this branch.
   Only a genuinely observed previous local non-Off mode may be restored.
 - Cloud-derived humidity and fan state are explicitly marked cloud-reported.
   These attributes must not be interpreted as local Matter telemetry.
+
+## Hardware verification correction: Matter snapshots vs live reads
+
+Matter Server's `get_node` is a server-maintained cache. We now perform
+an actual `read_attribute` of the Thermostat system mode on every local
+state refresh; this is used as a reachability check before cloud-to-local
+fallback. Every command separately reads its destination attribute before
+sending a write and skips the write when that attribute is already at target.
+
+The protocol now respects Thermostat `MinSetpointDeadBand` attribute 0x0019
+in tenths of a degree Celsius and refuses a requested target that would
+silently move the opposite target. See Matter Application Clusters §4.3.
+No hardware-based feature-map assumption or fan-control claim was added.

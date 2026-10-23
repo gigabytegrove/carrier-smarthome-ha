@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from .matter_protocol import (
     MatterNotReady, MatterWriteUncertain, decode, path, plan_mode, plan_setpoint,
-    THERMOSTAT_CLUSTER,
+    THERMOSTAT_CLUSTER, MATTER_TO_MODES,
 )
 
 
@@ -83,7 +83,18 @@ class MatterWsClient:
             async with self.session.ws_connect(self.server_url, timeout=10) as ws:
                 await self._handshake(ws)
                 node = await self._rpc(ws, "get_node", {"node_id": self.node_id})
-                return decode(node, self.endpoint)
+                decode(node, self.endpoint)  # Check commissioned VID/PID first.
+                address = path(self.endpoint, THERMOSTAT_CLUSTER, 0x1C)
+                current = await self._rpc(ws, "read_attribute", {
+                    "node_id": self.node_id, "attribute_path": address,
+                })
+                if (not isinstance(current, dict)
+                        or type(current.get(address)) is not int
+                        or current[address] not in MATTER_TO_MODES):
+                    raise MatterNotReady("Thermostat did not answer live Matter mode read")
+                return decode({**node, "attributes": {
+                    **node["attributes"], address: current[address],
+                }}, self.endpoint)
         except MatterNotReady:
             raise
         except (ClientError, OSError, asyncio.TimeoutError, ValueError, RuntimeError) as exc:
