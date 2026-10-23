@@ -26,6 +26,7 @@ Official protocol docs: https://github.com/matter-js/matterjs-server/blob/main/d
 - A bounded, one-at-a-time WebSocket client for official `get_node`, `read_attribute` and `write_attribute` RPCs with schema checks and readback. No pairing codes stored; the server manages its own fabric.
 - Three-way transport routing policy with no fallback after any possibly sent write.
 - Offline tests for mappings, identities, unit conversions, selection, unsafe destinations, RPC sequence and uncertain write outcomes.
+- Dedicated `DualTransportRouter` enforcing all three modes, serialized user commands and **no second cloud write** following an uncertain Matter result. Cloud fallback is restricted to safe, pre-write Matter failure.
 - Zero changes to stable cloud coordinator, commands or entity registry.
 
 ## Gating work before enabling Matter in HA
