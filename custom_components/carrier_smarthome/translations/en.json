@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Sign in to Carrier SmartHome",
-        "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. Matter control is available separately after commissioning with a Matter Server. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
+        "description": "Sign in using Carrier's native GraphQL API. After setup, choose cloud or local Matter control from Configure. On Home Assistant OS, use Home Assistant's built-in Matter integration to add your thermostat; Carrier discovers it automatically.",
         "data": {
           "username": "Carrier account email or username",
           "password": "Password"
@@ -38,14 +38,41 @@
         }
       },
       "transport": {
-        "title": "Control connection",
-        "description": "Local Matter requires an already commissioned thermostat in an Open Home Foundation Matter Server. Verify the correct physical thermostat and keep its WebSocket endpoint restricted to your trusted LAN. Cloud only is always available. Confirm the Matter node belongs to the selected physical thermostat; VID/PID alone cannot prove that.",
+        "title": "Choose how to control this thermostat",
+        "description": "Cloud requires no extra setup. For local Matter, Carrier automatically reuses Home Assistant's existing Matter controller; you don't need to provide an IP or node ID.",
         "data": {
-          "policy": "Control preference",
+          "policy": "Control preference"
+        }
+      },
+      "auto": {
+        "title": "Choose your commissioned Carrier thermostat",
+        "description": "Carrier detected compatible devices using Home Assistant's existing Matter controller. Pick the physical thermostat you want to link.",
+        "data": {
+          "candidate": "Matter thermostat"
+        }
+      },
+      "confirm": {
+        "title": "Confirm this is the same physical thermostat",
+        "description": "Verify that the selected Matter thermostat belongs to the selected Carrier account device. Model identity alone cannot distinguish two identical units.",
+        "data": {
+          "verified_same_device": "I verified this is the same physical thermostat"
+        }
+      },
+      "matter_required": {
+        "title": "Set up Home Assistant Matter first",
+        "description": "No reachable, commissioned Carrier thermostat was found in Home Assistant Matter. On Home Assistant OS, add the built-in Matter integration in Settings → Devices & services, then pair/share your Carrier thermostat with the Home Assistant Companion app. On Home Assistant Container, Matter requires a separate controller service managed by your deployment. Carrier cannot safely install a Docker daemon or Matter server from HACS. Retry after pairing, or use the advanced connection option.",
+        "data": {
+          "next_action": "Continue"
+        }
+      },
+      "advanced": {
+        "title": "Advanced: existing Matter controller",
+        "description": "For users who manage their own controller. Connect only to a Matter Server on a trusted private IP; no automatic commissioning is performed.",
+        "data": {
           "url": "Matter Server WebSocket address",
-          "node_id": "Matter node ID",
+          "node_id": "Commissioned node ID",
           "endpoint": "Thermostat endpoint",
-          "verified_same_device": "I verified this Matter node is the selected physical thermostat"
+          "verified_same_device": "I verified this is the same physical thermostat"
         }
       }
     },

@@ -1,3 +1,11 @@
+## 0.5.7b2 — Development: discover Home Assistant's own Matter controller (unreleased)
+
+- Normal Configure flow reuses the built-in Matter integration's commissioned device list. No manual server URL, node ID or endpoint required.
+- Matter devices are filtered by verified Carrier VID/PID and thermostat cluster. The physical thermostat must be confirmed before binding.
+- Native Matter controller entry ID and compressed fabric ID are pinned. An unavailable or changed controller never silently enables cloud commands under Matter-only policy.
+- Existing advanced/manual private Matter Server configurations remain backward-compatible; cloud-only installs unchanged.
+- Home Assistant OS can use the supported official Matter app; Container installations still require a separately managed Matter Server. No Docker socket, daemon spawning or hidden host modification.
+
 ## 0.5.7b1 — experimental Matter test build (feature branch, not stable v0.5.6)
 
 - Add explicit per-thermostat Cloud only / Matter only / Prefer Matter control preferences; existing installations remain cloud-only by default.

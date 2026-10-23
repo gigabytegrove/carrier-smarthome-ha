@@ -132,3 +132,31 @@ You can also [report an issue](https://github.com/gigabytegrove/carrier-smarthom
 Your account credentials are stored by Home Assistant for Carrier authentication; this project does not require Matter pairing or a separate cloud account. **Never post** credentials, raw diagnostics, MACs, IP addresses, serials, unredacted packet captures, or authentication tokens in public GitHub issues.
 
 Carrier SmartHome is an **independent community integration**, not affiliated with, endorsed by, or supported by Carrier. Carrier names, logos, and product marks belong to their respective owners. The project icon identifies the supported Carrier equipment; its inclusion does not imply an official relationship.
+
+
+### Simplified local Matter onboarding — development beta v0.5.7b2
+
+The in-development **v0.5.7b2** path prefers the official, **existing Home
+Assistant Matter controller** rather than a separate Carrier-run Matter
+instance. Carrier SmartHome → Configure → Local Matter/Prefer Matter →
+**Choose thermostat** → confirm identity. No manually typed WebSocket address,
+node ID or endpoint for the normal setup path. It reuses Home Assistant's
+commissioning, fabric certificate store and controller lifecycle.
+
+- **Home Assistant OS:** the native Matter integration can set up and manage
+  its Matter Server app. Commission/share the Wi-Fi thermostat using the
+  native Home Assistant Matter flow, then select it in Carrier SmartHome.
+  The official Matter integration handles pairing securely.
+- **Home Assistant Container:** there is no Supervisor/apps API, so a HACS
+  integration **cannot safely install the controller within the HA process**.
+  A standalone Matter Server remains necessary, but only once per HA instance.
+  Carrier can autodiscover it *after* the native Matter integration connects.
+- **Advanced/manual:** existing private-IP Matter Server installations and
+  previous option bindings remain supported.
+- **Safety:** only an online, verified Carrier VID/PID and Thermostat cluster
+  is offered. Saved bindings pin the native Matter config entry ID and fabric
+  identity; if that fabric changes, local control fails closed.
+
+This beta is still under development; the published v0.5.7b1 prerelease is
+unchanged. No Docker socket access, privileged installations, or duplicate
+Matter fabric is created by Carrier SmartHome.

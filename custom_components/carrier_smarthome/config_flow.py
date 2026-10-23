@@ -13,6 +13,7 @@ from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
 from .const import DOMAIN
 from .models import zone_indices
 from .matter_client import MatterWsClient
+from .matter_discovery import find_home_assistant_matter, HA_MATTER_SOURCE
 from .matter_protocol import CLOUD_ONLY, MATTER_ONLY, MATTER_PREFERRED, MatterNotReady
 from .matter_runtime import OPTIONS_BINDINGS, binding_key
 
@@ -85,10 +86,36 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
-    """Bind one explicitly chosen Carrier serial/zone to a commissioned Matter node."""
+    """One-time Carrier-to-HA-Matter selection; no manual controller fields."""
 
     def __init__(self):
         self._target = None
+        self._policy = CLOUD_ONLY
+        self._source = None
+        self._fabric = None
+        self._candidates = {}
+        self._candidate = None
+
+    def _existing(self):
+        raw = self.config_entry.options.get(OPTIONS_BINDINGS, {})
+        return dict(raw) if isinstance(raw, dict) else {}
+
+    def _save(self, existing):
+        return self.async_create_entry(
+            title="", data={**self.config_entry.options, OPTIONS_BINDINGS: existing})
+
+    def _is_duplicate(self, existing, *, url, node_id, endpoint, source_entry_id=None):
+        for target, previous in existing.items():
+            if target == self._target or not isinstance(previous, dict):
+                continue
+            if (previous.get("node_id") != node_id
+                    or previous.get("endpoint") != endpoint):
+                continue
+            if source_entry_id and previous.get("matter_entry_id") == source_entry_id:
+                return True
+            if previous.get("url") == url:
+                return True
+        return False
 
     async def async_step_init(self, user_input=None):
         coordinator = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
@@ -101,70 +128,159 @@ class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
         if not choices:
             return self.async_abort(reason="no_devices")
         if user_input is not None:
-            self._target = user_input["target"]
-            if self._target not in choices:
+            target = user_input["target"]
+            if target not in choices:
                 return self.async_abort(reason="no_devices")
+            self._target = target
             return await self.async_step_transport()
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({vol.Required("target"): vol.In(choices)}),
-        )
+            data_schema=vol.Schema({vol.Required("target"): vol.In(choices)}))
 
     async def async_step_transport(self, user_input=None):
-        existing = dict(self.config_entry.options.get(OPTIONS_BINDINGS, {}))
-        binding = existing.get(self._target, {})
+        existing = self._existing()
+        prior = existing.get(self._target, {})
+        if user_input is not None:
+            self._policy = user_input["policy"]
+            if self._policy == CLOUD_ONLY:
+                existing.pop(self._target, None)
+                return self._save(existing)
+            return await self.async_step_auto()
+        return self.async_show_form(step_id="transport", data_schema=vol.Schema({
+            vol.Required("policy", default=prior.get("policy", CLOUD_ONLY)): vol.In({
+                CLOUD_ONLY: "Carrier cloud only",
+                MATTER_ONLY: "Local Matter only",
+                MATTER_PREFERRED: "Prefer local Matter, then cloud",
+            }),
+        }))
+
+    async def async_step_auto(self, user_input=None):
+        """Use the native Home Assistant Matter fabric without a server URL."""
+        source = find_home_assistant_matter(self.hass)
+        if source is None:
+            return await self.async_step_matter_required()
+        self._source = source
+        session = async_get_clientsession(self.hass)
+        try:
+            client = MatterWsClient(session, source.server_url, 1, 1,
+                                    trusted_ha_source=True)
+            self._fabric, found = await client.discover_thermostats()
+            self._candidates = {f"{c['node_id']}:{c['endpoint']}": c
+                                for c in found}
+        except MatterNotReady:
+            return await self.async_step_matter_required()
+        if not self._candidates:
+            return await self.async_step_matter_required()
+        if user_input is not None:
+            candidate_id = user_input["candidate"]
+            if candidate_id not in self._candidates:
+                return self.async_show_form(
+                    step_id="auto", errors={"base": "matter_not_ready"},
+                    data_schema=vol.Schema({
+                        vol.Required("candidate"): vol.In({
+                            key: f"Carrier Matter thermostat (node {value['node_id']}, endpoint {value['endpoint']})"
+                            for key, value in self._candidates.items()})}))
+            self._candidate = self._candidates[candidate_id]
+            return await self.async_step_confirm()
+        choices = {
+            key: f"Carrier Matter thermostat (node {value['node_id']}, endpoint {value['endpoint']})"
+            for key, value in self._candidates.items()
+        }
+        return self.async_show_form(
+            step_id="auto",
+            data_schema=vol.Schema({vol.Required("candidate"): vol.In(choices)}))
+
+    async def async_step_confirm(self, user_input=None):
         errors = {}
         if user_input is not None:
-            policy = user_input["policy"]
-            if policy == CLOUD_ONLY:
-                existing.pop(self._target, None)
-                return self.async_create_entry(title="", data={
-                    **self.config_entry.options, OPTIONS_BINDINGS: existing
-                })
             if user_input.get("verified_same_device") is not True:
                 errors["base"] = "identity_not_verified"
-            try:
-                if errors:
-                    raise MatterNotReady("Identity confirmation required")
-                url = user_input["url"].strip()
-                node_id = int(user_input["node_id"])
-                endpoint = int(user_input["endpoint"])
-                client = MatterWsClient(async_get_clientsession(self.hass),
-                                        url, node_id, endpoint)
-                # Read-only verification: matching certified VID/PID,
-                # commissioned/online node and thermostat endpoint.
-                await client.get_state()
-                if any(
-                    previous.get("url") == client.server_url
-                    and previous.get("node_id") == node_id
-                    and previous.get("endpoint") == endpoint
-                    for target, previous in existing.items()
-                    if target != self._target and isinstance(previous, dict)
-                ):
-                    raise ValueError("Matter node/endpoint already bound to another Carrier thermostat")
-            except (MatterNotReady, ValueError, TypeError, KeyError):
-                errors.setdefault("base", "matter_not_ready")
-            except Exception:
-                _LOGGER.exception("Matter server check failed during configuration")
-                errors["base"] = "matter_not_ready"
             else:
-                existing[self._target] = {
-                    "policy": policy, "url": client.server_url,
-                    "node_id": node_id, "endpoint": endpoint,
-                }
-                return self.async_create_entry(title="", data={
-                    **self.config_entry.options, OPTIONS_BINDINGS: existing
-                })
-        return self.async_show_form(step_id="transport", errors=errors,
-                                    data_schema=vol.Schema({
-            vol.Required("policy", default=binding.get("policy", CLOUD_ONLY)):
-                vol.In({CLOUD_ONLY: "Carrier cloud only",
-                        MATTER_ONLY: "Local Matter only",
-                        MATTER_PREFERRED: "Prefer local Matter, then cloud"}),
-            vol.Optional("url", default=binding.get("url", "ws://127.0.0.1:5580/ws")): str,
-            vol.Optional("node_id", default=binding.get("node_id", 1)):
-                vol.All(vol.Coerce(int), vol.Range(min=1, max=2**64 - 1)),
-            vol.Optional("endpoint", default=binding.get("endpoint", 1)):
-                vol.All(vol.Coerce(int), vol.Range(min=1, max=240)),
-            vol.Required("verified_same_device", default=False): bool,
-        }))
+                source = find_home_assistant_matter(self.hass)
+                if source is None or source.entry_id != self._source.entry_id:
+                    errors["base"] = "matter_not_ready"
+                else:
+                    candidate = self._candidate
+                    existing = self._existing()
+                    try:
+                        client = MatterWsClient(
+                            async_get_clientsession(self.hass), source.server_url,
+                            candidate["node_id"], candidate["endpoint"],
+                            trusted_ha_source=True,
+                            expected_fabric_id=self._fabric)
+                        # Recheck live device identity and fabric at save time.
+                        await client.get_state()
+                        if self._is_duplicate(
+                                existing, url=source.server_url,
+                                node_id=candidate["node_id"],
+                                endpoint=candidate["endpoint"],
+                                source_entry_id=source.entry_id):
+                            raise ValueError("Matter thermostat already linked")
+                    except (MatterNotReady, ValueError, TypeError):
+                        errors["base"] = "matter_not_ready"
+                    else:
+                        existing[self._target] = {
+                            "source": HA_MATTER_SOURCE,
+                            "matter_entry_id": source.entry_id,
+                            "fabric_id": self._fabric,
+                            "policy": self._policy,
+                            "node_id": candidate["node_id"],
+                            "endpoint": candidate["endpoint"],
+                        }
+                        return self._save(existing)
+        return self.async_show_form(
+            step_id="confirm", errors=errors,
+            data_schema=vol.Schema({
+                vol.Required("verified_same_device", default=False): bool,
+            }))
+
+    async def async_step_matter_required(self, user_input=None):
+        """Explain native HA commissioning; retain advanced legacy migration."""
+        if user_input is not None:
+            if user_input["next_action"] == "advanced":
+                return await self.async_step_advanced()
+            return await self.async_step_auto()
+        return self.async_show_form(
+            step_id="matter_required", data_schema=vol.Schema({
+                vol.Required("next_action"): vol.In({
+                    "retry": "I added my device to Home Assistant Matter — retry",
+                    "advanced": "Advanced: connect an existing Matter Server",
+                }),
+            }))
+
+    async def async_step_advanced(self, user_input=None):
+        """Expert/manual backwards-compatible path; never silently install a daemon."""
+        existing = self._existing()
+        previous = existing.get(self._target, {})
+        errors = {}
+        if user_input is not None:
+            if user_input.get("verified_same_device") is not True:
+                errors["base"] = "identity_not_verified"
+            else:
+                try:
+                    client = MatterWsClient(
+                        async_get_clientsession(self.hass), user_input["url"].strip(),
+                        user_input["node_id"], user_input["endpoint"])
+                    await client.get_state()
+                    if self._is_duplicate(
+                            existing, url=client.server_url,
+                            node_id=client.node_id, endpoint=client.endpoint):
+                        raise MatterNotReady("Matter device already linked")
+                except (MatterNotReady, ValueError, TypeError, KeyError):
+                    errors["base"] = "matter_not_ready"
+                else:
+                    existing[self._target] = {
+                        "policy": self._policy, "url": client.server_url,
+                        "node_id": client.node_id, "endpoint": client.endpoint,
+                    }
+                    return self._save(existing)
+        return self.async_show_form(
+            step_id="advanced", errors=errors, data_schema=vol.Schema({
+                vol.Required("url", default=previous.get(
+                    "url", "ws://127.0.0.1:5580/ws")): str,
+                vol.Required("node_id", default=previous.get("node_id", 1)):
+                    vol.All(vol.Coerce(int), vol.Range(min=1, max=2**64 - 1)),
+                vol.Required("endpoint", default=previous.get("endpoint", 1)):
+                    vol.All(vol.Coerce(int), vol.Range(min=1, max=240)),
+                vol.Required("verified_same_device", default=False): bool,
+            }))

@@ -11,6 +11,7 @@ import time
 from typing import Any, Awaitable, Callable
 
 from .matter_client import MatterWsClient
+from .matter_discovery import resolve_source
 from .matter_protocol import (
     CLOUD_ONLY, MATTER_ONLY, MATTER_PREFERRED, MatterNotReady,
     MatterWriteUncertain,
@@ -47,6 +48,7 @@ class MatterManager:
         self._readings: dict[str, tuple[float, Any]] = {}
         self._last_non_off: dict[str, str] = {}
         raw = options.get(OPTIONS_BINDINGS, {})
+        hass = getattr(coordinator, "hass", None)
         if not isinstance(raw, dict):
             return
         for key, binding in raw.items():
@@ -55,14 +57,18 @@ class MatterManager:
             policy = binding.get("policy")
             if policy not in (MATTER_ONLY, MATTER_PREFERRED):
                 continue
+            # Keep Matter-only fail-closed when its controller is missing:
+            # skipping a binding must never silently switch it to cloud.
+            self._policies[key] = policy
             try:
-                client = MatterWsClient(session, binding["url"],
-                                        binding["node_id"], binding["endpoint"])
-            except (KeyError, TypeError, ValueError, MatterNotReady):
-                _LOGGER.warning("Ignoring invalid Matter binding configuration")
+                url, trusted, fabric_id = resolve_source(hass, binding)
+                client = MatterWsClient(
+                    session, url, binding["node_id"], binding["endpoint"],
+                    trusted_ha_source=trusted, expected_fabric_id=fabric_id)
+            except (AttributeError, KeyError, TypeError, ValueError, MatterNotReady):
+                _LOGGER.warning("Matter controller unavailable; preserving selected control policy")
                 continue
             self._clients[key] = client
-            self._policies[key] = policy
             self._routers[key] = DualTransportRouter(
                 client, lambda key=key: self._cloud_ready(key)
             )
@@ -123,7 +129,12 @@ class MatterManager:
         if policy == CLOUD_ONLY:
             await cloud_write()
             return CLOUD_ONLY
-        router = self._routers[key]
+        router = self._routers.get(key)
+        if router is None:
+            if policy == MATTER_PREFERRED and self._cloud_ready(key):
+                await cloud_write()
+                return CLOUD_ONLY
+            raise MatterNotReady("Selected Matter controller not loaded; no local command sent")
 
         async def guarded_matter(client):
             # Serialize with legacy Carrier cloud controls. In particular,
