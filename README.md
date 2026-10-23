@@ -160,3 +160,9 @@ commissioning, fabric certificate store and controller lifecycle.
 This beta is still under development; the published v0.5.7b1 prerelease is
 unchanged. No Docker socket access, privileged installations, or duplicate
 Matter fabric is created by Carrier SmartHome.
+
+For supported installation-specific setup, see
+[One-time Matter onboarding design](docs/MATTER_ONBOARDING.md). Carrier does not
+install another controller or silently edit the host. In Home Assistant OS it
+reuses the managed official controller; in HA Container it can reuse the
+operator's official Matter integration after its controller is provisioned.
