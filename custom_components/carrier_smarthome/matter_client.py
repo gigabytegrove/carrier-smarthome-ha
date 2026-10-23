@@ -94,6 +94,8 @@ class MatterWsClient:
         """Single write followed by readback; never retry an uncertain result."""
         if (mode is None) == (setpoint_kind is None):
             raise MatterNotReady("Request exactly one HVAC action at a time")
+        if setpoint_kind is not None and setpoint_c is None:
+            raise MatterNotReady("Setpoint temperature required")
         try:
             async with self.session.ws_connect(self.server_url, timeout=10) as ws:
                 await self._handshake(ws)
@@ -103,6 +105,17 @@ class MatterWsClient:
                 else:
                     address, value = plan_setpoint(node, self.endpoint,
                                                    setpoint_kind, setpoint_c)
+                # Verify live reachability through a real Matter Read before
+                # sending any write. get_node alone may contain cached data
+                # from a prior server subscription.
+                observed = await self._rpc(ws, "read_attribute", {
+                    "node_id": self.node_id, "attribute_path": address,
+                })
+                if (not isinstance(observed, dict)
+                        or type(observed.get(address)) is not int):
+                    raise MatterNotReady("Matter did not provide a live thermostat read")
+                if observed[address] == value:
+                    return {"transport": "matter", "confirmed": True, "changed": False}
                 # Irreversible boundary: even a lost ACK may mean HVAC changed.
                 try:
                     result = await self._rpc(ws, "write_attribute", {
