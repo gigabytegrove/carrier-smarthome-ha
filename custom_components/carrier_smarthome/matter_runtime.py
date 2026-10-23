@@ -94,7 +94,9 @@ class MatterManager:
             return False
         try:
             state = await client.get_state()
-        except (MatterNotReady, OSError, asyncio.TimeoutError):
+        except Exception as exc:
+            # A local controller failure must not prevent cloud-only operation.
+            _LOGGER.debug("Configured Matter controller not ready (%s)", type(exc).__name__)
             self._readings.pop(key, None)
             self.coordinator.async_update_listeners()
             return False

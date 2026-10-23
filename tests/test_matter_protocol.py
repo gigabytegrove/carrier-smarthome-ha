@@ -62,11 +62,16 @@ class MatterMappingTests(unittest.TestCase):
         with self.assertRaises(p.MatterNotReady):
             p.select_transport("matter", matter_ready=False, cloud_ready=True)
 
-    def test_refuse_cleartext_remote_and_public_server(self):
-        self.assertEqual(c.validate_server_url("ws://127.0.0.1:5580/ws"),
-                         "ws://127.0.0.1:5580/ws")
-        for url in ("ws://192.168.0.19:5580/ws", "ws://8.8.8.8:5580/ws",
-                    "ws://user:pw@127.0.0.1:5580/ws", "http://127.0.0.1:5580/ws"):
+    def test_private_lan_matter_server_urls(self):
+        for url in ("ws://127.0.0.1:5580/ws", "ws://127.0.0.1:5580/",
+                    "ws://127.0.0.1:5580",
+                    "ws://192.168.0.19:5580/ws", "wss://172.20.0.4:5580/ws"):
+            self.assertEqual(c.validate_server_url(url),
+                             url.rstrip("/") + ("/ws" if not url.endswith("/ws") else ""))
+        for url in ("ws://8.8.8.8:5580/ws",
+                    "ws://0.0.0.0:5580/ws", "ws://169.254.5.4:5580/ws",
+                    "ws://user:pw@127.0.0.1:5580/ws",
+                    "http://127.0.0.1:5580/ws", "ws://127.0.0.1:99999/ws"):
             with self.assertRaises(p.MatterNotReady):
                 c.validate_server_url(url)
 

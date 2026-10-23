@@ -39,17 +39,19 @@
       },
       "transport": {
         "title": "Control connection",
-        "description": "Local Matter requires an already commissioned thermostat in an Open Home Foundation Matter Server. Verify the correct physical thermostat and keep its WebSocket endpoint restricted to your trusted LAN. Cloud only is always available.",
+        "description": "Local Matter requires an already commissioned thermostat in an Open Home Foundation Matter Server. Verify the correct physical thermostat and keep its WebSocket endpoint restricted to your trusted LAN. Cloud only is always available. Confirm the Matter node belongs to the selected physical thermostat; VID/PID alone cannot prove that.",
         "data": {
           "policy": "Control preference",
           "url": "Matter Server WebSocket address",
           "node_id": "Matter node ID",
-          "endpoint": "Thermostat endpoint"
+          "endpoint": "Thermostat endpoint",
+          "verified_same_device": "I verified this Matter node is the selected physical thermostat"
         }
       }
     },
     "error": {
-      "matter_not_ready": "Matter Server did not confirm an online certified Carrier thermostat at this node and endpoint."
+      "matter_not_ready": "Matter Server did not confirm an online certified Carrier thermostat at this node and endpoint.",
+      "identity_not_verified": "Confirm you have matched this node with the correct physical thermostat."
     },
     "abort": {
       "no_devices": "No Carrier thermostats are currently available for configuration."

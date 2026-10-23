@@ -72,3 +72,18 @@ Cloud-first startup still requires the original Carrier account and a
 successful initial cloud thermostat listing. Fully cloud-independent cold
 startup requires a separately validated persistent identity/device cache and
 is not claimed by this branch.
+
+### Implementation verification checklist (not hardware-tested)
+
+- Confirm default cloud-only config and original entity IDs remain unchanged.
+- Confirm HA OptionsFlow serial/zone list, read-only node verification and
+  owner acknowledgement. Test two same-model units; wrong-node binding is
+  rejected by the user's verification gate and duplicate node/endpoint binding
+  is refused for the account.
+- Exercise 20-second Matter readings with Carrier cloud blocked. Existing
+  climate should remain available for local control while independent cloud
+  diagnostic entities remain cloud-specific.
+- Exercise no-ACK Matter write (must NOT send cloud command); verify cloud
+  fallback only before local write. Matter-only independent fan mode is hidden.
+- Never make test changes to live setpoints or HVAC modes without supervised
+  reversible device-level confirmation.
