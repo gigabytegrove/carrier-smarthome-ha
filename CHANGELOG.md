@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.7 — Immediate thermostat feedback and command diagnostics
+
+- Show an operator's requested HVAC mode, fan setting or target temperature on the Home Assistant climate entity immediately, before cloud preflight and Carrier command readback. The new state is visibly marked `control_status: pending_cloud_confirmation`.
+- Keep optimistic values in a transient, climate-only overlay. The Carrier-reported telemetry, last-reported diagnostic sensors, temperature/humidity, connectivity state and cloud confirmation evidence remain unchanged.
+- After Carrier verifies a command, clear the overlay and display the verified report. Roll it back automatically after a rejection, failed preflight, cancellation, or unresolved readback; label ambiguous acknowledged-but-unconfirmed outcomes separately from confirmed rejection.
+- Add the most recent 160 privacy-sanitized command events to Home Assistant Download diagnostics, including request, preflight, one mutation, individual readbacks, confirmation or rollback, with correlation IDs and times but **no serials, names, account data or tokens**.
+- Preserve one cloud mutation per request, no queued writes, 64-second read-only verification, offline safety, rate limiting, existing entity IDs, no Matter and no claim of proprietary LAN control.
+- Includes offline regression coverage for overlay isolation, multi-zone behavior, privacy, bounded history, rollback and stale completions.
+
 ## v0.5.6 — Clear thermostat sensor names and diagnostic cleanup
 
 - Display native thermostat terminology in the Home Assistant Diagnostics section: **Max Heating Setpoint**, **Min Cooling Setpoint**, **Heating Setpoint**, **Cooling Setpoint**, **HVAC Mode**, **Fan Mode**, **Schedule Enabled**, **Room Temperature**, **Indoor Humidity**, and **Outdoor Temperature**.
