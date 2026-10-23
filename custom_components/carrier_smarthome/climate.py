@@ -13,6 +13,8 @@ from .const import DOMAIN
 from .control import async_set_mode_verified, async_set_fan_verified, async_set_setpoints_verified
 from .entity import CarrierEntity
 from .models import connectivity_state, temperature_unit, zone_indices, zone_values
+from .matter_protocol import CLOUD_ONLY, MATTER_ONLY, MatterNotReady, MatterWriteUncertain
+from .matter_runtime import degrees_from_c, degrees_to_c
 
 _TO_HA = {
     "off": HVACMode.OFF, "heat": HVACMode.HEAT,
@@ -55,12 +57,51 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         self._attr_unique_id = f"{serial}_zone_{zone}_climate"
 
     @property
+    def _matter(self):
+        return getattr(self.coordinator, "matter", None)
+
+    @property
+    def _policy(self):
+        return self._matter.policy(self.serial, self.zone) if self._matter else CLOUD_ONLY
+
+    @property
+    def _local(self):
+        return self._matter.state(self.serial, self.zone) if self._matter else None
+
+    @property
     def available(self):
+        if self._policy != CLOUD_ONLY:
+            if self._local is not None:
+                return True
+            if self._policy == MATTER_ONLY:
+                return False
         return super().available and connectivity_state(self.system) == "online"
 
     @property
     def _state(self):
-        return zone_values(self.zone_data)
+        values = zone_values(self.zone_data)
+        local = self._local if self._policy != CLOUD_ONLY else None
+        if local is not None:
+            unit = self.temperature_unit
+            values.update({
+                "mode": local.mode,
+                "temperature": degrees_from_c(local.temperature_c, unit),
+                "heat_setpoint": degrees_from_c(local.heat_target_c, unit),
+                "cool_setpoint": degrees_from_c(local.cool_target_c, unit),
+                "heat_max": degrees_from_c(local.max_heat_c, unit),
+                "cool_min": degrees_from_c(local.min_cool_c, unit),
+            })
+        return values
+
+    async def _execute(self, cloud_write, matter_write):
+        if self._matter is None or self._policy == CLOUD_ONLY:
+            await cloud_write()
+            return
+        try:
+            await self._matter.execute(self.serial, self.zone,
+                                       cloud_write, matter_write)
+        except (MatterNotReady, MatterWriteUncertain) as exc:
+            raise HomeAssistantError(str(exc)) from exc
 
     @property
     def hvac_modes(self):
@@ -131,7 +172,11 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
             "schedule_enabled": state["schedule_enabled"],
             "stage_status": state["stage_status"],
             "carrier_reported_connection": connectivity_state(self.system),
-            "control_transport": "Carrier native cloud GraphQL (experimental writes)",
+            "control_transport": (
+                "local_matter" if self._policy != CLOUD_ONLY and self._local is not None
+                else "carrier_native_cloud_graphql"
+            ),
+            "transport_policy": self._policy,
             "telemetry_freshness": ("brief_cloud_recovery_grace_may_be_stale"
                                         if getattr(self.coordinator, "telemetry_in_grace", False)
                                         else "carrier_online_without_device_sample_timestamp"),
@@ -145,8 +190,11 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         self._require_online()
         if hvac_mode not in _FROM_HA:
             raise HomeAssistantError("Unsupported thermostat mode")
-        await async_set_mode_verified(self.coordinator, self.serial, self.zone,
-                                      _FROM_HA[hvac_mode])
+        mode = _FROM_HA[hvac_mode]
+        await self._execute(
+            lambda: async_set_mode_verified(self.coordinator, self.serial, self.zone, mode),
+            lambda client: client.write(mode=mode),
+        )
 
     async def async_turn_off(self):
         await self.async_set_hvac_mode(HVACMode.OFF)
@@ -156,10 +204,17 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
         previous = self.coordinator.last_non_off_mode(self.serial, self.zone)
         if previous not in ("heat", "cool", "auto", "fanonly"):
             raise HomeAssistantError("Choose Heat, Cool, Auto or Fan Only in the mode selector first")
-        await async_set_mode_verified(self.coordinator, self.serial, self.zone, previous)
+        await self._execute(
+            lambda: async_set_mode_verified(self.coordinator, self.serial, self.zone, previous),
+            lambda client: client.write(mode=previous),
+        )
 
     async def async_set_fan_mode(self, fan_mode):
         self._require_online()
+        if self._policy == MATTER_ONLY:
+            raise HomeAssistantError("Independent fan mode is not verified via Matter; no command sent")
+        # Prefer Matter falls back to cloud for fan control: the thermostat
+        # cluster does not prove that an independent FanControl command exists.
         await async_set_fan_verified(self.coordinator, self.serial, self.zone, fan_mode)
 
     async def async_set_temperature(self, **kwargs):
@@ -182,4 +237,32 @@ class CarrierClimate(CarrierEntity, ClimateEntity):
             cool = kwargs["temperature"]
         else:
             raise HomeAssistantError("Select Heat, Cool or Auto before setting temperature")
-        await async_set_setpoints_verified(self.coordinator, self.serial, self.zone, heat, cool)
+        async def local_setpoint(client):
+            if not isinstance(heat, (int, float)) or not isinstance(cool, (int, float)):
+                raise MatterNotReady("Setpoint values must be numeric")
+            if isinstance(heat, bool) or isinstance(cool, bool):
+                raise MatterNotReady("Boolean temperature rejected")
+            old_heat, old_cool = state["heat_setpoint"], state["cool_setpoint"]
+            # A single Matter write is atomic; do not partially apply both
+            # targets or pretend that two separate writes are transactional.
+            changed = []
+            if abs(heat - old_heat) >= 0.01:
+                changed.append(("heat", heat))
+            if abs(cool - old_cool) >= 0.01:
+                changed.append(("cool", cool))
+            if len(changed) > 1:
+                raise MatterNotReady(
+                    "Two simultaneous Matter targets are not yet verified; "
+                    "change one setpoint at a time"
+                )
+            if not changed:
+                return {"confirmed": True}
+            kind, value = changed[0]
+            return await client.write(setpoint_kind=kind,
+                                      setpoint_c=degrees_to_c(value, self.temperature_unit))
+
+        await self._execute(
+            lambda: async_set_setpoints_verified(
+                self.coordinator, self.serial, self.zone, heat, cool),
+            local_setpoint,
+        )

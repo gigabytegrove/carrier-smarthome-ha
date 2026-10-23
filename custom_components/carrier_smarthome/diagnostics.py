@@ -14,7 +14,9 @@ def build_diagnostics(coordinator) -> dict:
     systems = list(coordinator.data.values()) if isinstance(coordinator.data, dict) else []
     return {
         "transport": "carrier_native_cloud_graphql",
-        "matter_enabled": False,
+        "matter_enabled": bool(getattr(getattr(coordinator, "matter", None), "has_bindings", False)),
+        "matter_binding_count": len(getattr(getattr(coordinator, "matter", None), "_clients", {})),
+        "matter_configuration": "explicit_per_thermostat_opt_in",
         "last_poll_succeeded": bool(coordinator.last_update_success),
         "last_successful_poll_utc": getattr(coordinator, "last_poll_utc", None),
         "last_error_category": getattr(coordinator, "last_error_kind", None),
