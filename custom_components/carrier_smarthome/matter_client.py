@@ -2,7 +2,7 @@
 
 The standalone Matter Server owns secure fabrics/commissioning/credentials.
 This integration does NOT create another broker or expose a duplicate climate
-entity. Not wired into live HVAC control until on-device commissioning passes.
+entity. Commands are opt-in and require a commissioned, verified Matter node.
 """
 from __future__ import annotations
 

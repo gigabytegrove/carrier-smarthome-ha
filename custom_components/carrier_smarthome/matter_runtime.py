@@ -13,7 +13,7 @@ from typing import Any, Awaitable, Callable
 from .matter_client import MatterWsClient
 from .matter_protocol import (
     CLOUD_ONLY, MATTER_ONLY, MATTER_PREFERRED, MatterNotReady,
-    MatterWriteUncertain, TRANSPORT_MODES,
+    MatterWriteUncertain,
 )
 from .matter_routing import DualTransportRouter
 
