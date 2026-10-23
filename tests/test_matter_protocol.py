@@ -82,6 +82,7 @@ class FakeWs:
         self.confirm = confirm
         self.corrupt = corrupt
         self.reply = None
+        self.read_count = 0
 
     async def __aenter__(self): return self
     async def __aexit__(self, *exc): return None
@@ -94,7 +95,9 @@ class FakeWs:
         elif command == "write_attribute":
             result = [{"Status": 0}]
         elif command == "read_attribute":
-            result = {payload["args"]["attribute_path"]: 4 if self.confirm else 3}
+            self.read_count += 1
+            result = {payload["args"]["attribute_path"]:
+                      (4 if self.read_count > 1 and self.confirm else 3)}
         else:
             raise AssertionError(f"Unexpected RPC: {command}")
         self.reply = (RuntimeError("lost after write") if
@@ -126,15 +129,15 @@ class MatterWebsocketTests(unittest.IsolatedAsyncioTestCase):
         session = FakeSession()
         await c.MatterWsClient(session, "ws://127.0.0.1:5580/ws", 17, 1).write(mode="heat")
         self.assertEqual([x["command"] for x in session.ws.commands],
-                         ["get_node", "write_attribute", "read_attribute"])
-        self.assertEqual(session.ws.commands[1]["args"]["value"], 4)
+                         ["get_node", "read_attribute", "write_attribute", "read_attribute"])
+        self.assertEqual(session.ws.commands[2]["args"]["value"], 4)
 
     async def test_post_write_disconnect_never_retries(self):
         session = FakeSession(corrupt=True)
         with self.assertRaises(p.MatterWriteUncertain):
             await c.MatterWsClient(session, "ws://127.0.0.1:5580/ws", 17, 1).write(mode="heat")
         self.assertEqual([x["command"] for x in session.ws.commands],
-                         ["get_node", "write_attribute"])
+                         ["get_node", "read_attribute", "write_attribute"])
 
     async def test_unconfirmed_readback_never_retries(self):
         session = FakeSession(confirm=False)
@@ -142,3 +145,49 @@ class MatterWebsocketTests(unittest.IsolatedAsyncioTestCase):
             await c.MatterWsClient(session, "ws://127.0.0.1:5580/ws", 17, 1).write(mode="heat")
         self.assertEqual(sum(x["command"] == "write_attribute"
                              for x in session.ws.commands), 1)
+
+
+class MatterReadBeforeWriteTests(unittest.IsolatedAsyncioTestCase):
+    async def test_live_read_occurs_before_write(self):
+        session = FakeSession()
+        client = c.MatterWsClient(session, "ws://127.0.0.1:5580/ws", 17, 1)
+        await client.write(mode="heat")
+        self.assertEqual([x["command"] for x in session.ws.commands],
+                         ["get_node", "read_attribute", "write_attribute", "read_attribute"])
+        self.assertEqual(session.ws.commands[1]["args"]["attribute_path"], "1/513/28")
+
+    async def test_already_matching_live_mode_sends_no_write(self):
+        session = FakeSession()
+        async def send_matching(payload):
+            session.ws.commands.append(payload)
+            cmd = payload["command"]
+            value = node() if cmd == "get_node" else {"1/513/28": 4}
+            session.ws.reply = {"message_id": payload["message_id"], "result": value}
+        session.ws.send_json = send_matching
+        result = await c.MatterWsClient(
+            session, "ws://127.0.0.1:5580/ws", 17, 1).write(mode="heat")
+        self.assertTrue(result["confirmed"])
+        self.assertFalse(result["changed"])
+        self.assertEqual([x["command"] for x in session.ws.commands],
+                         ["get_node", "read_attribute"])
+
+    async def test_missing_live_attribute_never_writes(self):
+        session = FakeSession()
+        async def missing_attribute(payload):
+            session.ws.commands.append(payload)
+            value = node() if payload["command"] == "get_node" else {}
+            session.ws.reply = {"message_id": payload["message_id"], "result": value}
+        session.ws.send_json = missing_attribute
+        with self.assertRaises(p.MatterNotReady):
+            await c.MatterWsClient(
+                session, "ws://127.0.0.1:5580/ws", 17, 1).write(mode="heat")
+        self.assertEqual([x["command"] for x in session.ws.commands],
+                         ["get_node", "read_attribute"])
+
+    async def test_missing_setpoint_is_prewrite_failure(self):
+        session = FakeSession()
+        with self.assertRaises(p.MatterNotReady):
+            await c.MatterWsClient(
+                session, "ws://127.0.0.1:5580/ws", 17, 1).write(
+                    setpoint_kind="heat")
+        self.assertEqual(session.ws.commands, [])

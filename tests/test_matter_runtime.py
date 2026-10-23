@@ -1,4 +1,5 @@
 """Offline tests: local cache, unit conversion and cross-transport safety."""
+import asyncio
 import importlib.util
 from pathlib import Path
 import sys
@@ -25,6 +26,7 @@ class FakeCoordinator:
         self.last_update_success = True
         self.data = {"TEST": {"connection": {"isConnected": True}}}
         self.notifications = 0
+        self.write_lock = asyncio.Lock()
 
     def async_update_listeners(self):
         self.notifications += 1
@@ -34,7 +36,10 @@ class FakeClient:
     def __init__(self, *, online=True):
         self.online = online
         self.writes = []
-        self.state_value = object()
+        self.state_value = p.ThermostatState(
+            mode="cool", temperature_c=22.5, heat_target_c=20.0,
+            cool_target_c=25.0, max_heat_c=30.0, min_cool_c=16.0,
+            endpoint=1)
 
     async def get_state(self):
         if not self.online:
@@ -79,6 +84,7 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await manager.refresh_one("TEST|0"))
         self.assertIs(manager.state("TEST", 0), client.state_value)
         self.assertEqual(coordinator.notifications, 1)
+        self.assertEqual(manager.last_non_off_mode("TEST", 0), "cool")
         client.online = False
         self.assertFalse(await manager.refresh_one("TEST|0"))
         self.assertIsNone(manager.state("TEST", 0))
@@ -136,3 +142,31 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(p.MatterWriteUncertain):
             await manager.execute("TEST", 0, cloud_write, uncertain_write)
         self.assertEqual(calls, [])
+
+
+    async def test_matter_write_rejected_when_cloud_command_is_locked(self):
+        manager, coordinator, client = runtime(p.MATTER_ONLY)
+        cloud_called = []
+
+        async def cloud_write():
+            cloud_called.append(True)
+
+        async with coordinator.write_lock:
+            with self.assertRaises(p.MatterNotReady):
+                await manager.execute("TEST", 0, cloud_write,
+                                      lambda c: c.write(mode="heat"))
+        self.assertEqual(cloud_called, [])
+        self.assertEqual(client.writes, [])
+
+    async def test_matter_preflight_does_not_leave_cloud_lock_held(self):
+        manager, coordinator, client = runtime(p.MATTER_PREFERRED)
+        client.online = False
+        calls = []
+
+        async def cloud_write():
+            calls.append(coordinator.write_lock.locked())
+
+        result = await manager.execute("TEST", 0, cloud_write,
+                                       lambda c: c.write(mode="heat"))
+        self.assertEqual(result, "cloud")
+        self.assertEqual(calls, [False])
