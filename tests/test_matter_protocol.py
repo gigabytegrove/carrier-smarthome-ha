@@ -123,7 +123,8 @@ class MatterWebsocketTests(unittest.IsolatedAsyncioTestCase):
         session = FakeSession()
         state = await c.MatterWsClient(session, "ws://127.0.0.1:5580/ws", 17, 1).get_state()
         self.assertEqual(state.mode, "cool")
-        self.assertEqual([x["command"] for x in session.ws.commands], ["get_node"])
+        self.assertEqual([x["command"] for x in session.ws.commands],
+                         ["get_node", "read_attribute"])
 
     async def test_single_write_and_confirm(self):
         session = FakeSession()
@@ -191,3 +192,24 @@ class MatterReadBeforeWriteTests(unittest.IsolatedAsyncioTestCase):
                 session, "ws://127.0.0.1:5580/ws", 17, 1).write(
                     setpoint_kind="heat")
         self.assertEqual(session.ws.commands, [])
+
+
+class MatterDeadbandTests(unittest.TestCase):
+    def test_deadband_is_tenths_not_hundredths(self):
+        n = node(**{"1/513/25": 25})
+        self.assertEqual(p.decode(n, 1).deadband_c, 2.5)
+        with self.assertRaises(p.MatterNotReady):
+            p.plan_setpoint(n, 1, "heat", 24.0)
+        self.assertEqual(p.plan_setpoint(n, 1, "heat", 23.5),
+                         ("1/513/18", 2350))
+
+    def test_unrequested_opposite_target_never_moves(self):
+        for kind, value in (("heat", 27), ("cool", 19)):
+            with self.subTest(kind=kind, value=value):
+                with self.assertRaises(p.MatterNotReady):
+                    p.plan_setpoint(node(), 1, kind, value)
+
+    def test_opposite_target_required(self):
+        n = node(**{"1/513/18": None})
+        with self.assertRaises(p.MatterNotReady):
+            p.plan_setpoint(n, 1, "cool", 25)

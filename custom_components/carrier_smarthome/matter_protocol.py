@@ -36,6 +36,7 @@ class ThermostatState:
     max_heat_c: float | None
     min_cool_c: float | None
     endpoint: int
+    deadband_c: float | None = None
 
 
 def path(endpoint: int, cluster: int, attribute: int) -> str:
@@ -89,6 +90,10 @@ def decode(node: Mapping[str, Any], endpoint: int) -> ThermostatState:
         max_heat_c=read(0x16) if read(0x16) is not None else read(0x04),
         min_cool_c=read(0x17) if read(0x17) is not None else read(0x05),
         endpoint=endpoint,
+        deadband_c=(a[path(endpoint, THERMOSTAT_CLUSTER, 0x19)] / 10.0
+                    if type(a.get(path(endpoint, THERMOSTAT_CLUSTER, 0x19))) is int
+                    and 0 <= a[path(endpoint, THERMOSTAT_CLUSTER, 0x19)] <= 25
+                    else None),
     )
 
 
@@ -117,6 +122,15 @@ def plan_setpoint(node: Mapping[str, Any], endpoint: int,
         raise MatterNotReady("Heating target exceeds Matter reported limit")
     if kind == "cool" and state.min_cool_c is not None and target_c < state.min_cool_c:
         raise MatterNotReady("Cooling target below Matter reported limit")
+    # Matter may silently alter the opposite target to maintain deadband.
+    # Refuse changes that could move an unrequested target on real hardware.
+    opposite = state.cool_target_c if kind == "heat" else state.heat_target_c
+    if opposite is None:
+        raise MatterNotReady("Opposite setpoint unavailable; cannot verify safe separation")
+    deadband = state.deadband_c if state.deadband_c is not None else 0.0
+    if ((kind == "heat" and target_c + deadband > opposite)
+            or (kind == "cool" and target_c - deadband < opposite)):
+        raise MatterNotReady("Requested target would alter the opposite Matter setpoint")
     return address, raw
 
 
