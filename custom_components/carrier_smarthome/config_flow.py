@@ -11,6 +11,10 @@ from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, Tex
 
 from .api import CarrierAuthError, CarrierError, CarrierSmartHomeClient
 from .const import DOMAIN
+from .models import zone_indices
+from .matter_client import MatterWsClient
+from .matter_protocol import CLOUD_ONLY, MATTER_ONLY, MATTER_PREFERRED, MatterNotReady
+from .matter_runtime import OPTIONS_BINDINGS, binding_key
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +29,10 @@ def _credentials_schema(defaults: dict | None = None):
 
 class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return CarrierSmartHomeOptionsFlow(config_entry)
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -73,3 +81,78 @@ class CarrierSmartHomeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="reauth_confirm",
                                     data_schema=vol.Schema({vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}), errors=errors)
 
+
+
+
+class CarrierSmartHomeOptionsFlow(config_entries.OptionsFlow):
+    """Bind one explicitly chosen Carrier serial/zone to a commissioned Matter node."""
+
+    def __init__(self, entry):
+        self._entry = entry
+        self._target = None
+
+    async def async_step_init(self, user_input=None):
+        coordinator = self.hass.data.get(DOMAIN, {}).get(self._entry.entry_id)
+        systems = getattr(coordinator, "data", None) or {}
+        choices = {
+            binding_key(serial, zone): f"{system.get('name') or 'Carrier Thermostat'} (zone {zone})"
+            for serial, system in systems.items()
+            for zone in zone_indices(system)
+        }
+        if not choices:
+            return self.async_abort(reason="no_devices")
+        if user_input is not None:
+            self._target = user_input["target"]
+            if self._target not in choices:
+                return self.async_abort(reason="no_devices")
+            return await self.async_step_transport()
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({vol.Required("target"): vol.In(choices)}),
+        )
+
+    async def async_step_transport(self, user_input=None):
+        existing = dict(self._entry.options.get(OPTIONS_BINDINGS, {}))
+        binding = existing.get(self._target, {})
+        errors = {}
+        if user_input is not None:
+            policy = user_input["policy"]
+            if policy == CLOUD_ONLY:
+                existing.pop(self._target, None)
+                return self.async_create_entry(title="", data={
+                    **self._entry.options, OPTIONS_BINDINGS: existing
+                })
+            try:
+                url = user_input["url"].strip()
+                node_id = int(user_input["node_id"])
+                endpoint = int(user_input["endpoint"])
+                client = MatterWsClient(async_get_clientsession(self.hass),
+                                        url, node_id, endpoint)
+                # Read-only verification: matching certified VID/PID,
+                # commissioned/online node and thermostat endpoint.
+                await client.get_state()
+            except (MatterNotReady, ValueError, TypeError, KeyError):
+                errors["base"] = "matter_not_ready"
+            except Exception:
+                _LOGGER.exception("Matter server check failed during configuration")
+                errors["base"] = "matter_not_ready"
+            else:
+                existing[self._target] = {
+                    "policy": policy, "url": client.server_url,
+                    "node_id": node_id, "endpoint": endpoint,
+                }
+                return self.async_create_entry(title="", data={
+                    **self._entry.options, OPTIONS_BINDINGS: existing
+                })
+        return self.async_show_form(step_id="transport", errors=errors,
+                                    data_schema=vol.Schema({
+            vol.Required("policy", default=binding.get("policy", CLOUD_ONLY)):
+                vol.In({CLOUD_ONLY: "Carrier cloud only",
+                        MATTER_ONLY: "Local Matter only",
+                        MATTER_PREFERRED: "Prefer local Matter, then cloud"}),
+            vol.Optional("url", default=binding.get("url", "ws://127.0.0.1:5580/ws")): str,
+            vol.Optional("node_id", default=binding.get("node_id", 1)):
+                vol.All(vol.Coerce(int), vol.Range(min=1, max=2**64 - 1)),
+            vol.Optional("endpoint", default=binding.get("endpoint", 1)):
+                vol.All(vol.Coerce(int), vol.Range(min=1, max=240)),
+        }))

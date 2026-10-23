@@ -19,7 +19,11 @@ from .matter_protocol import (
 
 
 def validate_server_url(value: str) -> str:
-    """Allow local unencrypted WS only on loopback; remote requires TLS."""
+    """Accept explicit private/LAN Matter Servers; reject public destinations.
+
+    Matter Servers commonly expose plain ws:// on a trusted local subnet.
+    Users must keep that port LAN-restricted: WebSocket is not authenticated.
+    """
     try:
         url = urlsplit(value)
         ip = ipaddress.ip_address(url.hostname or "")
@@ -31,11 +35,11 @@ def validate_server_url(value: str) -> str:
         raise MatterNotReady("Matter Server expects ws[s]://<private-ip>:5580/ws")
     if not (ip.is_private or ip.is_loopback):
         raise MatterNotReady("Matter Server address must be private or loopback")
-    if url.scheme == "ws" and not ip.is_loopback:
-        raise MatterNotReady("Remote Matter Server requires TLS (wss)")
     if not url.port or not 1 <= url.port <= 65535:
         raise MatterNotReady("Matter Server port required")
-    return value.rstrip("/") + ("ws" if url.path == "/" else "/ws" if url.path == "" else "")
+    # Preserve the slash between authority and endpoint; a bare trailing slash
+    # must not accidentally become `:5580ws`.
+    return f"{url.scheme}://{url.netloc}/ws"
 
 
 class MatterWsClient:
@@ -51,15 +55,17 @@ class MatterWsClient:
     async def _rpc(self, ws: Any, command: str, args: dict[str, Any]) -> Any:
         request_id = uuid4().hex
         await ws.send_json({"message_id": request_id, "command": command, "args": args})
-        for _ in range(100):
-            response = await ws.receive_json(timeout=20)
-            if not isinstance(response, dict) or response.get("message_id") != request_id:
-                continue
-            if response.get("error_code") is not None:
-                raise MatterNotReady(f"Matter Server rejected {command}; code {response['error_code']}")
-            if "result" not in response:
-                raise MatterNotReady("Matter Server response missing result")
-            return response["result"]
+        # Bound the *entire* exchange, not 100 x 20-second receives.
+        async with asyncio.timeout(15):
+            for _ in range(100):
+                response = await ws.receive_json(timeout=10)
+                if not isinstance(response, dict) or response.get("message_id") != request_id:
+                    continue
+                if response.get("error_code") is not None:
+                    raise MatterNotReady(f"Matter Server rejected {command}; code {response['error_code']}")
+                if "result" not in response:
+                    raise MatterNotReady("Matter Server response missing result")
+                return response["result"]
         raise MatterNotReady("Matter Server sent too many unrelated messages")
 
     async def _handshake(self, ws: Any) -> None:

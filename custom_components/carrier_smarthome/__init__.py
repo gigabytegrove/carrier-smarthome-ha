@@ -5,10 +5,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_interval
+from datetime import timedelta
 
 from .api import CarrierSmartHomeClient
 from .const import DOMAIN, PLATFORMS
 from .coordinator import CarrierCoordinator
+from .matter_runtime import MatterManager
 from homeassistant.helpers import entity_registry as er
 
 
@@ -35,6 +38,20 @@ async def async_setup_entry(hass, entry: ConfigEntry) -> bool:
                                   "_last_cloud_reported_current_scene")))
         if obsolete_switch or unsupported_sensor:
             registry.async_remove(old.entity_id)
+    coordinator.matter = MatterManager(async_get_clientsession(hass), entry.options, coordinator)
+    if coordinator.matter.has_bindings:
+        await coordinator.matter.refresh_all()
+
+        async def _poll_matter(_now):
+            await coordinator.matter.refresh_all()
+
+        entry.async_on_unload(async_track_time_interval(
+            hass, _poll_matter, timedelta(seconds=20)))
+
+    async def _options_updated(hass, changed_entry):
+        await hass.config_entries.async_reload(changed_entry.entry_id)
+
+    entry.async_on_unload(entry.add_update_listener(_options_updated))
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

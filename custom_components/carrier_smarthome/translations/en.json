@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Sign in to Carrier SmartHome",
-        "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. No Matter. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
+        "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. Matter control is available separately after commissioning with a Matter Server. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
         "data": {
           "username": "Carrier account email or username",
           "password": "Password"
@@ -26,6 +26,33 @@
     "abort": {
       "already_configured": "This Carrier account is already configured.",
       "reauth_successful": "Carrier account reconnected."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Choose thermostat",
+        "description": "Select the Carrier thermostat whose controls you want to configure.",
+        "data": {
+          "target": "Thermostat"
+        }
+      },
+      "transport": {
+        "title": "Control connection",
+        "description": "Local Matter requires an already commissioned thermostat in an Open Home Foundation Matter Server. Verify the correct physical thermostat and keep its WebSocket endpoint restricted to your trusted LAN. Cloud only is always available.",
+        "data": {
+          "policy": "Control preference",
+          "url": "Matter Server WebSocket address",
+          "node_id": "Matter node ID",
+          "endpoint": "Thermostat endpoint"
+        }
+      }
+    },
+    "error": {
+      "matter_not_ready": "Matter Server did not confirm an online certified Carrier thermostat at this node and endpoint."
+    },
+    "abort": {
+      "no_devices": "No Carrier thermostats are currently available for configuration."
     }
   }
 }

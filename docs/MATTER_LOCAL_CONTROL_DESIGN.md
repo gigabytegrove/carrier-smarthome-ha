@@ -42,3 +42,33 @@ Official protocol docs: https://github.com/matter-js/matterjs-server/blob/main/d
 ## Validation
 
 Run `python -m unittest discover -s tests -q` from the checkout. Matter mapping tests require no network and never change HVAC state.
+
+
+## New experimental HA integration wiring (this branch)
+
+- Home Assistant **Configure** offers per-device Cloud only, Matter only or Prefer Matter.
+- Only an explicitly bound and *already commissioned* Matter Server node is eligible.
+  Saving an option performs a read-only VID/PID/endpoint check.
+- One Carrier climate entity retains its existing unique ID. Local temperature
+  and setpoints are converted from Matter's hundredths °C into the Carrier
+  climate entity's configured temperature unit. 20-second local polling keeps
+  locally confirmed state fresh for at most 45 seconds, separately from cloud.
+- Local mode and individual temperature writes are routed through the existing
+  validated Matter client. Unknown writes never trigger cloud commands.
+  Simultaneous dual-setpoint updates are intentionally blocked from Matter
+  until an atomic and hardware-verified implementation is available.
+- Independent fan control remains cloud-only: Matter-only refuses it.
+- Existing installations have **no behavior change** until configured.
+- Configuring Matter does not install a controller, alter VLAN/firewall rules,
+  expose pairing codes, or prove physical-device identity beyond VID/PID and
+  the owner's explicit node binding. The local path still needs real hardware
+  validation before public release.
+- The Matter Server WebSocket API defaults to unauthenticated local ws. Private
+  LAN addresses are accepted so HA and Matter Server can run in different
+  containers/hosts; never expose TCP 5580 beyond a trusted network. Use wss
+  via a trusted TLS reverse proxy when the network is not fully trusted.
+
+Cloud-first startup still requires the original Carrier account and a
+successful initial cloud thermostat listing. Fully cloud-independent cold
+startup requires a separately validated persistent identity/device cache and
+is not claimed by this branch.
