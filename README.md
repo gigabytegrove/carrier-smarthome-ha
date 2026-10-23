@@ -10,14 +10,14 @@
   [![PayPal Donate](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white)](https://paypal.me/gigabytegrove)
   [![Latest release](https://img.shields.io/github/v/release/gigabytegrove/carrier-smarthome-ha?label=Release)](https://github.com/gigabytegrove/carrier-smarthome-ha/releases)
 
-  Unofficial Home Assistant integration · Carrier's native SmartHome cloud API · **No Matter**
+  Unofficial Home Assistant integration · Stable v0.5.6: Carrier cloud · Experimental branch: optional local Matter
 </div>
 
 ## What it does
 
 **Carrier SmartHome** brings a supported Carrier thermostat into Home Assistant as a **single, standard climate device**. Change heating/cooling modes, view indoor temperature and humidity, manage thermostat targets, and use the familiar Home Assistant interface—without separate power switches, duplicate controls, or artificial configuration gates.
 
-The integration authenticates with the same Carrier SmartHome account used in the Android app (`com.carrier.home`). It communicates with Carrier's native cloud GraphQL service; **local-only HVAC control has not yet been established**.
+The integration authenticates with the same Carrier SmartHome account used in the Android app (`com.carrier.home`). It communicates with Carrier's native cloud GraphQL service. **Stable v0.5.6 uses cloud control.** An unreleased feature branch now contains an experimental, opt-in local Matter control path requiring separately commissioned Matter hardware; hardware operation remains unverified.
 
 ### Compatibility: one verified thermostat
 
@@ -35,6 +35,41 @@ The integration authenticates with the same Carrier SmartHome account used in th
 - **Connectivity-aware display:** a Carrier-reported Wi-Fi disconnect immediately disables live entities. A brief cloud/API interruption retains the most recent verified online readings for at most **90 seconds**, visibly flagged as potentially stale, while *all HVAC writes remain blocked* until a successful fresh cloud poll. Separately labeled last-reported diagnostics remain readable.
 - **Safe command handling:** a single native cloud mutation per command, a current connection check, no hidden command queue, and read-only post-command confirmation. Home Assistant only publishes states observed from Carrier, never invented optimistic states.
 - **Simple configuration:** sign in with your Carrier SmartHome credentials and use the normal climate card; no separate options are required to unlock mode controls.
+
+## Experimental local Matter control (development branch only)
+
+**Do not interpret this section as a published release feature.** The stable
+release remains **cloud-only**. Work under
+[`feature/matter-dual-transport-foundation`](https://github.com/gigabytegrove/carrier-smarthome-ha/tree/feature/matter-dual-transport-foundation)
+adds the following opt-in control selections to the existing Carrier device's
+**Configure** screen after initial Carrier sign-in:
+
+| Preference | Behavior | If Matter is unavailable |
+|---|---|---|
+| Cloud only (default) | All original verified Carrier cloud controls | Existing cloud error behavior |
+| Matter only | Climate mode and supported single-target setpoints via local Matter | **No cloud HVAC commands** |
+| Prefer local Matter | Use local Matter when verified reachable | Fall back to Carrier cloud only **before** any Matter write |
+
+The integration uses the [Open Home Foundation Matter Server](https://github.com/matter-js/matterjs-server)
+WebSocket controller (not an MQTT broker) and requires a physically commissioned
+Carrier Matter thermostat. The Matter Server must be reachable over IPv6 to
+the thermostat, and Home Assistant must have WebSocket access to the controller.
+The options flow performs a read-only certification VID/PID/endpoint check and
+asks the owner to confirm the node matches the selected physical thermostat.
+The integration doesn't commission devices or modify the host's VLAN settings.
+
+Local temperature and setpoints are reflected in the *existing* climate entity,
+preserving its unique ID. Independent Matter fan settings and simultaneous
+two-target writes are intentionally unsupported pending hardware confirmation.
+Carrier cloud connectivity remains necessary for initial account/device
+discovery, including after an offline cold restart; this branch does **not**
+yet provide cloud-independent startup. The cloud diagnostic sensors remain
+cloud-specific and are not presented as local Matter data.
+
+**Testing:** Offline protocol and transport safety tests are included. Real
+commissioning, Home Assistant integration testing, thermostat writes and
+cloud/offline recovery remain necessary before a production release. See
+[the Matter implementation and safety notes](docs/MATTER_LOCAL_CONTROL_DESIGN.md).
 
 ## Installation via HACS
 
