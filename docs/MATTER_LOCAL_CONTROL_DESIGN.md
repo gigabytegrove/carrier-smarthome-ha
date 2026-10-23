@@ -115,3 +115,12 @@ The protocol now respects Thermostat `MinSetpointDeadBand` attribute 0x0019
 in tenths of a degree Celsius and refuses a requested target that would
 silently move the opposite target. See Matter Application Clusters §4.3.
 No hardware-based feature-map assumption or fan-control claim was added.
+
+### Device-level telemetry and side-effect protections
+
+`get_state()` now performs an actual Matter Read for local room temperature,
+occupied cooling/heating targets, and system mode. An unavailable attribute is
+not silently filled with its earlier cached value. Setpoint writes request
+both the destination and opposite setpoint in one read-only preflight; changing
+the opposite target as a side effect is explicitly forbidden. This prevents a
+stale Matter Server subscription snapshot from authorizing a dangerous write.
