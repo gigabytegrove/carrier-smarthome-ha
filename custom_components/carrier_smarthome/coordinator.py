@@ -44,14 +44,15 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         if callable(notify):
             notify()
 
-    def begin_control(self, serial: str, index: int, desired: dict) -> int:
+    def begin_control(self, serial: str, index: int, desired: dict,
+                      requested: dict | None = None) -> int:
         zone = get_zone(self.data.get(serial, {}), index)
         if zone is None:
             raise ValueError("Thermostat zone unavailable")
         # Export only a numbered slot, never Carrier's serial or cloud IDs.
         device_number = sorted(self.data).index(serial) + 1
         return self.optimistic.begin(serial, index, desired, zone_values(zone),
-                                     device_number)
+                                     device_number, requested=requested)
 
     def cancel_confirmation(self, serial: str, index: int) -> None:
         task = self._confirmation_tasks.get((serial, index))

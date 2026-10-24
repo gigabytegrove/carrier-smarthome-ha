@@ -48,10 +48,14 @@ class OptimisticControlTracker:
         self._events: deque[dict] = deque(maxlen=160)
 
     def begin(self, serial: str, zone_index: int, desired: dict,
-              previous: dict, device_number: int) -> int:
+              previous: dict, device_number: int, *,
+              requested: dict | None = None) -> int:
         key = (serial, zone_index)
         if not desired or _safe_values(desired) != desired:
             raise ValueError("Invalid thermostat control request")
+        requested = desired if requested is None else requested
+        if not requested or _safe_values(requested) != requested:
+            raise ValueError("Invalid requested thermostat fields")
         # Later user intent immediately replaces pending display. The earlier
         # cloud mutation (if already sent) must be allowed to finish; only its
         # read-only confirmation can be abandoned.
@@ -72,16 +76,19 @@ class OptimisticControlTracker:
             "state": "pending_cloud_confirmation",
         }
         self._active[key] = record
-        self.record(command_id, "optimistic_applied", requested=desired,
-                    observed=safe_previous, device_number=device_number,
-                    zone_index=zone_index)
+        self.record(command_id, "optimistic_applied", requested=requested,
+                    pending_overlay=desired, observed=safe_previous,
+                    device_number=device_number, zone_index=zone_index)
         self._on_change()
         return command_id
 
     def record(self, command_id: int | None, stage: str, *,
                reason: str | None = None, source: str | None = None,
                attempt: int | None = None, observed: dict | None = None,
-               requested: dict | None = None, device_number: int | None = None,
+               requested: dict | None = None, pending_overlay: dict | None = None,
+               detail_reads: int | None = None, listing_reads: int | None = None,
+               repeated_reads: int | None = None,
+               device_number: int | None = None,
                zone_index: int | None = None) -> None:
         """Only fixed code-controlled tags and normalized values reach exports."""
         if not _SAFE_TAG.fullmatch(stage):
@@ -98,6 +105,13 @@ class OptimisticControlTracker:
             event["observed"] = _safe_values(observed)
         if requested is not None:
             event["requested"] = _safe_values(requested)
+        if pending_overlay is not None:
+            event["pending_overlay"] = _safe_values(pending_overlay)
+        for name, value in (("detail_reads", detail_reads),
+                            ("listing_reads", listing_reads),
+                            ("repeated_reads", repeated_reads)):
+            if type(value) is int and 0 <= value <= 1000:
+                event[name] = value
         if type(device_number) is int and device_number > 0:
             event["device_number"] = device_number
         if type(zone_index) is int and zone_index >= 0:

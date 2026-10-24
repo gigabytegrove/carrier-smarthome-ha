@@ -154,9 +154,12 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.confirmation_task.cancel()
             def track_confirmation(self, serial, zone, task):
                 self.confirmation_task = task
-            def begin_control(self, serial, zone, desired):
-                return self.optimistic.begin(serial, zone, desired,
-                     self.parent.models.zone_values(self.data[serial]["zones"][zone]), 1)
+            def begin_control(self, serial, zone, desired, requested=None):
+                return self.optimistic.begin(
+                    serial, zone, desired,
+                    self.parent.models.zone_values(self.data[serial]["zones"][zone]),
+                    1, requested=requested,
+                )
             def publish_verified_detail(self, serial, zone, detail, desired):
                 values = self.parent.models.zone_values(detail["zones"][0])
                 if values["mode"] != desired.get("mode"):
@@ -303,12 +306,88 @@ class ControlIntegrationTests(unittest.IsolatedAsyncioTestCase):
             c, "SENSITIVE-SERIAL", 0, 69, 74)
         self.assertEqual(c.client.async_update_zone.await_count, 2)
         self.assertEqual(c.client.async_update_zone.await_args.kwargs,
-                         {"mode": "cool", "heat": 69, "cool": 74})
+                         {"heat": 69, "cool": 74})
         self.assertEqual(c.optimistic.overlay("SENSITIVE-SERIAL", 0),
                          {"mode": "cool", "heat_setpoint": 69,
                           "cool_setpoint": 74})
         await c.confirmation_task
         await self.asyncio.gather(previous_task, return_exceptions=True)
+
+    async def test_diagnostic_trace_avoids_repeated_mode_mutations(self):
+        c = self.coordinator(detail_mode="off")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        first = c.confirmation_task
+        await self.control.async_set_fan_verified(c, "SENSITIVE-SERIAL", 0, "on")
+        second = c.confirmation_task
+        await self.control.async_set_fan_verified(c, "SENSITIVE-SERIAL", 0, "auto")
+        third = c.confirmation_task
+        await self.asyncio.gather(first, second, return_exceptions=True)
+        await third
+        payloads = [call.kwargs for call in c.client.async_update_zone.await_args_list]
+        self.assertEqual(payloads, [
+            {"mode": "cool"}, {"fan": "on"}, {"fan": "auto"},
+        ])
+        applied = [row for row in c.optimistic.events
+                   if row["stage"] == "optimistic_applied"]
+        self.assertEqual([row["requested"] for row in applied], [
+            {"mode": "cool"}, {"fan_mode": "on"}, {"fan_mode": "auto"},
+        ])
+        self.assertEqual(applied[-1]["pending_overlay"],
+                         {"mode": "cool", "fan_mode": "auto"})
+
+    async def test_duplicate_click_does_not_write_again_or_reset_readback(self):
+        c = self.coordinator(detail_mode="off")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        worker = c.confirmation_task
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        self.assertIs(c.confirmation_task, worker)
+        c.client.async_update_zone.assert_awaited_once()
+        self.assertIn("duplicate_request_ignored",
+                      [row["stage"] for row in c.optimistic.events])
+        await worker
+
+    async def test_unrelated_already_selected_fan_is_ignored(self):
+        c = self.coordinator(detail_mode="off")
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        worker = c.confirmation_task
+        await self.control.async_set_fan_verified(c, "SENSITIVE-SERIAL", 0, "auto")
+        self.assertIs(c.confirmation_task, worker)
+        c.client.async_update_zone.assert_awaited_once()
+        self.assertIn("unchanged_control_ignored",
+                      [row["stage"] for row in c.optimistic.events])
+        await worker
+
+    async def test_readback_logs_changes_and_summary_not_every_poll(self):
+        c = self.coordinator(detail_mode="off")
+        self.control.READBACK_DELAYS = (0, 0, 0)
+        self.control.DETAIL_CHECK_ATTEMPTS = frozenset((0, 1, 2))
+        await self.control.async_set_mode_verified(c, "SENSITIVE-SERIAL", 0, "cool")
+        await c.confirmation_task
+        samples = [row for row in c.optimistic.events
+                   if row["stage"] == "verification_read"]
+        self.assertEqual([(row["source"], row["observed"])
+                          for row in samples], [
+            ("detail", {"mode": "off"}), ("listing", {"mode": "off"}),
+        ])
+        summary = [row for row in c.optimistic.events
+                   if row["stage"] == "verification_summary"]
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(
+            (summary[0]["detail_reads"], summary[0]["listing_reads"],
+             summary[0]["repeated_reads"]), (3, 3, 4),
+        )
+
+    async def test_missing_fan_value_cannot_verify_fast_reversal(self):
+        # A missing field in the detail query is not evidence that the
+        # thermostat entered the opposite fan setting.
+        self.assertFalse(self.control._observed_conflict(
+            {"fan_mode": None}, {"fan_mode": "auto"}))
+        self.assertFalse(self.control._observed_conflict(
+            {}, {"mode": "off"}))
+        self.assertTrue(self.control._observed_conflict(
+            {"fan_mode": "on"}, {"fan_mode": "auto"}))
+        self.assertTrue(self.control._observed_conflict(
+            {"cool_setpoint": 75}, {"cool_setpoint": 74}))
 
     async def test_explicit_offline_never_displays_optimistic_mode(self):
         c = self.coordinator()

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.9 — Deduplicate thermostat control writes and diagnostics
+
+- Correct the v0.5.8 behavior observed in owner diagnostics: Cool, then Fan On, then Fan Auto sent the previously pending Cool mode in all three cloud mutations. Pending state remains merged in Home Assistant's display, but only the newly requested mode/fan/temperature fields are transmitted to Carrier.
+- Repeating an already pending target no longer creates another cloud mutation or restarts the confirmation window. Ignore independent already-selected fields while other thermostat controls are pending.
+- Distinguish `requested` (the actual new control) from `pending_overlay` (all unconfirmed displayed settings) and include newly sent fields in the `mutation_sent` event.
+- Compress repetitive verification observations: record each source's first reading and changes, then a `verification_summary` containing actual detail/list read counts and the count of unchanged samples suppressed. Preserve the existing one-write guard, command supersession, cloud-backoff and 64-second bounded confirmation.
+- Preserve explicit cloud mutation for a true rapid reversal (Cool → Off), and require evidence of transition instead of claiming confirmation based on a stale Off reading.
+- Do not claim that Fan On or Fan Only has been physically validated. Existing controls and all entity IDs are preserved; no new Matter, proprietary LAN or scheduling operations are introduced.
+- Extend offline regression tests around the exact owner-observed sequence, repeated clicks, unchanged fan selections and verification-summary counting.
+
 ## v0.5.8 — Rapid consecutive thermostat changes
 
 - Fix the "Previous Carrier command still being verified" failure when changing HVAC mode twice quickly.
