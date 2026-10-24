@@ -336,6 +336,10 @@ async def _readback(coordinator, serial: str, index: int, desired: dict,
                         zone = get_zone(detail, index)
                         if zone is not None:
                             observed = zone_values(zone)
+                            if hasattr(coordinator, "observe_control_detail"):
+                                coordinator.observe_control_detail(
+                                    serial, index, detail,
+                                )
                             _record_observation(
                                 coordinator, command_id, desired, "detail",
                                 attempt + 1, observed, previous_samples, read_counts,
