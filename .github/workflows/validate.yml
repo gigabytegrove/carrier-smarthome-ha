@@ -20,6 +20,10 @@ jobs:
           python-version: "3.13"
       - name: Compile integration Python
         run: python -m compileall -q custom_components/carrier_smarthome
+      - name: Run offline thermostat control regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_optimistic_feedback.py' -v
+          python -m unittest discover -s tests -p 'test_alpha10_contract.py' -v
       - name: Validate integration JSON
         run: |
           python - <<'PY'

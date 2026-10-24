@@ -57,21 +57,44 @@ async def _write_verified(coordinator, serial: str, index: int,
                                       reason="device_or_cloud_unavailable")
         raise
 
+    requested = dict(desired)
     previous = coordinator.optimistic.active(serial, index)
-    # Preserve other still-pending controls (e.g., Cool followed immediately
-    # by a temperature change) so the new write includes all user intent.
+    force_write = False
     if previous is not None:
-        desired = {**previous["requested"], **desired}
-        payload = _payload(desired)
-    command_id = coordinator.begin_control(serial, index, desired)
+        pending = previous["requested"]
+        # Clicking the already pending target again is not a second physical
+        # request. Keep the original verification alive rather than resetting
+        # the clock or issuing an identical cloud mutation.
+        if _target_ok(pending, requested):
+            coordinator.optimistic.record(
+                previous["command_id"], "duplicate_request_ignored",
+                requested=requested,
+            )
+            return
+        # Ignore an unrelated setting which the cloud already reports as
+        # selected. In particular, don't send "fan auto" just because Cool
+        # is pending while the fan is already Auto.
+        if (not any(key in pending for key in requested)
+                and _target_ok(_state(coordinator, serial, index), requested)):
+            coordinator.optimistic.record(
+                previous["command_id"], "unchanged_control_ignored",
+                requested=requested,
+            )
+            return
+        # The overlay preserves all pending intent, but the actual Carrier
+        # mutation MUST contain only fields changed by this new request.
+        # A fan adjustment never re-sends a prior Cool/Heat mode request.
+        force_write = any(key in pending for key in requested)
+        desired = {**pending, **requested}
+    command_id = coordinator.begin_control(serial, index, desired, requested)
     # Cancellation is limited to read-only verification. Never cancel a
     # mutation that Carrier might already be processing.
     coordinator.cancel_confirmation(serial, index)
 
     try:
         outcome, require_detail, require_transition = await _send_cloud_change(
-            coordinator, serial, index, desired, payload, command_id,
-            force_write=previous is not None,
+            coordinator, serial, index, requested, _payload(requested),
+            command_id, force_write=force_write,
         )
     except asyncio.CancelledError:
         coordinator.optimistic.finish(serial, index, command_id, "cancelled",
@@ -82,14 +105,16 @@ async def _write_verified(coordinator, serial: str, index: int,
                                       reason="preflight_or_mutation_failed")
         raise
 
-    if outcome == "already":
+    if outcome == "already" and previous is None:
         coordinator.optimistic.finish(serial, index, command_id, "verified")
-    elif outcome == "sent" and _current(coordinator, serial, index, command_id):
+    elif outcome in ("already", "sent") and _current(
+            coordinator, serial, index, command_id):
         # The HA service may now complete as soon as Carrier acknowledges
         # the write; the card remains pending while this task observes cloud.
         task = asyncio.create_task(
             _confirmation_worker(coordinator, serial, index, desired,
-                                 command_id, require_detail, require_transition),
+                                 command_id, require_detail,
+                                 requested if require_transition else None),
             name="carrier_smarthome_confirm",
         )
         coordinator.track_confirmation(serial, index, task)
@@ -185,7 +210,9 @@ async def _send_cloud_change(coordinator, serial: str, index: int,
         if not _current(coordinator, serial, index, command_id):
             coordinator.optimistic.record(command_id, "superseded_before_send")
             return "superseded", False, False
-        coordinator.optimistic.record(command_id, "mutation_sent")
+        coordinator.optimistic.record(
+            command_id, "mutation_sent", requested=desired,
+        )
         # Shield and drain the network operation on caller cancellation: an
         # uncertain in-flight write must finish before the lock can release.
         mutation = asyncio.create_task(
@@ -216,10 +243,10 @@ async def _send_cloud_change(coordinator, serial: str, index: int,
 async def _confirmation_worker(coordinator, serial: str, index: int,
                                desired: dict, command_id: int,
                                require_detail: bool,
-                               require_transition: bool) -> None:
+                               transition_target: dict | None) -> None:
     try:
         confirmed = await _readback(coordinator, serial, index, desired,
-                                    command_id, require_detail, require_transition)
+                                    command_id, require_detail, transition_target)
     except asyncio.CancelledError:
         coordinator.optimistic.record(command_id, "verification_cancelled",
                                       reason="new_command_or_unload")
@@ -245,89 +272,133 @@ async def _confirmation_worker(coordinator, serial: str, index: int,
                                           reason="cloud_readback_uncertain")
 
 
+def _observed_conflict(observed: dict, target: dict) -> bool:
+    """Only a valid, reported *different* value proves a transition.
+
+    Missing/unknown fan or mode fields must never count as seeing the
+    intervening state during Cool -> Off or Fan On -> Auto.
+    """
+    for key, value in target.items():
+        actual = observed.get(key)
+        if key == "mode":
+            valid = actual in MODES if isinstance(actual, str) else False
+        elif key == "fan_mode":
+            valid = actual in FANS if isinstance(actual, str) else False
+        else:
+            valid = (type(actual) in (int, float)
+                     and math.isfinite(actual))
+        if valid and actual != value:
+            return True
+    return False
+
+
+def _record_observation(coordinator, command_id: int, desired: dict,
+                        source: str, attempt: int, observed: dict,
+                        previous_samples: dict, read_counts: dict) -> None:
+    """Record meaningful changes, not 20 near-identical readback events."""
+    read_counts[source] += 1
+    sample = {key: observed.get(key) for key in desired}
+    if previous_samples.get(source) == sample:
+        read_counts["repeated"] += 1
+        return
+    previous_samples[source] = sample
+    coordinator.optimistic.record(
+        command_id, "verification_read", source=source, attempt=attempt,
+        observed=sample,
+    )
+
+
 async def _readback(coordinator, serial: str, index: int, desired: dict,
                     command_id: int, require_detail: bool,
-                    require_transition: bool) -> bool:
-    seen_opposite = not require_transition
+                    transition_target: dict | None) -> bool:
+    seen_opposite = transition_target is None
+    previous_samples: dict[str, dict] = {}
+    read_counts = {"detail": 0, "listing": 0, "repeated": 0}
     # The first readback is immediate; all subsequent checks are read-only,
     # for at most the original ~64-second observation window.
-    for attempt, delay in enumerate(READBACK_DELAYS):
-        if not _current(coordinator, serial, index, command_id):
-            return False
-        if delay:
-            await asyncio.sleep(delay)
-        if not _current(coordinator, serial, index, command_id):
-            return False
-
-        if (attempt in DETAIL_CHECK_ATTEMPTS
-                and hasattr(coordinator.client, "async_get_system_detail")):
-            try:
-                detail = await coordinator.client.async_get_system_detail(serial)
-                if not _current(coordinator, serial, index, command_id):
-                    return False
-                if (detail.get("serial") == serial
-                        and connectivity_state(detail) == "online"):
-                    zone = get_zone(detail, index)
-                    if zone is not None:
-                        observed = zone_values(zone)
-                        coordinator.optimistic.record(
-                            command_id, "verification_read", source="detail",
-                            attempt=attempt + 1,
-                            observed={key: observed.get(key) for key in desired},
-                        )
-                        if not _target_ok(observed, desired):
-                            seen_opposite = True
-                        if _target_ok(observed, desired) and seen_opposite:
-                            if coordinator.publish_verified_detail(
-                                    serial, index, detail, desired):
-                                coordinator.optimistic.record(
-                                    command_id, "verification_confirmed",
-                                    source="detail", attempt=attempt + 1,
-                                )
-                                return True
-                            coordinator.optimistic.record(
-                                command_id, "verified_detail_not_published",
-                            )
-            except CarrierRateLimitError:
-                coordinator.optimistic.record(command_id, "verification_rate_limited",
-                                              source="detail")
-                return False
-            except (CarrierError, ValueError, TypeError, AttributeError):
-                coordinator.optimistic.record(command_id, "verification_read_failed",
-                                              source="detail", attempt=attempt + 1)
-
-        if not _current(coordinator, serial, index, command_id):
-            return False
-        try:
-            await coordinator.async_refresh()
+    try:
+        for attempt, delay in enumerate(READBACK_DELAYS):
             if not _current(coordinator, serial, index, command_id):
                 return False
-            observed = _state(coordinator, serial, index)
-            coordinator.optimistic.record(
-                command_id, "verification_read", source="listing",
-                attempt=attempt + 1,
-                observed={key: observed.get(key) for key in desired},
-            )
-            if not _target_ok(observed, desired):
-                seen_opposite = True
-            if (_target_ok(observed, desired)
-                    and seen_opposite and not require_detail):
-                coordinator.optimistic.record(
-                    command_id, "verification_confirmed",
-                    source="listing", attempt=attempt + 1,
-                )
-                return True
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            coordinator.optimistic.record(command_id, "verification_read_failed",
-                                          source="listing", attempt=attempt + 1)
-            failure = getattr(coordinator, "last_exception", None)
-            if getattr(failure, "retry_after", None) is not None:
-                coordinator.optimistic.record(command_id, "verification_rate_limited",
-                                              source="listing")
+            if delay:
+                await asyncio.sleep(delay)
+            if not _current(coordinator, serial, index, command_id):
                 return False
-    return False
+
+            if (attempt in DETAIL_CHECK_ATTEMPTS
+                    and hasattr(coordinator.client, "async_get_system_detail")):
+                try:
+                    detail = await coordinator.client.async_get_system_detail(serial)
+                    if not _current(coordinator, serial, index, command_id):
+                        return False
+                    if (detail.get("serial") == serial
+                            and connectivity_state(detail) == "online"):
+                        zone = get_zone(detail, index)
+                        if zone is not None:
+                            observed = zone_values(zone)
+                            _record_observation(
+                                coordinator, command_id, desired, "detail",
+                                attempt + 1, observed, previous_samples, read_counts,
+                            )
+                            if transition_target and _observed_conflict(observed, transition_target):
+                                seen_opposite = True
+                            if _target_ok(observed, desired) and seen_opposite:
+                                if coordinator.publish_verified_detail(
+                                        serial, index, detail, desired):
+                                    coordinator.optimistic.record(
+                                        command_id, "verification_confirmed",
+                                        source="detail", attempt=attempt + 1,
+                                    )
+                                    return True
+                                coordinator.optimistic.record(
+                                    command_id, "verified_detail_not_published",
+                                )
+                except CarrierRateLimitError:
+                    coordinator.optimistic.record(command_id, "verification_rate_limited",
+                                                  source="detail")
+                    return False
+                except (CarrierError, ValueError, TypeError, AttributeError):
+                    coordinator.optimistic.record(command_id, "verification_read_failed",
+                                                  source="detail", attempt=attempt + 1)
+
+            if not _current(coordinator, serial, index, command_id):
+                return False
+            try:
+                await coordinator.async_refresh()
+                if not _current(coordinator, serial, index, command_id):
+                    return False
+                observed = _state(coordinator, serial, index)
+                _record_observation(
+                    coordinator, command_id, desired, "listing",
+                    attempt + 1, observed, previous_samples, read_counts,
+                )
+                if transition_target and _observed_conflict(observed, transition_target):
+                    seen_opposite = True
+                if (_target_ok(observed, desired)
+                        and seen_opposite and not require_detail):
+                    coordinator.optimistic.record(
+                        command_id, "verification_confirmed",
+                        source="listing", attempt=attempt + 1,
+                    )
+                    return True
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                coordinator.optimistic.record(command_id, "verification_read_failed",
+                                              source="listing", attempt=attempt + 1)
+                failure = getattr(coordinator, "last_exception", None)
+                if getattr(failure, "retry_after", None) is not None:
+                    coordinator.optimistic.record(command_id, "verification_rate_limited",
+                                                  source="listing")
+                    return False
+        return False
+    finally:
+        coordinator.optimistic.record(
+            command_id, "verification_summary",
+            detail_reads=read_counts["detail"],
+            listing_reads=read_counts["listing"],
+            repeated_reads=read_counts["repeated"],
+        )
 
 
 async def async_set_mode_verified(coordinator, serial: str, index: int, mode: str) -> None:
