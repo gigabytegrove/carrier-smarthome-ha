@@ -23,6 +23,7 @@ jobs:
       - name: Run offline thermostat control regression tests
         run: |
           python -m unittest discover -s tests -p 'test_optimistic_feedback.py' -v
+          python -m unittest discover -s tests -p 'test_cloud_state_trace.py' -v
           python -m unittest discover -s tests -p 'test_alpha10_contract.py' -v
       - name: Validate integration JSON
         run: |

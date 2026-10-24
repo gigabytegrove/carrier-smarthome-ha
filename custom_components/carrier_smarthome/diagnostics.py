@@ -30,6 +30,8 @@ def build_diagnostics(coordinator) -> dict:
         "devices": sanitize_telemetry(systems),
         "optimistic_control_active": coordinator.optimistic.active_diagnostics,
         "control_event_history": coordinator.optimistic.events,
+        "cloud_control_trace_started_utc": coordinator.cloud_trace.started_utc,
+        "cloud_control_transition_history": coordinator.cloud_trace.events,
     }
 
 

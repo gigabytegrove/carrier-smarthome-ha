@@ -9,6 +9,7 @@
 - Preserve explicit cloud mutation for a true rapid reversal (Cool → Off), and require evidence of transition instead of claiming confirmation based on a stale Off reading.
 - Do not claim that Fan On or Fan Only has been physically validated. Existing controls and all entity IDs are preserved; no new Matter, proprietary LAN or scheduling operations are introduced.
 - Extend offline regression tests around the exact owner-observed sequence, repeated clicks, unchanged fan selections and verification-summary counting.
+- Add a separate passive, per-source cloud control transition history (100 events) to diagnostics. Log initial observations and genuine subsequent changes in mode, fan, targets and schedule-enabled flag from polling and detailed readback. Avoid claiming that cloud changes without a pending HA command were caused by the Carrier schedule, official app or thermostat. Do not log secrets or identifiers, and do not overwrite device telemetry.
 
 ## v0.5.8 — Rapid consecutive thermostat changes
 

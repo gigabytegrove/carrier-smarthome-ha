@@ -15,6 +15,7 @@ from .api import CarrierAuthError, CarrierError, CarrierRateLimitError, CarrierS
 from .const import DOMAIN, POLL_INTERVAL, TRANSIENT_GRACE_SECONDS, MAX_POLL_BACKOFF_SECONDS
 from .models import connectivity_state, zone_indices, get_zone, zone_values
 from .optimistic import OptimisticControlTracker
+from .state_trace import CloudControlTrace
 
 
 class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
@@ -26,6 +27,9 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         self.write_lock = asyncio.Lock()
         # Local UI intent never changes confirmed Carrier data or diagnostic sensors.
         self.optimistic = OptimisticControlTracker(self._notify_optimistic_change)
+        # Cloud-reported changes, including those with no HA command pending.
+        # Per-source baselines avoid confusing detail/listing lag with changes.
+        self.cloud_trace = CloudControlTrace()
         # In-process, read-only confirmation tasks: never include cloud writes.
         self._confirmation_tasks: dict[tuple[str, int], asyncio.Task] = {}
         # Remember only a mode Carrier actually reported, never guess a default.
@@ -53,6 +57,21 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         device_number = sorted(self.data).index(serial) + 1
         return self.optimistic.begin(serial, index, desired, zone_values(zone),
                                      device_number, requested=requested)
+
+    def observe_control_detail(self, serial: str, index: int,
+                               detail: dict) -> None:
+        if (detail.get("serial") != serial
+                or connectivity_state(detail) != "online"):
+            return
+        zone = get_zone(detail, index)
+        if zone is None or serial not in self.data:
+            return
+        pending = self.optimistic.active(serial, index)
+        self.cloud_trace.observe(
+            serial, index, "detail", zone_values(zone),
+            sorted(self.data).index(serial) + 1,
+            pending["command_id"] if pending else None,
+        )
 
     def cancel_confirmation(self, serial: str, index: int) -> None:
         task = self._confirmation_tasks.get((serial, index))
@@ -221,4 +240,20 @@ class CarrierCoordinator(DataUpdateCoordinator[dict[str, dict]]):
                         mode = zone_values(zone)["mode"] if zone else None
                         if mode in {"heat", "cool", "auto", "fanonly"}:
                             self._last_non_off_modes[(serial, index)] = mode
+        # This timeline is passive evidence, not an attribution to a person,
+        # schedule, official app, or HA automation. It excludes identifiers.
+        for device_number, serial in enumerate(sorted(result), start=1):
+            system = result[serial]
+            if connectivity_state(system) != "online":
+                continue
+            for index in zone_indices(system):
+                zone = get_zone(system, index)
+                if zone is None:
+                    continue
+                pending = self.optimistic.active(serial, index)
+                self.cloud_trace.observe(
+                    serial, index, "listing", zone_values(zone),
+                    device_number,
+                    pending["command_id"] if pending else None,
+                )
         return result
