@@ -1,10 +1,12 @@
-# Confirmed IoT range: redacted.invalid/16
+# Confirmed IoT range: REDACTED_NETWORK/16
 
-Source: User confirmed that their Carrier TSTATCCEWF-01 is connected to the redacted.invalid/16 IoT network, and not on the redacted.invalid/16 network. Prior user-side discovery covered redacted.invalid/24 and returned 78 neighbor entries but did not establish the thermostat's address.
+> **Privacy:** Network addresses and ranges have been redacted from the public investigation. Set target networks in your private environment, not in repository files.
+
+Source: User confirmed that their Carrier TSTATCCEWF-01 is connected to the REDACTED_NETWORK/16 IoT network, and not on the REDACTED_NETWORK/16 network. Prior user-side discovery covered REDACTED_NETWORK/24 and returned 78 neighbor entries but did not establish the thermostat's address.
 
 ## Scope and objective
 
-The default `tools/Run-Discovery.ps1` calls `tools/Discover-CarrierIoT.ps1` with the confirmed network. It scans only redacted.invalid to 172.20.255.255. There are 65,536 addresses total and 65,534 usable host addresses; an unknown IP cannot be determined offline from an APK, because it is assigned on the user's LAN. No static route or firewall changes are made.
+The default `tools/Run-Discovery.ps1` calls `tools/Discover-CarrierIoT.ps1` with the confirmed network. It scans only REDACTED_NETWORK to REDACTED_NETWORK. There are 65,536 addresses total and 65,534 usable host addresses; an unknown IP cannot be determined offline from an APK, because it is assigned on the user's LAN. No static route or firewall changes are made.
 
 ## Scan strategy
 
@@ -21,7 +23,7 @@ The default `tools/Run-Discovery.ps1` calls `tools/Discover-CarrierIoT.ps1` with
 - A closed common TCP port does not establish that Carrier has no local API; it could use a different port/protocol or exclusively outbound cloud control.
 - A responsive IP or `8883` socket does not identify a Carrier device. Correlate its MAC or observed device metadata with the *authenticated* cloud device inventory when it becomes available.
 - mDNS/Matter discovery may fail across VLANs without multicast forwarding and IPv6 routing. A host inside the IoT VLAN may be necessary.
-- `redacted.invalid/16` is confirmed by the user; **the specific thermostat IP is still unknown**.
+- `REDACTED_NETWORK/16` is confirmed by the user; **the specific thermostat IP is still unknown**.
 
 ## Evidence requirements
 
@@ -42,7 +44,7 @@ The owner ran `tools/Run-Discovery.ps1` against the configured IoT `/16` from Wi
 | IP addresses attempted | 65,534 | Full `/16` ICMP sweep completed |
 | ICMP/neighbor candidates | 63 | The report keeps separate lists of real ICMP replies and neighbor records; counts must not be conflated |
 | TCP open port results | 10 | **Ports**, not necessarily ten hosts |
-| Candidate /24 | `redacted.invalid/24` | All reported candidates fall in this slice; does not establish thermostat is among them |
+| Candidate /24 | `REDACTED_NETWORK/24` | All reported candidates fall in this slice; does not establish thermostat is among them |
 | Wall-clock time | 277.6 seconds | Do not repeat full scan merely to read results |
 | IPv4 route | Blank prefix and next hop | Reporting defect in `Find-NetRoute` output; use `Get-NetRoute` |
 | Thermostat IP identified | No | No model identity, DHCP lease or cloud MAC correlation available |
