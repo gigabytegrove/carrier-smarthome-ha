@@ -28,15 +28,15 @@ No live Carrier account or TSTATCCEWF-01 was accessed during this research pass.
 
 ## Multi-VLAN discovery update (2026-10-22)
 
-The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `redacted.invalid/24` discovery; **at the time of this earlier scan**, the IoT VLAN subnet was unknown (subsequently confirmed as `redacted.invalid/16` below). See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
+The scanner now includes multiple private connected networks, explicit routed VLAN prefixes, and optional authorized CIDRs, bounded to /24 each. The supplied scan log only demonstrates main-LAN `REDACTED_NETWORK/24` discovery; **at the time of this earlier scan**, the IoT VLAN subnet was unknown (subsequently confirmed as `REDACTED_NETWORK/16` below). See [`VLAN_DISCOVERY.md`](VLAN_DISCOVERY.md) for procedures and limitations. No thermostat-specific LAN IP or API has been confirmed.
 
 ## 2026-10-22: IoT network scope corrected
 
-The device's IoT network is user-confirmed as `redacted.invalid/16`. A dedicated Windows scanner now covers that exact range by default; its default ICMP pass is all 65,534 usable addresses, but full silent-host TCP scanning is opt-in. The unrelated `192.168.0.x` network is excluded unless the operator deliberately chooses `-IncludeOtherNetworks`. No thermostat IP or proprietary local API has been verified; Windows execution and VLAN reachability remain untested until run on the owner's PC.
+The device's IoT network is user-confirmed as `REDACTED_NETWORK/16`. A dedicated Windows scanner now covers that exact range by default; its default ICMP pass is all 65,534 usable addresses, but full silent-host TCP scanning is opt-in. The unrelated `REDACTED_LAN` network is excluded unless the operator deliberately chooses `-IncludeOtherNetworks`. No thermostat IP or proprietary local API has been verified; Windows execution and VLAN reachability remain untested until run on the owner's PC.
 
 
 ### First targeted VLAN scan and follow-up
-Owner-run targeted scan completed 2026-10-22: 65,534 IPv4 addresses probed; 63 ICMP/neighbor candidates exclusively in redacted.invalid/24; 10 open TCP **port results**, with no confirmed thermostat identity. Original Windows route output was incomplete; corrected scanner code now uses `Get-NetRoute` and describes the result as route-table evidence only. Added `Run-Discovery.ps1 -ReviewOnly` to list already-detected devices/ports directly from the user's existing private JSON without repeating probes. The script never publishes private device information. The next evidence needed is a candidate IP/hostname or DHCP lease correlation, while cloud authentication research proceeds independently.
+Owner-run targeted scan completed 2026-10-22: 65,534 IPv4 addresses probed; 63 ICMP/neighbor candidates exclusively in REDACTED_NETWORK/24; 10 open TCP **port results**, with no confirmed thermostat identity. Original Windows route output was incomplete; corrected scanner code now uses `Get-NetRoute` and describes the result as route-table evidence only. Added `Run-Discovery.ps1 -ReviewOnly` to list already-detected devices/ports directly from the user's existing private JSON without repeating probes. The script never publishes private device information. The next evidence needed is a candidate IP/hostname or DHCP lease correlation, while cloud authentication research proceeds independently.
 
 
 ## 2026-10-22: First authenticated native cloud test (owner supplied)
