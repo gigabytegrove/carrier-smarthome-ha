@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — pairing preparation documentation only
+
+- Add clear guidance for owners of Carrier TSTATCCEWF-01 thermostats to
+  photograph the rear **Smart Home** QR label and record any manual Matter
+  code *before* wall mounting, when practical. Explain why scanning a code
+  behind a powered thermostat is impractical and how a previously recorded
+  code avoids needing another live scan.
+- Distinguish the Smart Home QR from Carrier's **Mobile Onboarding** QR,
+  and distinguish knowing the code from opening a Matter commissioning
+  window. No unsupported thermostat button sequence is implied.
+- Update the Home Assistant sign-in description with optional future
+  Matter preparation while stating clearly that **this integration is
+  cloud-only and requires no Matter code**.
+- No change to Carrier API control, entities, local protocols, version,
+  diagnostic formats or existing configuration.
+
+
 ## v0.5.9 — Deduplicate thermostat control writes and diagnostics
 
 - Correct the v0.5.8 behavior observed in owner diagnostics: Cool, then Fan On, then Fan Auto sent the previously pending Cool mode in all three cloud mutations. Pending state remains merged in Home Assistant's display, but only the newly requested mode/fan/temperature fields are transmitted to Carrier.

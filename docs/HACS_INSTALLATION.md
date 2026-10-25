@@ -1,5 +1,11 @@
 # Carrier SmartHome HACS installation and release guidance
 
+> **Important for wall-mounted thermostats:** This cloud integration needs only
+> your Carrier SmartHome account, **not** a Matter pairing code. If you plan to
+> use Matter separately, [record the rear Smart Home QR/manual code before
+> mounting](MATTER_PAIRING_PREP.md); it may be hidden after installation.
+> This is different from the Mobile Onboarding QR used for Carrier app setup.
+
 **Verified model:** Carrier Smart Thermostat `TSTATCCEWF-01` (Carrier cloud label `TSTATCCEEF-01`). No other model has been tested or is claimed compatible. **No Matter.**
 
 **Branding:** `custom_components/carrier_smarthome/brand/icon.png` carries the owner-provided SmartHome app icon. Home Assistant 2026.3+ loads custom integration brand assets locally. HACS 2.0.x may independently show a placeholder repository icon; that is not the HA integration icon.

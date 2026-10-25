@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Sign in to Carrier SmartHome",
-        "description": "Uses Carrier's native GraphQL cloud API. Supports SmartHome entry-level thermostats only. No Matter. Your password is stored in Home Assistant's configuration storage for authentication and session renewal.",
+        "description": "This integration signs in to Carrier's cloud; it does NOT commission Matter devices. Your Carrier username and password are all you need here. **Before installing or remounting a thermostat**, save a private photo of the back label marked **Smart Home** and write down any Matter manual pairing code. The separate **Mobile Onboarding** QR code is for Carrier app setup. A saved manual code can be entered later without removing a powered wall-mounted thermostat. [Read the optional Matter preparation guide](https://github.com/gigabytegrove/carrier-smarthome-ha/blob/main/docs/MATTER_PAIRING_PREP.md). Your password is stored in Home Assistant's configuration storage.",
         "data": {
           "username": "Carrier account email or username",
           "password": "Password"

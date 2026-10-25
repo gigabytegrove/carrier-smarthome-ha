@@ -36,6 +36,30 @@ The integration authenticates with the same Carrier SmartHome account used in th
 - **Safe command handling:** a single native cloud mutation per command, a current connection check, serialized cloud mutations, latest-wins coalescing of unsent commands, and independent read-only post-command confirmation. Pending mode, fan and setpoint selections remain visible together, but subsequent cloud mutations include only the newly adjusted fields; a fan adjustment never needlessly re-sends Cool/Heat. Repeated clicks on the same still-pending value are ignored safely. You can make another adjustment as soon as the previous cloud mutation is acknowledged—without waiting for the previous verification window. Home Assistant displays the requested mode, fan setting or temperature immediately while confirmation is pending. This is a **temporary optimistic display only**: the raw Carrier telemetry and historical sensors remain unchanged until Carrier actually reports new values. Cloud rejection, preflight failure, cancelled commands and inconclusive 64-second verification revert the display to the last Carrier-reported state; an inconclusive result does not prove the physical thermostat ignored the command.
 - **Simple configuration:** sign in with your Carrier SmartHome credentials and use the normal climate card; no separate options are required to unlock mode controls.
 
+## Important before installing a new wall-mounted thermostat
+
+**Save its Smart Home / Matter pairing information *before* it goes on the wall.**
+Carrier places the TSTATCCEWF-01 **Smart Home QR code on the back** of the
+thermostat, where it may be inaccessible once installed. Keep a private
+photograph of the label and record any 11- or 21-digit manual Matter setup
+code supplied by the manufacturer or installer. The **Mobile Onboarding**
+QR code is a different code used during Carrier app setup.
+
+If the thermostat is already mounted, **do not pull it off while powered just
+to scan the code**. First check a saved photo, installation paperwork or
+installer records. When you already have a Matter manual code, a compatible
+controller such as Aveliom can accept it without scanning the QR again.
+Having a code does **not** open the device's Matter commissioning window;
+the device still needs a manufacturer-supported pairing mode and compatible
+network onboarding.
+
+**This Home Assistant integration uses the Carrier SmartHome cloud API,
+not Matter. You do not need a Matter code to set up the integration, and
+it does not provide a Matter commissioning flow.** The preparation advice
+is for owners who want to add a Matter controller now or in the future.
+
+[Simple homeowner guide: save the Carrier Matter code before mounting](docs/MATTER_PAIRING_PREP.md)
+
 ## Installation via HACS
 
 [![Open repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gigabytegrove&repository=carrier-smarthome-ha&category=integration)
