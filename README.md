@@ -130,3 +130,7 @@ Carrier SmartHome is an **independent community integration**, not affiliated wi
 For a mounted thermostat with a saved manual code, see
 [phone-assisted Matter setup and multi-admin sharing](docs/MATTER_PAIRING_PREP.md#phone-based-matter-commissioning-without-pulling-it-off-the-wall).
 This is optional and separate from the Carrier cloud integration.
+
+**Latest Matter-preparation documentation:** v0.5.10. HACS must install
+the matching published release and Home Assistant must restart before the
+new sign-in explanation appears; no cloud control behavior was changed.

@@ -17,6 +17,8 @@ class MatterPreparationDocsTest(unittest.TestCase):
         strings = json.loads((COMPONENT / "strings.json").read_text())
         en = json.loads((COMPONENT / "translations" / "en.json").read_text())
         self.assertEqual(strings, en)
+        manifest = json.loads((COMPONENT / "manifest.json").read_text())
+        self.assertEqual(manifest["version"], "0.5.10")
         desc = strings["config"]["step"]["user"]["description"]
         for phrase in ("cloud", "Smart Home", "Mobile Onboarding", "does NOT commission", "manual"):
             self.assertIn(phrase, desc)

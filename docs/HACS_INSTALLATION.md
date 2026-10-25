@@ -10,7 +10,7 @@
 
 **Branding:** `custom_components/carrier_smarthome/brand/icon.png` carries the owner-provided SmartHome app icon. Home Assistant 2026.3+ loads custom integration brand assets locally. HACS 2.0.x may independently show a placeholder repository icon; that is not the HA integration icon.
 
-**Versions:** `manifest.json` is `0.5.6` in this release. Until a GitHub Release named `v0.5.6` is published, HACS custom-repository download UI may correctly say `Commit <hash> will be downloaded`. A downloadable commit isn't a semver release. To install updated code, use HACS Redownload on `main` or the published release, **restart Home Assistant**, and verify the `integration_manifest.version` in HA diagnostics. Never infer the running version from `gh repo clone` on another computer.
+**Versions:** The current integration manifest is `0.5.10`. Install a published GitHub Release `v0.5.10` through HACS, then **restart Home Assistant** and verify `integration_manifest.version` in diagnostics. A newer `main` source commit alone does not make HACS install the change. This release updates documentation and sign-in guidance only; the working Carrier cloud control logic is unchanged.
 
 If the GitHub CLI release-check command reports `release not found`, PowerShell 5.1 with `$ErrorActionPreference='Stop'` can stop on `gh` stderr before conditional logic. Instead use `gh release list --repo ... --json tagName --jq ...` (success even when there are no releases) to detect the tag; publish it with `gh release create <tag> --target <commit> --notes-file <path>` and verify with `gh release view` **only after** creation. Don't use GitHub Actions.
 
@@ -25,7 +25,7 @@ If the GitHub CLI release-check command reports `release not found`, PowerShell 
 
 **Known limits:** Authenticated cloud reads and official-app → cloud synchronization have been proved. Home Assistant Off/Cool mode changes have been owner-verified on the real thermostat. Other mode and fan mutations have not all been verified. Fan On is an experimental Carrier GraphQL value; Circulation is not exposed. `turn_on` cannot invent an initial mode. If no prior non-Off Carrier mode has been observed since startup, select Heat, Cool or Auto manually. No Matter and no verified proprietary LAN API.
 
-For update troubleshooting, check manifest `0.5.5` and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
+For update troubleshooting, check the installed manifest version and integration logs. Do not share credentials, hardware identifiers or raw Omada archives.
 
 ## v0.5.1: Cloud state confirmation after a write
 

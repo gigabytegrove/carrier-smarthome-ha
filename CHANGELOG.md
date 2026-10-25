@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — pairing preparation documentation only
+## v0.5.10 — Homeowner Matter code preparation and cloud setup clarity
 
 - Add clear guidance for owners of Carrier TSTATCCEWF-01 thermostats to
   photograph the rear **Smart Home** QR label and record any manual Matter
