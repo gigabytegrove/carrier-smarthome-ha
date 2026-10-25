@@ -126,3 +126,7 @@ You can also [report an issue](https://github.com/gigabytegrove/carrier-smarthom
 Your account credentials are stored by Home Assistant for Carrier authentication; this project does not require Matter pairing or a separate cloud account. **Never post** credentials, raw diagnostics, MACs, IP addresses, serials, unredacted packet captures, or authentication tokens in public GitHub issues.
 
 Carrier SmartHome is an **independent community integration**, not affiliated with, endorsed by, or supported by Carrier. Carrier names, logos, and product marks belong to their respective owners. The project icon identifies the supported Carrier equipment; its inclusion does not imply an official relationship.
+
+For a mounted thermostat with a saved manual code, see
+[phone-assisted Matter setup and multi-admin sharing](docs/MATTER_PAIRING_PREP.md#phone-based-matter-commissioning-without-pulling-it-off-the-wall).
+This is optional and separate from the Carrier cloud integration.

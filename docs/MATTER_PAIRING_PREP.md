@@ -76,3 +76,26 @@ device; it does not establish that the code is wrong.
   https://assets-f02205d260.cdn.insitecloud.net/61e56e8270b9de4/TSTATCCEWF-01SI-%20Installation%20Instructions.pdf
 - Carrier Smart Thermostat brochure:
   https://www.shareddocs.com/hvac/docs/1010/Public/07/01-TSTAT-113-01.pdf
+
+## Phone-based Matter commissioning without pulling it off the wall
+
+For an already installed and powered thermostat with a *saved* Matter
+manual setup code, Google's official Android guide supports
+**Google Home → Add device → Matter-enabled device → Set up without QR code**.
+Enter the code manually; a live QR scan is not required.
+Google Home may use the phone's Bluetooth features for first commissioning.
+**This is a troubleshooting option, not a verified Carrier-specific method for
+opening an already-configured thermostat's Matter commissioning window.**
+If no Matter device is discovered, stop and consult Carrier.
+
+If Google Home *successfully adds it as a Matter device* (not merely by
+linking your Carrier cloud account), open the device's Google Home settings →
+**Linked Matter apps & services** → **Link apps & services** →
+**Use pairing code**. Enter that new, temporary sharing code in Aveliom
+while the multi-admin commissioning window is open.
+
+Official Google instructions:
+https://support.google.com/googlehome/answer/13127223
+
+Remember: **this Carrier SmartHome Home Assistant integration itself
+requires only Carrier cloud credentials and never uses a Matter code**.
