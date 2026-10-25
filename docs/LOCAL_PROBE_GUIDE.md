@@ -53,7 +53,7 @@ If the controller's timestamp uses a different civil-time zone from your Windows
 
 | Test | Behavior | What it proves |
 | --- | --- | --- |
-| Active Omada lease | Current online MAC suffix, unique active IP, authorized `redacted.invalid/16`, recent snapshot | Network target selection only |
+| Active Omada lease | Current online MAC suffix, unique active IP, authorized `REDACTED_NETWORK/16`, recent snapshot | Network target selection only |
 | Broad TCP scan | Default TCP 1–1024 + common higher IoT ports; optional all TCP 1–65535 | TCP connections accepted at scanning moment |
 | HTTPS/TLS | Handshake and TLS version/ALPN on candidate open TLS ports | An encrypted listener, **not** HVAC API authorization |
 | HTTP | One `HEAD /` on known candidate web listener ports | HTTP response code only, no body/credentials |
