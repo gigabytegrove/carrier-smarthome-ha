@@ -14,16 +14,16 @@ import omada_identity as omada
 def sample():
     return {
         'online': [
-            {'NAME': 'Kasa', 'MAC ADDRESS': '00-11-22-33-44-55', 'IP ADDRESS': '172.20.0.31', 'STATUS': 'CONNECTED', 'VLAN': '30'},
+            {'NAME': 'Kasa', 'MAC ADDRESS': '00-11-22-33-44-55', 'IP ADDRESS': '192.0.2.31', 'STATUS': 'CONNECTED', 'VLAN': '100'},
         ],
         'offline': [
-            {'NAME': 'Smart Thermostat-CAFE', 'MAC ADDRESS': '02-00-00-aa-ca-fe', 'IP ADDRESS': '-', 'VLAN': '30', 'STATUS': 'DISCONNECTED'},
-            {'NAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '172.20.0.151', 'VLAN': '30', 'SSID': 'Example IoT', 'AP/PORT': 'Example AP', 'STATUS': 'DISCONNECTED'},
-            {'NAME': 'Other', 'MAC ADDRESS': '02-00-00-bb-cc-dd', 'IP ADDRESS': '172.20.0.151', 'STATUS': 'DISCONNECTED'},
+            {'NAME': 'Smart Thermostat-CAFE', 'MAC ADDRESS': '02-00-00-aa-ca-fe', 'IP ADDRESS': '-', 'VLAN': '100', 'STATUS': 'DISCONNECTED'},
+            {'NAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '192.0.2.151', 'VLAN': '100', 'SSID': 'Example IoT', 'AP/PORT': 'Example AP', 'STATUS': 'DISCONNECTED'},
+            {'NAME': 'Other', 'MAC ADDRESS': '02-00-00-bb-cc-dd', 'IP ADDRESS': '192.0.2.151', 'STATUS': 'DISCONNECTED'},
         ],
         'history': [
-            {'USERNAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '172.20.0.151', 'LAST ONLINE TIME': '2026-10-22 08:08:40 AM'},
-            {'USERNAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '172.20.0.138', 'LAST ONLINE TIME': '2026-08-22 07:22:13 AM'},
+            {'USERNAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '192.0.2.151', 'LAST ONLINE TIME': '2026-10-22 08:08:40 AM'},
+            {'USERNAME': 'Smart Thermostat-BEEF', 'MAC ADDRESS': '02-00-00-aa-be-ef', 'IP ADDRESS': '192.0.2.138', 'LAST ONLINE TIME': '2026-08-22 07:22:13 AM'},
         ],
     }
 
@@ -43,15 +43,15 @@ class OmadaTests(unittest.TestCase):
         self.assertEqual(result['name'], 'Smart Thermostat-BEEF')
         self.assertEqual(result['status'], 'NOT CONNECTED IN EXPORT')
         self.assertEqual(result['current_ip'], '')
-        self.assertEqual(result['last_ip'], '172.20.0.151')
+        self.assertEqual(result['last_ip'], '192.0.2.151')
         self.assertEqual(result['same_ip_other_macs'], 1)
-        self.assertEqual(result['history_ips'], ['172.20.0.151', '172.20.0.138'])
+        self.assertEqual(result['history_ips'], ['192.0.2.151', '192.0.2.138'])
 
     def test_connected_has_current_ip(self):
         rows = sample()
-        rows['online'].append(dict(rows['offline'][1], STATUS='CONNECTED', **{'IP ADDRESS': '172.20.0.52'}))
+        rows['online'].append(dict(rows['offline'][1], STATUS='CONNECTED', **{'IP ADDRESS': '192.0.2.52'}))
         result = omada.identify(rows, suffix='BEEF')
-        self.assertEqual(result['current_ip'], '172.20.0.52')
+        self.assertEqual(result['current_ip'], '192.0.2.52')
         self.assertEqual(result['status'], 'CONNECTED')
 
     def test_wrong_suffix_refuses_to_guess(self):
@@ -64,7 +64,7 @@ class OmadaTests(unittest.TestCase):
 
     def test_history_does_not_make_device_online(self):
         result = omada.identify(sample(), suffix='BEEF')
-        output = omada.render(result, {'icmp_responsive': ['172.20.0.151'], 'tcp_open': []})
+        output = omada.render(result, {'icmp_responsive': ['192.0.2.151'], 'tcp_open': []})
         self.assertIn('current IP confirmed by ONLINE export: NO'.lower(), output.lower())
         self.assertIn('answered ICMP: yes', output)
         self.assertIn('PREVIOUS SAVED SCAN', output)
@@ -81,7 +81,7 @@ class OmadaTests(unittest.TestCase):
                     writer.writerows(records)
                     z.writestr(prefix + '2026.csv', memory.getvalue())
             loaded = omada.read_archive(zpath)
-            self.assertEqual(omada.identify(loaded, suffix='BEEF')['last_ip'], '172.20.0.151')
+            self.assertEqual(omada.identify(loaded, suffix='BEEF')['last_ip'], '192.0.2.151')
 
     def test_zip_missing_csv_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -93,7 +93,7 @@ class OmadaTests(unittest.TestCase):
 
     def test_zero_mac_ignored(self):
         rows = sample()
-        rows['online'].append({'NAME':'Smart Thermostat-FFFF', 'MAC ADDRESS':'00-00-00-00-00-00', 'IP ADDRESS':'172.20.0.60','STATUS':'CONNECTED'})
+        rows['online'].append({'NAME':'Smart Thermostat-FFFF', 'MAC ADDRESS':'00-00-00-00-00-00', 'IP ADDRESS':'192.0.2.60','STATUS':'CONNECTED'})
         self.assertEqual(omada.identify(rows,suffix='BEEF')['status'],'NOT CONNECTED IN EXPORT')
 
 
