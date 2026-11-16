@@ -181,10 +181,16 @@ class CarrierSmartHomeClient:
 
     async def _post(self, url: str, data: Mapping[str, Any], *, token: str | None = None,
                     form: bool = False) -> dict[str, Any]:
+        # Never transmit credentials to an unexpected endpoint, even if a future
+        # caller supplies a URL from device data or remote API output.
+        if url not in (NO_AUTH, REFRESH, GRAPHQL):
+            raise CarrierTransportError("Unapproved Carrier API endpoint")
+        if (token is not None and url != GRAPHQL) or (form and url != REFRESH):
+            raise CarrierTransportError("Invalid Carrier request authentication context")
         headers = {"Accept": "application/json"}
         if token:
             headers["Authorization"] = f"{self._token_type} {token}"
-        headers["User-Agent"] = "carrier-smarthome-ha/0.5.9"
+        headers["User-Agent"] = "carrier-smarthome-ha/0.5.11"
         if not form:
             headers["Content-Type"] = "application/json"
         kwargs: dict[str, Any] = {"data" if form else "json": dict(data)}

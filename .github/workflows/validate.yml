@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Test credential destination controls
+        run: python -m unittest discover -s tests -p test_security_endpoint.py
       - name: Compile integration Python
         run: python -m compileall -q custom_components/carrier_smarthome
       - name: Run offline thermostat control regression tests
@@ -51,3 +53,14 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+
+  homeassistant-2026-11:
+    name: Home Assistant 2026.11.1 import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'homeassistant==2026.11.1'
+      - run: python -c 'import custom_components.carrier_smarthome; import custom_components.carrier_smarthome.config_flow; import custom_components.carrier_smarthome.api; print("HA 2026.11.1 imports passed")'

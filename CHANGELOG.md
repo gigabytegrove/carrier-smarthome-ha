@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.11 — Credential destination controls and Home Assistant compatibility
+
+- Security: reject unapproved HTTP endpoints before building authorization headers or sending login, token-refresh, or GraphQL payloads.
+- Reject bearer-token use on authentication routes and form payloads outside the dedicated refresh endpoint; preserve known Carrier GraphQL routes.
+- Align the diagnostic User-Agent with v0.5.11 and add endpoint guard regression tests.
+- Validate integration imports against Home Assistant Core 2026.11.1 in CI and enable CodeQL scanning.
+- Add validated-first-party main branch automatic release gating.
+- Preserve all existing thermostat entities, cloud login credentials, safety checks, climate controls and rate-limit behavior. Physical hardware was not retested by this source-only pass.
+
+
 ## v0.5.10 — Homeowner Matter code preparation and cloud setup clarity
 
 - Add clear guidance for owners of Carrier TSTATCCEWF-01 thermostats to
